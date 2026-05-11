@@ -1,0 +1,272 @@
+import '../models/notification_model.dart';
+import '../models/order_model.dart';
+import '../models/transaction_model.dart';
+import '../models/user_model.dart';
+
+class AppData {
+  AppData._();
+
+  static final user = UserModel(
+    id: 'user_001',
+    name: 'James Hartley',
+    phone: '07700900001',
+    email: 'james.hartley@email.co.uk',
+    totalDeliveries: 0,
+    isActive: true,
+    isVerified: true,
+    walletBalance: 24.50,
+    createdAt: DateTime(2024, 1, 15),
+  );
+
+  static final List<OrderModel> activeOrders = [
+    OrderModel(
+      id: 'ord_active_001',
+      orderNumber: 'SD-20240501',
+      status: 'accepted',
+      pickupAddress: 'The Burger Joint, 14 Old Street, London EC1V 9BD',
+      deliveryAddress: '27 Clerkenwell Rd, London EC1M 5RN',
+      items: [
+        const OrderItem(name: 'Classic Cheeseburger', quantity: 2, price: 9.50),
+        const OrderItem(name: 'Crispy Fries', quantity: 2, price: 3.50),
+        const OrderItem(name: 'Diet Coke', quantity: 2, price: 2.50),
+      ],
+      totalAmount: 31.50,
+      deliveryFee: 2.99,
+      driverTip: 1.50,
+      distance: 1.2,
+      estimatedTime: 20,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 12)),
+      acceptedAt: DateTime.now().subtract(const Duration(minutes: 8)),
+    ),
+  ];
+
+  static final List<OrderModel> orderHistory = [
+    OrderModel(
+      id: 'ord_hist_001',
+      orderNumber: 'SD-20240428',
+      status: 'delivered',
+      pickupAddress: 'Pret A Manger, 42 Chancery Lane, London WC2A 1JE',
+      deliveryAddress: '27 Clerkenwell Rd, London EC1M 5RN',
+      items: [
+        const OrderItem(name: 'Egg & Cress Sandwich', quantity: 1, price: 5.75),
+        const OrderItem(name: 'Flat White', quantity: 1, price: 3.25),
+      ],
+      totalAmount: 11.99,
+      deliveryFee: 1.99,
+      driverTip: 1.00,
+      distance: 0.8,
+      estimatedTime: 15,
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      acceptedAt: DateTime.now().subtract(const Duration(days: 3, minutes: -2)),
+      pickedUpAt: DateTime.now().subtract(const Duration(days: 3, minutes: -10)),
+      deliveredAt: DateTime.now().subtract(const Duration(days: 3, minutes: -18)),
+    ),
+    OrderModel(
+      id: 'ord_hist_002',
+      orderNumber: 'SD-20240425',
+      status: 'delivered',
+      pickupAddress: 'Wagamama, 40 Long Acre, London WC2E 9JT',
+      deliveryAddress: '27 Clerkenwell Rd, London EC1M 5RN',
+      items: [
+        const OrderItem(name: 'Chicken Ramen', quantity: 1, price: 14.95),
+        const OrderItem(name: 'Gyoza (6)', quantity: 1, price: 7.50),
+        const OrderItem(name: 'Jasmine Tea', quantity: 1, price: 3.00),
+      ],
+      totalAmount: 28.44,
+      deliveryFee: 2.99,
+      driverTip: 2.00,
+      distance: 2.1,
+      estimatedTime: 30,
+      createdAt: DateTime.now().subtract(const Duration(days: 6)),
+      deliveredAt: DateTime.now().subtract(const Duration(days: 6, minutes: -35)),
+    ),
+    OrderModel(
+      id: 'ord_hist_003',
+      orderNumber: 'SD-20240420',
+      status: 'cancelled',
+      pickupAddress: 'Nando\'s, 32 Westfield Stratford City, London E20 1EL',
+      deliveryAddress: '27 Clerkenwell Rd, London EC1M 5RN',
+      items: [
+        const OrderItem(name: 'Half Chicken Peri-Peri', quantity: 1, price: 12.25),
+        const OrderItem(name: 'Peri Chips', quantity: 1, price: 4.25),
+      ],
+      totalAmount: 18.49,
+      deliveryFee: 2.99,
+      distance: 5.4,
+      estimatedTime: 45,
+      createdAt: DateTime.now().subtract(const Duration(days: 11)),
+    ),
+  ];
+
+  static final Map<String, dynamic> walletSummary = {
+    'balance': 24.50,
+    'totalSpent': 348.75,
+    'totalOrders': 18,
+  };
+
+  static final List<TransactionModel> transactions = [
+    TransactionModel(
+      id: 'txn_001',
+      type: 'debit',
+      amount: 31.50,
+      description: 'Order #SD-20240501',
+      createdAt: DateTime.now().subtract(const Duration(minutes: 12)),
+      status: 'completed',
+    ),
+    TransactionModel(
+      id: 'txn_002',
+      type: 'credit',
+      amount: 50.00,
+      description: 'Wallet top-up',
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      status: 'completed',
+    ),
+    TransactionModel(
+      id: 'txn_003',
+      type: 'debit',
+      amount: 11.99,
+      description: 'Order #SD-20240428',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      status: 'completed',
+    ),
+    TransactionModel(
+      id: 'txn_004',
+      type: 'debit',
+      amount: 28.44,
+      description: 'Order #SD-20240425',
+      createdAt: DateTime.now().subtract(const Duration(days: 6)),
+      status: 'completed',
+    ),
+    TransactionModel(
+      id: 'txn_005',
+      type: 'credit',
+      amount: 100.00,
+      description: 'Wallet top-up',
+      createdAt: DateTime.now().subtract(const Duration(days: 10)),
+      status: 'completed',
+    ),
+  ];
+
+  static final List<NotificationModel> notifications = [
+    NotificationModel(
+      id: 'notif_001',
+      title: 'Order on its way!',
+      body: 'Your order #SD-20240501 has been picked up and is heading to you.',
+      type: 'order_update',
+      data: {'orderId': 'ord_active_001'},
+      isRead: false,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
+    ),
+    NotificationModel(
+      id: 'notif_002',
+      title: 'Order confirmed',
+      body: 'Your order from The Burger Joint has been confirmed.',
+      type: 'order_update',
+      data: {'orderId': 'ord_active_001'},
+      isRead: false,
+      createdAt: DateTime.now().subtract(const Duration(minutes: 12)),
+    ),
+    NotificationModel(
+      id: 'notif_003',
+      title: 'Wallet credited',
+      body: '£50.00 has been added to your SwiftDrop wallet.',
+      type: 'wallet',
+      data: {'amount': 50.00},
+      isRead: true,
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+    NotificationModel(
+      id: 'notif_004',
+      title: 'Order delivered',
+      body: 'Your order #SD-20240428 has been delivered. Enjoy your meal!',
+      type: 'order_update',
+      data: {'orderId': 'ord_hist_001'},
+      isRead: true,
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+    ),
+  ];
+
+  static final List<Map<String, dynamic>> savedAddresses = [
+    {
+      'id': 'addr_001',
+      'label': 'Home',
+      'address': '27 Clerkenwell Rd, London EC1M 5RN',
+      'isDefault': true,
+    },
+    {
+      'id': 'addr_002',
+      'label': 'Work',
+      'address': '1 Canada Square, Canary Wharf, London E14 5AB',
+      'isDefault': false,
+    },
+  ];
+
+  static final List<Map<String, dynamic>> categories = [
+    {'id': 'cat_001', 'name': 'Burgers', 'icon': '🍔'},
+    {'id': 'cat_002', 'name': 'Pizza', 'icon': '🍕'},
+    {'id': 'cat_003', 'name': 'Sushi', 'icon': '🍣'},
+    {'id': 'cat_004', 'name': 'Chinese', 'icon': '🥡'},
+    {'id': 'cat_005', 'name': 'Indian', 'icon': '🍛'},
+    {'id': 'cat_006', 'name': 'Healthy', 'icon': '🥗'},
+    {'id': 'cat_007', 'name': 'Desserts', 'icon': '🍰'},
+    {'id': 'cat_008', 'name': 'Coffee', 'icon': '☕'},
+  ];
+
+  static final List<Map<String, dynamic>> featuredRestaurants = [
+    {
+      'id': 'rest_001',
+      'name': 'The Burger Joint',
+      'category': 'Burgers',
+      'rating': 4.7,
+      'deliveryTime': '20-30 min',
+      'deliveryFee': 1.99,
+      'minOrder': 10.00,
+      'address': '14 Old Street, London EC1V 9BD',
+      'isOpen': true,
+    },
+    {
+      'id': 'rest_002',
+      'name': 'Wagamama',
+      'category': 'Asian',
+      'rating': 4.5,
+      'deliveryTime': '25-40 min',
+      'deliveryFee': 2.49,
+      'minOrder': 15.00,
+      'address': '40 Long Acre, London WC2E 9JT',
+      'isOpen': true,
+    },
+    {
+      'id': 'rest_003',
+      'name': 'Pret A Manger',
+      'category': 'Sandwiches & Coffee',
+      'rating': 4.3,
+      'deliveryTime': '15-25 min',
+      'deliveryFee': 1.49,
+      'minOrder': 5.00,
+      'address': '42 Chancery Lane, London WC2A 1JE',
+      'isOpen': true,
+    },
+    {
+      'id': 'rest_004',
+      'name': 'Dishoom',
+      'category': 'Indian',
+      'rating': 4.9,
+      'deliveryTime': '35-50 min',
+      'deliveryFee': 2.99,
+      'minOrder': 20.00,
+      'address': '12 Upper St Martin\'s Ln, London WC2H 9FB',
+      'isOpen': true,
+    },
+    {
+      'id': 'rest_005',
+      'name': 'Nando\'s',
+      'category': 'Chicken',
+      'rating': 4.4,
+      'deliveryTime': '30-45 min',
+      'deliveryFee': 2.49,
+      'minOrder': 12.00,
+      'address': '32 Westfield Stratford City, London E20 1EL',
+      'isOpen': false,
+    },
+  ];
+}
