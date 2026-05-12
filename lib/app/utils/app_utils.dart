@@ -12,8 +12,7 @@ class AppUtils {
     return '$symbol${amount.toStringAsFixed(2)}';
   }
 
-  static bool isValidPhone(String phone) =>
-      RegExp(r'^07\d{9}$').hasMatch(phone);
+  static bool isValidPhone(String phone) => phone.length >= 5;
 
   static String formatPhoneDisplay(String raw) {
     if (raw.startsWith('0')) return '+44 ${raw.substring(1)}';

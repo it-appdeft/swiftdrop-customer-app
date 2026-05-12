@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
+import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../widgets/app_button.dart';
-import '../../../utils/app_utils.dart';
 import '../controllers/auth_controller.dart';
 
 class OtpView extends GetView<AuthController> {
@@ -13,91 +14,131 @@ class OtpView extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
-    final List<FocusNode> focusNodes = List.generate(4, (_) => FocusNode());
-    final List<TextEditingController> otpControllers =
-        List.generate(4, (_) => TextEditingController());
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new,
+            size: AppDimensions.iconSm,
+            color: AppColors.lightSurfaceText,
+          ),
           onPressed: () => Get.back(),
         ),
+        title: Text(
+          'OTP Verification',
+          style: AppTextStyles.h6.copyWith(color: AppColors.lightSurfaceHeading),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXl),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: AppDimensions.gapXl),
-            Text('Verify your number', style: AppTextStyles.h4),
-            const SizedBox(height: AppDimensions.gapSm),
-            Obx(() => Text(
-                  'Enter the 4-digit code sent to ${AppUtils.formatPhoneDisplay(controller.phoneNumber.value)}',
-                  style: AppTextStyles.pMedium.copyWith(color: AppColors.textSecondary),
-                )),
-            const SizedBox(height: AppDimensions.sp32),
-            // OTP boxes scale fluidly to available width
-            LayoutBuilder(
-              builder: (context, constraints) {
-                // (available width − 3 gaps of 12px each) ÷ 4 boxes, clamped 52–72px
-                final boxSize = ((constraints.maxWidth - 36) / 4).clamp(52.0, 72.0);
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(4, (index) {
-                    return _OtpBox(
-                      size: boxSize,
-                      controller: otpControllers[index],
-                      focusNode: focusNodes[index],
-                      onChanged: (value) {
-                        controller.onOtpDigitChanged(index, value);
-                        if (value.isNotEmpty && index < 3) {
-                          focusNodes[index + 1].requestFocus();
-                        } else if (value.isEmpty && index > 0) {
-                          focusNodes[index - 1].requestFocus();
-                        }
-                      },
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingXl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: AppDimensions.gapXl),
+                  Obx(() => Text(
+                        'We have sent a verification code\nto ${controller.displayPhone}',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.pSmall.copyWith(
+                          color: AppColors.lightSurfaceSubtitle,
+                        ),
+                      )),
+                  const SizedBox(height: AppDimensions.sp32),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (int index = 0; index < 4; index++) ...[
+                        _OtpBox(
+                          size: AppDimensions.otpBoxSize,
+                          controller: controller.otpBoxControllers[index],
+                          focusNode: controller.otpFocusNodes[index],
+                          onChanged: (value) {
+                            controller.onOtpDigitChanged(index, value);
+                            if (value.isNotEmpty && index < 3) {
+                              controller.otpFocusNodes[index + 1].requestFocus();
+                            } else if (value.isEmpty && index > 0) {
+                              controller.otpFocusNodes[index - 1].requestFocus();
+                            }
+                          },
+                        ),
+                        if (index < 3) const SizedBox(width: AppDimensions.gapLg),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: AppDimensions.gapXl),
+                  Obx(() {
+                    if (!controller.canResend.value) {
+                      return Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Resend OTP ',
+                              style: AppTextStyles.pSmall.copyWith(
+                                color: AppColors.lightSurfaceDisabled,
+                              ),
+                            ),
+                            TextSpan(
+                              text: '(${controller.resendTimer.value})',
+                              style: AppTextStyles.pSmall.copyWith(
+                                color: AppColors.lightSurfaceLabel,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return GestureDetector(
+                      onTap: controller.resendOtp,
+                      child: Text(
+                        'Resend OTP',
+                        style: AppTextStyles.pSmallSemiBold.copyWith(
+                          color: AppColors.lightSurfaceLabel,
+                        ),
+                      ),
                     );
                   }),
-                );
-              },
+                ],
+              ),
             ),
-            const SizedBox(height: AppDimensions.sp32),
-            Obx(() => AppButton(
+          ),
+          Padding(
+            padding: EdgeInsets.only(
+              left: AppDimensions.paddingXl,
+              right: AppDimensions.paddingXl,
+              bottom: bottomPadding + AppDimensions.paddingLg,
+            ),
+            child: Obx(() => AppButton(
                   label: 'Verify',
-                  onTap: controller.verifyOtp,
+                  onTap: controller.otpValues.every((v) => v.isNotEmpty)
+                      ? controller.verifyOtp
+                      : null,
                   isLoading: controller.isLoading.value,
+                  borderRadius: AppRadius.sm,
                 )),
-            const SizedBox(height: AppDimensions.gapXl),
-            Center(
-              child: Obx(() {
-                if (!controller.canResend.value) {
-                  return Text(
-                    'Resend code in ${controller.resendTimer.value}s',
-                    style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
-                  );
-                }
-                return GestureDetector(
-                  onTap: controller.resendOtp,
-                  child: Text(
-                    'Resend code',
-                    style: AppTextStyles.pSmallSemiBold.copyWith(color: AppColors.primary),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: AppDimensions.paddingXl),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _OtpBox extends StatelessWidget {
+class _OtpBox extends StatefulWidget {
   final double size;
   final TextEditingController controller;
   final FocusNode focusNode;
@@ -111,22 +152,61 @@ class _OtpBox extends StatelessWidget {
   });
 
   @override
+  State<_OtpBox> createState() => _OtpBoxState();
+}
+
+class _OtpBoxState extends State<_OtpBox> {
+  bool _isFocused = false;
+  bool _hasContent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_onFocusChange);
+    widget.controller.addListener(_onTextChange);
+    _hasContent = widget.controller.text.isNotEmpty;
+  }
+
+  void _onFocusChange() {
+    setState(() => _isFocused = widget.focusNode.hasFocus);
+  }
+
+  void _onTextChange() {
+    setState(() => _hasContent = widget.controller.text.isNotEmpty);
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_onFocusChange);
+    widget.controller.removeListener(_onTextChange);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
+    return Container(
+      width: widget.size,
+      height: widget.size,
+      decoration: (_isFocused || _hasContent)
+          ? AppDecorations.lightOtpBoxFocused
+          : AppDecorations.lightOtpBox,
       child: TextField(
-        controller: controller,
-        focusNode: focusNode,
+        controller: widget.controller,
+        focusNode: widget.focusNode,
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: AppTextStyles.h5,
-        onChanged: onChanged,
+        style: AppTextStyles.pMedium.copyWith(color: AppColors.lightInputText),
+        onChanged: widget.onChanged,
         decoration: const InputDecoration(
           counterText: '',
           contentPadding: EdgeInsets.zero,
+          filled: true,
+          fillColor: AppColors.transparent,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
       ),
     );

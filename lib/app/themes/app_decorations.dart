@@ -64,4 +64,28 @@ class AppDecorations {
     borderRadius: AppRadius.md,
     border: Border.all(color: AppColors.primary, width: 1.5),
   );
+
+  // Light-surface variants — used on white/off-white cards (login, OTP, register)
+  static BoxDecoration lightInput = BoxDecoration(
+    color: AppColors.white,
+    borderRadius: AppRadius.sm,
+    border: Border.all(color: AppColors.lightSurfaceBorder),
+  );
+
+  static BoxDecoration lightCard = BoxDecoration(
+    color: AppColors.white,
+    borderRadius: AppRadius.xl,
+    boxShadow: AppShadows.xl,
+  );
+
+  static BoxDecoration lightOtpBox = BoxDecoration(
+    color: AppColors.lightOtpBoxBg,
+    borderRadius: AppRadius.sm,
+  );
+
+  static BoxDecoration lightOtpBoxFocused = BoxDecoration(
+    color: AppColors.white,
+    borderRadius: AppRadius.sm,
+    border: Border.all(color: AppColors.lightOtpFocusBorder),
+  );
 }

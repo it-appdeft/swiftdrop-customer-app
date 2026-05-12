@@ -29,5 +29,5 @@ class AppTextStyles {
   static TextStyle caption = GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textHint);
   static TextStyle amount = GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.success);
   static TextStyle amountLg = GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w700, color: AppColors.success);
-  static TextStyle button = GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.white);
+  static TextStyle button = GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600, color: AppColors.buttonLabel);
 }

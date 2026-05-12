@@ -21,4 +21,9 @@ class AppRadius {
     topLeft: Radius.circular(AppDimensions.radiusXl),
     topRight: Radius.circular(AppDimensions.radiusXl),
   );
+
+  static BorderRadius topXxl = const BorderRadius.only(
+    topLeft: Radius.circular(AppDimensions.radiusXxl),
+    topRight: Radius.circular(AppDimensions.radiusXxl),
+  );
 }

@@ -27,8 +27,22 @@ class AppColors {
 
   static const Color success = Color(0xFF1BC27D);
   static const Color warning = Color(0xFFF5A623);
-  static const Color error = Color(0xFFE53935);
+  static const Color error = Color(0xFFDC3545);
   static const Color white = Color(0xFFFFFFFF);
+  static const Color offWhite = Color(0xFFF6F8FA);
+  static const Color buttonLabel = Color(0xFFFEFEFD);
+
+  // Light surface — used on white/off-white cards (login, OTP, register)
+  static const Color lightSurfaceText     = Color(0xFF071623);
+  static const Color lightInputText       = Color(0xFF0F191F);
+  static const Color lightSurfaceHeading  = Color(0xFF3C4042);
+  static const Color lightSurfaceLabel    = Color(0xFF595D70);
+  static const Color lightSurfaceSubtitle = Color(0xFF868AA5);
+  static const Color lightSurfaceDisabled = Color(0xFFE1E2E3);
+  static const Color lightSurfaceBorder   = Color(0xFFF2F2E9);
+  static const Color lightSurfaceHint     = Color(0xFFADB5BD);
+  static const Color lightOtpBoxBg        = Color(0xFFEDEEF1);
+  static const Color lightOtpFocusBorder  = Color(0xFF198754);
 
   static const Color transparent = Colors.transparent;
 }

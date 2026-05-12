@@ -36,6 +36,15 @@ class AppShadows {
     ),
   ];
 
+  // Soft floating shadow — for light-surface cards over backgrounds
+  static List<BoxShadow> xl = [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.12),
+      blurRadius: 24,
+      offset: const Offset(0, 4),
+    ),
+  ];
+
   static List<BoxShadow> primary = [
     BoxShadow(
       color: AppColors.primary.withOpacity(0.3),

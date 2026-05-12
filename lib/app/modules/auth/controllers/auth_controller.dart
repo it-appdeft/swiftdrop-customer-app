@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../../data/models/user_model.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../base/base_controller.dart';
 import '../../../constants/app_constants.dart';
@@ -21,6 +24,29 @@ class AuthController extends BaseController {
   final RxInt resendTimer = AppConstants.otpResendTimer.obs;
   final RxBool canResend = false.obs;
 
+  final RxString countryCode = '+44'.obs;
+  final RxString countryFlag = '🇬🇧'.obs;
+
+  Timer? _resendCountdown;
+
+  final List<FocusNode> otpFocusNodes =
+      List.generate(AppConstants.otpLength, (_) => FocusNode());
+  final List<TextEditingController> otpBoxControllers =
+      List.generate(AppConstants.otpLength, (_) => TextEditingController());
+
+  String get displayPhone {
+    final local = phoneNumber.value.startsWith('0')
+        ? phoneNumber.value.substring(1)
+        : phoneNumber.value;
+    return '${countryCode.value}-$local';
+  }
+
+  void selectCountry(String flag, String code) {
+    countryFlag.value = flag;
+    countryCode.value = code;
+    phoneController.clear();
+  }
+
   String get _fullOtp => otpValues.join();
 
   @override
@@ -36,7 +62,7 @@ class AuthController extends BaseController {
 
   Future<void> sendOtp() async {
     if (!isPhoneValid.value) {
-      AppUtils.showError('Please enter a valid UK mobile number (07xxx xxxxxx).');
+      AppUtils.showError('Please enter a valid mobile number.');
       return;
     }
 
@@ -48,17 +74,18 @@ class AuthController extends BaseController {
   }
 
   void _startResendTimer() {
+    _resendCountdown?.cancel();
     resendTimer.value = AppConstants.otpResendTimer;
     canResend.value = false;
 
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
+    _resendCountdown = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (resendTimer.value > 0) {
         resendTimer.value--;
-        return true;
+      } else {
+        canResend.value = true;
+        timer.cancel();
+        _resendCountdown = null;
       }
-      canResend.value = true;
-      return false;
     });
   }
 
@@ -93,8 +120,7 @@ class AuthController extends BaseController {
           await AuthService.to.saveSession(
             accessToken: data['accessToken'] as String? ?? 'sd_access_token',
             refreshToken: data['refreshToken'] as String? ?? 'sd_refresh_token',
-            user: AuthService.to.currentUser.value ??
-                (await _loadUser(user)),
+            user: AuthService.to.currentUser.value ?? UserModel.fromJson(user),
           );
         }
         Get.offAllNamed(AppRoutes.dashboard);
@@ -102,19 +128,12 @@ class AuthController extends BaseController {
     });
   }
 
-  Future<dynamic> _loadUser(Map<String, dynamic> userJson) async {
-    final result = await _repo.verifyOtp(
-      phone: phoneController.text,
-      otp: _fullOtp,
-    );
-    return result;
-  }
-
   Future<void> resendOtp() async {
     if (!canResend.value) return;
     await runAsync(() async {
       await _repo.sendOtp(phoneController.text);
       otpValues.fillRange(0, AppConstants.otpLength, '');
+      for (final c in otpBoxControllers) c.clear();
       _startResendTimer();
       AppUtils.showSuccess('OTP resent successfully.');
     });
@@ -127,7 +146,7 @@ class AuthController extends BaseController {
       return;
     }
     if (!isPhoneValid.value) {
-      AppUtils.showError('Please enter a valid UK mobile number.');
+      AppUtils.showError('Please enter a valid mobile number.');
       return;
     }
 
@@ -147,9 +166,12 @@ class AuthController extends BaseController {
 
   @override
   void onClose() {
+    _resendCountdown?.cancel();
     phoneController.dispose();
     nameController.dispose();
     emailController.dispose();
+    for (final node in otpFocusNodes) node.dispose();
+    for (final c in otpBoxControllers) c.dispose();
     super.onClose();
   }
 }

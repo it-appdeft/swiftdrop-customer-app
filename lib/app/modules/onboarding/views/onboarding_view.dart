@@ -153,7 +153,7 @@ class OnboardingView extends GetView<OnboardingController> {
                               page['subtitle']!,
                               textAlign: TextAlign.center,
                               style: AppTextStyles.pSmall.copyWith(
-                                color: AppColors.white.withValues(alpha: 0.7),
+                                color: AppColors.offWhite,
                                 height: 1.5,
                               ),
                             ),

@@ -14,6 +14,7 @@ class AppButton extends StatelessWidget {
   final Color? backgroundColor;
   final Color? textColor;
   final Widget? prefixIcon;
+  final BorderRadius? borderRadius;
 
   const AppButton({
     super.key,
@@ -26,12 +27,13 @@ class AppButton extends StatelessWidget {
     this.backgroundColor,
     this.textColor,
     this.prefixIcon,
+    this.borderRadius,
   });
 
   @override
   Widget build(BuildContext context) {
     final bg = backgroundColor ?? AppColors.primary;
-    final fg = textColor ?? AppColors.white;
+    final fg = textColor ?? AppColors.buttonLabel;
 
     return SizedBox(
       width: width ?? double.infinity,
@@ -43,7 +45,7 @@ class AppButton extends StatelessWidget {
                 side: BorderSide(color: bg),
                 foregroundColor: bg,
                 shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.lg,
+                  borderRadius: borderRadius ?? AppRadius.lg,
                 ),
               ),
               child: _buildChild(bg),
@@ -53,8 +55,10 @@ class AppButton extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: bg,
                 foregroundColor: fg,
+                disabledBackgroundColor: bg.withValues(alpha: 0.5),
+                disabledForegroundColor: fg.withValues(alpha: 0.8),
                 shape: RoundedRectangleBorder(
-                  borderRadius: AppRadius.lg,
+                  borderRadius: borderRadius ?? AppRadius.lg,
                 ),
               ),
               child: _buildChild(fg),

@@ -1,11 +1,12 @@
 import 'package:get/get.dart';
+import '../../../base/base_controller.dart';
 import '../../../constants/app_constants.dart';
 import '../../../constants/storage_keys.dart';
 import '../../../routes/app_routes.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/storage_service.dart';
 
-class SplashController extends GetxController {
+class SplashController extends BaseController {
   @override
   void onInit() {
     super.onInit();
