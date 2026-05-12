@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const int splashDuration = 5500;
+  static const int splashDuration = 5600;
   static const int otpResendTimer = 60;
   static const int snackbarDuration = 3;
   static const int otpLength = 4;

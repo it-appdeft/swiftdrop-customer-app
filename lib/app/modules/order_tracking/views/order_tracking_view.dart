@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
+import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
 import '../../../utils/responsive.dart';
@@ -66,11 +68,7 @@ class _StatusBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.darkBorder, width: 0.5),
-      ),
+      decoration: AppDecorations.card,
       child: Row(
         children: [
           const Icon(Icons.delivery_dining, size: 32, color: AppColors.primary),
@@ -96,11 +94,7 @@ class _MapPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: Responsive.hpc(context, 28),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.darkBorder, width: 0.5),
-      ),
+      decoration: AppDecorations.card,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -127,11 +121,7 @@ class _OrderDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.darkBorder, width: 0.5),
-      ),
+      decoration: AppDecorations.card,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

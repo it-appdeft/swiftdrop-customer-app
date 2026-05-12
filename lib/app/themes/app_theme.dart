@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_dimensions.dart';
+import 'app_radius.dart';
 
 class AppTheme {
   AppTheme._();
@@ -49,7 +50,7 @@ class AppTheme {
             elevation: 0,
             minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              borderRadius: AppRadius.lg,
             ),
             textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
           ),
@@ -60,7 +61,7 @@ class AppTheme {
             side: const BorderSide(color: AppColors.primary),
             minimumSize: const Size(double.infinity, AppDimensions.buttonHeight),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              borderRadius: AppRadius.lg,
             ),
             textStyle: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w600),
           ),
@@ -79,23 +80,23 @@ class AppTheme {
             vertical: AppDimensions.paddingMd,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: AppRadius.md,
             borderSide: const BorderSide(color: AppColors.darkBorder),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: AppRadius.md,
             borderSide: const BorderSide(color: AppColors.darkBorder),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: AppRadius.md,
             borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: AppRadius.md,
             borderSide: const BorderSide(color: AppColors.error),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: AppRadius.md,
             borderSide: const BorderSide(color: AppColors.error, width: 1.5),
           ),
           hintStyle: GoogleFonts.inter(fontSize: 16, color: AppColors.textHint),
@@ -105,7 +106,7 @@ class AppTheme {
           color: AppColors.darkSurface,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: AppRadius.md,
             side: const BorderSide(color: AppColors.darkBorder, width: 0.5),
           ),
         ),
@@ -123,7 +124,7 @@ class AppTheme {
           backgroundColor: AppColors.darkSurfaceElevated,
           contentTextStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.textPrimary),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            borderRadius: AppRadius.md,
           ),
         ),
         dividerTheme: const DividerThemeData(
@@ -137,7 +138,7 @@ class AppTheme {
             return AppColors.darkBorder;
           }),
           checkColor: WidgetStateProperty.all(AppColors.white),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.xs),
         ),
         switchTheme: SwitchThemeData(
           thumbColor: WidgetStateProperty.resolveWith((states) {

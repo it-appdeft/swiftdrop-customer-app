@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_dimensions.dart';
+import '../themes/app_radius.dart';
 import '../themes/app_text_styles.dart';
 
 class AppButton extends StatelessWidget {
@@ -42,7 +43,7 @@ class AppButton extends StatelessWidget {
                 side: BorderSide(color: bg),
                 foregroundColor: bg,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                  borderRadius: AppRadius.lg,
                 ),
               ),
               child: _buildChild(bg),
@@ -53,7 +54,7 @@ class AppButton extends StatelessWidget {
                 backgroundColor: bg,
                 foregroundColor: fg,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                  borderRadius: AppRadius.lg,
                 ),
               ),
               child: _buildChild(fg),

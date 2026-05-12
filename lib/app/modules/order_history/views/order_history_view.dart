@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
+import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
 import '../../../widgets/empty_state_widget.dart';
@@ -95,11 +97,7 @@ class _OrderCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.gapMd),
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.darkBorder, width: 0.5),
-      ),
+      decoration: AppDecorations.card,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

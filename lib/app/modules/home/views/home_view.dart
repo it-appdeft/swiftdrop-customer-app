@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../services/auth_service.dart';
 import '../../../themes/app_colors.dart';
+import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../widgets/empty_state_widget.dart';
 import '../../../widgets/section_header.dart';
@@ -154,7 +156,7 @@ class _CategoryChip extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               color: AppColors.darkSurface,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              borderRadius: AppRadius.md,
               border: Border.all(color: AppColors.darkBorder, width: 0.5),
             ),
             child: Center(child: Text(icon, style: const TextStyle(fontSize: 24))),
@@ -180,7 +182,7 @@ class _ActiveOrderBanner extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: AppRadius.md,
         ),
         child: Row(
           children: [
@@ -246,16 +248,12 @@ class _RestaurantCard extends StatelessWidget {
         AppDimensions.paddingMd,
         AppDimensions.gapMd,
       ),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.darkBorder, width: 0.5),
-      ),
+      decoration: AppDecorations.card,
       child: Material(
         color: AppColors.transparent,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: AppRadius.md,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: AppRadius.md,
           onTap: isOpen ? () {} : null,
           child: Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -266,7 +264,7 @@ class _RestaurantCard extends StatelessWidget {
                   height: 60,
                   decoration: BoxDecoration(
                     color: AppColors.darkSurfaceElevated,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                    borderRadius: AppRadius.sm,
                   ),
                   child: const Icon(Icons.storefront, color: AppColors.textHint, size: 28),
                 ),
@@ -329,7 +327,7 @@ class _RestaurantCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.darkSurfaceElevated,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+                      borderRadius: AppRadius.full,
                     ),
                     child: Text(
                       'Closed',

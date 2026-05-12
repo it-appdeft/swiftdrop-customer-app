@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
+import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
 import '../controllers/profile_controller.dart';
@@ -105,11 +107,7 @@ class _MenuSection extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
       child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.darkSurface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-          border: Border.all(color: AppColors.darkBorder, width: 0.5),
-        ),
+        decoration: AppDecorations.card,
         child: Column(
           children: [
             _MenuItem(icon: Icons.location_on_outlined, label: 'Saved addresses', onTap: () {}),
@@ -167,15 +165,15 @@ class _LogoutButton extends GetView<ProfileController> {
       padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
       child: Material(
         color: AppColors.error.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        borderRadius: AppRadius.md,
         child: InkWell(
           onTap: controller.logout,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: AppRadius.md,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              borderRadius: AppRadius.md,
               border: Border.all(color: AppColors.error.withOpacity(0.3)),
             ),
             child: Row(

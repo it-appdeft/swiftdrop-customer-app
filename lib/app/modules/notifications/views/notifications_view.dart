@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
 import '../../../widgets/empty_state_widget.dart';
@@ -80,7 +81,7 @@ class _NotifTile extends StatelessWidget {
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         decoration: BoxDecoration(
           color: notification.isRead ? AppColors.darkSurface : AppColors.darkSurface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: AppRadius.md,
           border: Border.all(
             color: notification.isRead ? AppColors.darkBorder : AppColors.primary.withOpacity(0.4),
             width: notification.isRead ? 0.5 : 1,

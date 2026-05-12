@@ -18,7 +18,7 @@ class OnboardingController extends GetxController {
       'image': 'assets/images/onbording1.png',
     },
     {
-      'titleBefore': 'Great Food From\n',
+      'titleBefore': 'Great Food\nFrom ',
       'titleHighlight': 'Top Restaurants',
       'titleAfter': '',
       // 'subtitle': 'Choose from a wide variety of cuisines and enjoy restaurant-quality food from the comfort of home.',

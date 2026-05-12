@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
+import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
 import '../../../widgets/app_button.dart';
@@ -61,11 +63,7 @@ class _CartItemTile extends GetView<CartController> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.gapSm),
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: BoxDecoration(
-        color: AppColors.darkSurface,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.darkBorder, width: 0.5),
-      ),
+      decoration: AppDecorations.card,
       child: Row(
         children: [
           Expanded(
@@ -122,7 +120,7 @@ class _QuantityButton extends StatelessWidget {
         height: 28,
         decoration: BoxDecoration(
           color: AppColors.darkSurfaceElevated,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+          borderRadius: AppRadius.sm,
           border: Border.all(color: AppColors.darkBorder),
         ),
         child: Icon(icon, size: 16, color: AppColors.textPrimary),

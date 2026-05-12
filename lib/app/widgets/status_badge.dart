@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../themes/app_colors.dart';
+import '../themes/app_decorations.dart';
 import '../themes/app_dimensions.dart';
 import '../themes/app_text_styles.dart';
 
@@ -16,11 +17,7 @@ class StatusBadge extends StatelessWidget {
         horizontal: AppDimensions.paddingSm,
         vertical: AppDimensions.gapXs,
       ),
-      decoration: BoxDecoration(
-        color: config.color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-        border: Border.all(color: config.color.withOpacity(0.3)),
-      ),
+      decoration: AppDecorations.badge(color: config.color),
       child: Text(
         config.label,
         style: AppTextStyles.pXSmallMedium.copyWith(color: config.color),

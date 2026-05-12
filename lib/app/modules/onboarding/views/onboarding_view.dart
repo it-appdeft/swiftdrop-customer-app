@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../widgets/app_button.dart';
 import '../controllers/onboarding_controller.dart';
@@ -57,27 +60,31 @@ class OnboardingView extends GetView<OnboardingController> {
                 }
                 return GestureDetector(
                   onTap: controller.completeOnboarding,
-                  child: Container(
-                    margin: const EdgeInsets.only(
-                      top: AppDimensions.gapSm,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      top: AppDimensions.paddingLg,
                       right: AppDimensions.paddingMd,
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingMd,
-                      vertical: AppDimensions.gapSm,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-                      border: Border.all(
-                        color: AppColors.white.withValues(alpha: 0.4),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      'Skip',
-                      style: AppTextStyles.pSmallSemiBold.copyWith(
-                        color: AppColors.white,
+                    child: ClipRRect(
+                      borderRadius: AppRadius.md,
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5.87, sigmaY: 5.87),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimensions.paddingLg,
+                            vertical: AppDimensions.paddingXs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withValues(alpha: 0.22),
+                            borderRadius: AppRadius.md,
+                          ),
+                          child: Text(
+                            'Skip',
+                            style: AppTextStyles.pSmallSemiBold.copyWith(
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -108,6 +115,7 @@ class OnboardingView extends GetView<OnboardingController> {
                       final page = controller.pages[controller.currentPage.value];
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           RichText(
                             textAlign: TextAlign.center,
@@ -137,12 +145,17 @@ class OnboardingView extends GetView<OnboardingController> {
                             ),
                           ),
                           const SizedBox(height: AppDimensions.gapMd),
-                          Text(
-                            page['subtitle']!,
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.pSmall.copyWith(
-                              color: AppColors.white.withValues(alpha: 0.7),
-                              height: 1.5,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimensions.paddingLg,
+                            ),
+                            child: Text(
+                              page['subtitle']!,
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.pSmall.copyWith(
+                                color: AppColors.white.withValues(alpha: 0.7),
+                                height: 1.5,
+                              ),
                             ),
                           ),
                         ],
@@ -194,14 +207,14 @@ class _DotIndicator extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      margin: const EdgeInsets.only(right: 6),
-      width: 8,
-      height: 8,
+      margin: const EdgeInsets.only(right: AppDimensions.gapSm),
+      width: isActive ? AppDimensions.gapMd : AppDimensions.gapSm,
+      height: isActive ? AppDimensions.gapMd : AppDimensions.gapSm,
       decoration: BoxDecoration(
         color: isActive
             ? AppColors.white
             : AppColors.white.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+        borderRadius: AppRadius.full,
       ),
     );
   }

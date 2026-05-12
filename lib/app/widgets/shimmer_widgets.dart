@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_dimensions.dart';
+import '../themes/app_radius.dart';
 
 class ShimmerBox extends StatelessWidget {
   final double width;
@@ -48,7 +49,7 @@ class ShimmerListTile extends StatelessWidget {
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         decoration: BoxDecoration(
           color: AppColors.darkSurface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: AppRadius.md,
         ),
         child: Row(
           children: [
@@ -57,7 +58,7 @@ class ShimmerListTile extends StatelessWidget {
               height: AppDimensions.avatarMd,
               decoration: BoxDecoration(
                 color: AppColors.darkSurfaceElevated,
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                borderRadius: AppRadius.sm,
               ),
             ),
             const SizedBox(width: AppDimensions.gapMd),
@@ -70,7 +71,7 @@ class ShimmerListTile extends StatelessWidget {
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: AppColors.darkSurfaceElevated,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                      borderRadius: AppRadius.xs,
                     ),
                   ),
                   const SizedBox(height: AppDimensions.gapSm),
@@ -79,7 +80,7 @@ class ShimmerListTile extends StatelessWidget {
                     width: 120,
                     decoration: BoxDecoration(
                       color: AppColors.darkSurfaceElevated,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                      borderRadius: AppRadius.xs,
                     ),
                   ),
                 ],
@@ -126,7 +127,7 @@ class ShimmerCard extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: AppColors.darkSurface,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          borderRadius: AppRadius.md,
         ),
       ),
     );
