@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
 import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
 import '../../../widgets/empty_state_widget.dart';
@@ -24,40 +23,39 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
         title: Text('My Orders', style: AppTextStyles.h6),
         automaticallyImplyLeading: false,
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) return const ShimmerList();
-        if (controller.hasError.value) {
-          return ErrorStateWidget(
-            message: controller.errorMessage.value,
-            onRetry: controller.loadOrders,
-          );
-        }
-
-        return DefaultTabController(
-          length: 2,
-          child: Column(
-            children: [
-              TabBar(
-                indicatorColor: AppColors.primary,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                tabs: [
-                  Tab(text: 'Active (${controller.activeOrders.length})'),
-                  Tab(text: 'History'),
-                ],
-              ),
-              Expanded(
-                child: TabBarView(
+      body: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            TabBar(
+              indicatorColor: AppColors.primary,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              tabs: [
+                Obx(() => Tab(text: 'Active (${controller.activeOrders.length})')),
+                const Tab(text: 'History'),
+              ],
+            ),
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading.value) return const ShimmerList();
+                if (controller.hasError.value) {
+                  return ErrorStateWidget(
+                    message: controller.errorMessage.value,
+                    onRetry: controller.loadOrders,
+                  );
+                }
+                return TabBarView(
                   children: [
                     _OrderList(orders: controller.activeOrders),
                     _OrderList(orders: controller.historyOrders),
                   ],
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

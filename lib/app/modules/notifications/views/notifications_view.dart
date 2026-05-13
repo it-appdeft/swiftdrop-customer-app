@@ -80,7 +80,7 @@ class _NotifTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppDimensions.gapSm),
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         decoration: BoxDecoration(
-          color: notification.isRead ? AppColors.darkSurface : AppColors.darkSurface,
+          color: notification.isRead ? AppColors.darkSurface : AppColors.darkSurfaceElevated,
           borderRadius: AppRadius.md,
           border: Border.all(
             color: notification.isRead ? AppColors.darkBorder : AppColors.primary.withOpacity(0.4),

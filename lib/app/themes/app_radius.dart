@@ -6,6 +6,7 @@ class AppRadius {
 
   static BorderRadius xs = BorderRadius.circular(AppDimensions.radiusXs);
   static BorderRadius sm = BorderRadius.circular(AppDimensions.radiusSm);
+  static BorderRadius smd = BorderRadius.circular(AppDimensions.radiusSmd);
   static BorderRadius md = BorderRadius.circular(AppDimensions.radiusMd);
   static BorderRadius lg = BorderRadius.circular(AppDimensions.radiusLg);
   static BorderRadius xl = BorderRadius.circular(AppDimensions.radiusXl);

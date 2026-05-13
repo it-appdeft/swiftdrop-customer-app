@@ -66,7 +66,7 @@ class OnboardingView extends GetView<OnboardingController> {
                       right: AppDimensions.paddingMd,
                     ),
                     child: ClipRRect(
-                      borderRadius: AppRadius.md,
+                      borderRadius: AppRadius.smd,
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 5.87, sigmaY: 5.87),
                         child: Container(
@@ -76,11 +76,11 @@ class OnboardingView extends GetView<OnboardingController> {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.white.withValues(alpha: 0.22),
-                            borderRadius: AppRadius.md,
+                            borderRadius: AppRadius.smd,
                           ),
                           child: Text(
                             'Skip',
-                            style: AppTextStyles.pSmallSemiBold.copyWith(
+                            style: AppTextStyles.pSmall.copyWith(
                               color: AppColors.white,
                             ),
                           ),

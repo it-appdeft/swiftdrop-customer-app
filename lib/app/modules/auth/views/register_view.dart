@@ -1,10 +1,14 @@
+import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../constants/app_constants.dart';
 import '../../../themes/app_colors.dart';
+import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
+import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../widgets/app_button.dart';
-import '../../../widgets/app_text_field.dart';
 import '../controllers/auth_controller.dart';
 
 class RegisterView extends GetView<AuthController> {
@@ -12,74 +16,660 @@ class RegisterView extends GetView<AuthController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.darkBackground,
-      appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Get.back(),
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return PopScope(
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) controller.resetRegisterState();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.white,
+        appBar: AppBar(
+          backgroundColor: AppColors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          systemOverlayStyle: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+          ),
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: AppDimensions.iconSm,
+              color: AppColors.lightSurfaceText,
+            ),
+            onPressed: () => Get.back(),
+          ),
         ),
-        title: Text('Create account', style: AppTextStyles.h6),
+        body: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppDimensions.gapMd),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Get Started With\n',
+                      style: AppTextStyles.h3.copyWith(
+                        color: AppColors.lightSurfaceDarkText,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'SwiftDrop',
+                      style: AppTextStyles.h3.copyWith(color: AppColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppDimensions.gapXs),
+              Text(
+                'Create your account to start ordering with precision.',
+                style: AppTextStyles.pMedium.copyWith(
+                  color: AppColors.lightSurfaceSubtitle,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: AppDimensions.gapLg),
+
+              const _FieldLabel(label: 'Full Name'),
+              const SizedBox(height: AppDimensions.gapSm),
+              _NameField(),
+              const SizedBox(height: AppDimensions.gapLg),
+
+              const _FieldLabel(label: 'Email Address'),
+              const SizedBox(height: AppDimensions.gapSm),
+              _EmailFieldRow(),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: Obx(() {
+                  if (!controller.emailOtpSent.value) return const SizedBox.shrink();
+                  return _InlineOtpPanel(
+                    subtitle: 'We\'ve sent a 4-digit code to your email address.',
+                    otpBoxControllers: controller.emailOtpBoxControllers,
+                    otpFocusNodes: controller.emailOtpFocusNodes,
+                    otpValues: controller.emailOtpValues,
+                    onDigitChanged: controller.onEmailOtpDigitChanged,
+                    onVerify: controller.verifyEmailOtp,
+                  );
+                }),
+              ),
+              const SizedBox(height: AppDimensions.gapLg),
+
+              const _FieldLabel(label: 'Mobile Number'),
+              const SizedBox(height: AppDimensions.gapSm),
+              _PhoneRegisterRow(),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: Obx(() {
+                  if (!controller.regPhoneOtpSent.value) return const SizedBox.shrink();
+                  return _InlineOtpPanel(
+                    subtitle: 'We\'ve sent a 4-digit code to your phone number.',
+                    otpBoxControllers: controller.regPhoneOtpBoxControllers,
+                    otpFocusNodes: controller.regPhoneOtpFocusNodes,
+                    otpValues: controller.regPhoneOtpValues,
+                    onDigitChanged: controller.onRegPhoneOtpDigitChanged,
+                    onVerify: controller.verifyRegisterPhoneOtp,
+                  );
+                }),
+              ),
+              const SizedBox(height: AppDimensions.gapXl),
+
+              Obx(() => AppButton(
+                    label: 'Register',
+                    onTap: (controller.isEmailVerified.value &&
+                            controller.isPhoneVerified.value)
+                        ? controller.submitRegister
+                        : null,
+                    isLoading: controller.isLoading.value,
+                    borderRadius: AppRadius.sm,
+                  )),
+              const SizedBox(height: AppDimensions.gapXl),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Already have an account? ',
+                    style: AppTextStyles.pSmall.copyWith(
+                      color: AppColors.lightSurfaceHeading,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      controller.resetRegisterState();
+                      Get.back();
+                    },
+                    child: Text(
+                      'Login',
+                      style: AppTextStyles.pSmallSemiBold.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: bottomPadding + AppDimensions.paddingXl),
+            ],
+          ),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXl),
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: AppDimensions.gapXl),
-            Text(
-              'Your details',
-              style: AppTextStyles.pMedium.copyWith(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: AppDimensions.gapXl),
-            AppTextField(
-              controller: controller.nameController,
-              label: 'Full name',
-              hint: 'James Hartley',
-              keyboardType: TextInputType.name,
-              textCapitalization: TextCapitalization.words,
-              prefixIcon: const Icon(Icons.person_outline, color: AppColors.textHint),
-            ),
-            const SizedBox(height: AppDimensions.gapLg),
-            AppPhoneField(controller: controller.phoneController),
-            const SizedBox(height: AppDimensions.gapLg),
-            AppTextField(
+    );
+  }
+}
+
+class _FieldLabel extends StatelessWidget {
+  final String label;
+
+  const _FieldLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.pSmallMedium.copyWith(
+            color: AppColors.lightSurfaceLabel,
+          ),
+        ),
+        Text(
+          ' *',
+          style: AppTextStyles.pSmallMedium.copyWith(
+            color: AppColors.error,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NameField extends GetView<AuthController> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: AppDimensions.inputHeight,
+      decoration: AppDecorations.lightInput,
+      child: TextField(
+        controller: controller.nameController,
+        keyboardType: TextInputType.name,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.next,
+        style: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceText),
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.transparent,
+          hintText: 'Enter Your Full Name',
+          hintStyle: AppTextStyles.pSmall.copyWith(
+            color: AppColors.lightSurfaceSubtitle,
+          ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.gapMd,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmailFieldRow extends GetView<AuthController> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: AppDimensions.inputHeight,
+      decoration: AppDecorations.lightInput,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
               controller: controller.emailController,
-              label: 'Email address (optional)',
-              hint: 'james@email.co.uk',
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.done,
-              prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textHint),
-            ),
-            const SizedBox(height: AppDimensions.sp32),
-            Obx(() => AppButton(
-                  label: 'Create account',
-                  onTap: controller.register,
-                  isLoading: controller.isLoading.value,
-                )),
-            const SizedBox(height: AppDimensions.gapXl),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Already have an account? ',
-                  style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.pSmall.copyWith(
+                color: AppColors.lightSurfaceText,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.transparent,
+                hintText: 'Enter Your Email Address',
+                hintStyle: AppTextStyles.pSmall.copyWith(
+                  color: AppColors.lightSurfaceSubtitle,
                 ),
-                GestureDetector(
-                  onTap: () => Get.back(),
-                  child: Text(
-                    'Sign in',
-                    style: AppTextStyles.pSmallSemiBold.copyWith(color: AppColors.primary),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isCollapsed: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingSm,
+                  vertical: AppDimensions.gapMd,
+                ),
+              ),
+            ),
+          ),
+          Obx(() {
+            if (controller.isEmailVerified.value) {
+              return Padding(
+                padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.lightSurfaceVerified,
+                    ),
+                    const SizedBox(width: AppDimensions.gapXs),
+                    Text(
+                      'VERIFIED',
+                      style: AppTextStyles.pXSmallMedium.copyWith(
+                        color: AppColors.lightSurfaceVerified,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            if (controller.emailOtpSent.value) {
+              return Padding(
+                padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+                child: GestureDetector(
+                  onTap: controller.canResendEmail.value
+                      ? controller.resendEmailOtp
+                      : null,
+                  child: controller.canResendEmail.value
+                      ? Text(
+                          'Resend OTP',
+                          style: AppTextStyles.pXSmallMedium.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Resend OTP ',
+                                style: AppTextStyles.pXSmallMedium.copyWith(
+                                  color: AppColors.lightSurfaceDisabled,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '(${controller.emailResendTimer.value})',
+                                style: AppTextStyles.pXSmallMedium.copyWith(
+                                  color: AppColors.lightSurfaceLabel,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+              child: GestureDetector(
+                onTap: controller.isEmailValid.value
+                    ? controller.sendEmailOtp
+                    : null,
+                child: Text(
+                  'VERIFY',
+                  style: AppTextStyles.pXSmallSemiBold.copyWith(
+                    color: controller.isEmailValid.value
+                        ? AppColors.primary
+                        : AppColors.primaryFaded,
                   ),
                 ),
-              ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhoneRegisterRow extends GetView<AuthController> {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: AppDimensions.inputHeight,
+      decoration: AppDecorations.lightInput,
+      child: Row(
+        children: [
+          Obx(
+            () => GestureDetector(
+              onTap: () => _openCountryPicker(context),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingXs,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      controller.countryFlag.value,
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                    const SizedBox(width: AppDimensions.gapXs),
+                    Text(
+                      controller.countryCode.value,
+                      style: AppTextStyles.pSmall.copyWith(
+                        color: AppColors.lightSurfaceSubtitle,
+                      ),
+                    ),
+                    const SizedBox(width: AppDimensions.gapXs),
+                    const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.lightSurfaceSubtitle,
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: AppDimensions.paddingXl),
-          ],
+          ),
+          Container(
+            width: 1,
+            height: AppDimensions.inputHeight,
+            color: AppColors.lightSurfaceBorder,
+          ),
+          Expanded(
+            child: TextField(
+              controller: controller.regPhoneController,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
+              style: AppTextStyles.pSmall.copyWith(
+                color: AppColors.lightSurfaceText,
+              ),
+              maxLength: 11,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.transparent,
+                hintText: 'Enter Mobile Number',
+                hintStyle: AppTextStyles.pSmall.copyWith(
+                  color: AppColors.lightSurfaceSubtitle,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                counterText: '',
+                isCollapsed: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingSm,
+                  vertical: AppDimensions.gapMd,
+                ),
+              ),
+            ),
+          ),
+          Obx(() {
+            if (controller.isPhoneVerified.value) {
+              return Padding(
+                padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.lightSurfaceVerified,
+                    ),
+                    const SizedBox(width: AppDimensions.gapXs),
+                    Text(
+                      'VERIFIED',
+                      style: AppTextStyles.pXSmallMedium.copyWith(
+                        color: AppColors.lightSurfaceVerified,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            if (controller.regPhoneOtpSent.value) {
+              return Padding(
+                padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+                child: GestureDetector(
+                  onTap: controller.canResendRegPhone.value
+                      ? controller.resendRegisterPhoneOtp
+                      : null,
+                  child: controller.canResendRegPhone.value
+                      ? Text(
+                          'Resend OTP',
+                          style: AppTextStyles.pXSmallMedium.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        )
+                      : Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Resend OTP ',
+                                style: AppTextStyles.pXSmallMedium.copyWith(
+                                  color: AppColors.lightSurfaceDisabled,
+                                ),
+                              ),
+                              TextSpan(
+                                text:
+                                    '(${controller.regPhoneResendTimer.value})',
+                                style: AppTextStyles.pXSmallMedium.copyWith(
+                                  color: AppColors.lightSurfaceLabel,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                ),
+              );
+            }
+            return Padding(
+              padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+              child: GestureDetector(
+                onTap: controller.regIsPhoneValid.value
+                    ? controller.sendRegisterPhoneOtp
+                    : null,
+                child: Text(
+                  'Get OTP',
+                  style: AppTextStyles.pXSmallSemiBold.copyWith(
+                    color: controller.regIsPhoneValid.value
+                        ? AppColors.primary
+                        : AppColors.primaryFaded,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  void _openCountryPicker(BuildContext context) {
+    showCountryPicker(
+      context: context,
+      showPhoneCode: true,
+      favorite: ['GB'],
+      onSelect: (Country country) {
+        controller.selectCountry(country.flagEmoji, '+${country.phoneCode}');
+      },
+      countryListTheme: CountryListThemeData(
+        backgroundColor: AppColors.white,
+        borderRadius: AppRadius.topXl,
+        textStyle: AppTextStyles.pSmall.copyWith(
+          color: AppColors.lightSurfaceText,
+        ),
+        searchTextStyle: AppTextStyles.pSmall.copyWith(
+          color: AppColors.lightSurfaceText,
+        ),
+        inputDecoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.transparent,
+          labelText: 'Search',
+          prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+          labelStyle: AppTextStyles.pSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.lightSurfaceBorder),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.primary),
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _InlineOtpPanel extends StatelessWidget {
+  final String subtitle;
+  final List<TextEditingController> otpBoxControllers;
+  final List<FocusNode> otpFocusNodes;
+  final RxList<String> otpValues;
+  final Function(int, String) onDigitChanged;
+  final VoidCallback onVerify;
+
+  const _InlineOtpPanel({
+    required this.subtitle,
+    required this.otpBoxControllers,
+    required this.otpFocusNodes,
+    required this.otpValues,
+    required this.onDigitChanged,
+    required this.onVerify,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: AppDimensions.gapMd),
+      padding: const EdgeInsets.all(AppDimensions.paddingSm),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.sm,
+        border: Border.all(color: AppColors.lightSurfaceBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Enter Verification Code',
+            style: AppTextStyles.pSmallMedium.copyWith(
+              color: AppColors.lightSurfaceLabel,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.gapXs),
+          Text(
+            subtitle,
+            style: AppTextStyles.pXSmall.copyWith(
+              color: AppColors.lightSurfaceSubtitle,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: AppDimensions.gapLg),
+          Row(
+            children: [
+              for (int i = 0; i < AppConstants.otpLength; i++) ...[
+                _OtpBox(
+                  controller: otpBoxControllers[i],
+                  focusNode: otpFocusNodes[i],
+                  onChanged: (value) {
+                    onDigitChanged(i, value);
+                    if (value.isNotEmpty && i < AppConstants.otpLength - 1) {
+                      otpFocusNodes[i + 1].requestFocus();
+                    } else if (value.isEmpty && i > 0) {
+                      otpFocusNodes[i - 1].requestFocus();
+                    }
+                  },
+                ),
+                if (i < AppConstants.otpLength - 1)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.gapXs,
+                    ),
+                    child: Container(
+                      width: AppDimensions.gapSm,
+                      height: 1,
+                      color: AppColors.lightSurfaceDisabled,
+                    ),
+                  ),
+              ],
+              const Spacer(),
+              Obx(() => GestureDetector(
+                    onTap: otpValues.every((v) => v.isNotEmpty) ? onVerify : null,
+                    child: Text(
+                      'VERIFY',
+                      style: AppTextStyles.pXSmallSemiBold.copyWith(
+                        color: otpValues.every((v) => v.isNotEmpty)
+                            ? AppColors.primary
+                            : AppColors.primaryFaded,
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OtpBox extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final ValueChanged<String> onChanged;
+
+  const _OtpBox({
+    required this.controller,
+    required this.focusNode,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([controller, focusNode]),
+      builder: (_, _) {
+        final isFocused = focusNode.hasFocus;
+        final hasContent = controller.text.isNotEmpty;
+        return Container(
+          width: AppDimensions.otpBoxSize,
+          height: AppDimensions.otpBoxSize,
+          decoration: (isFocused || hasContent)
+              ? AppDecorations.lightOtpBoxFocused
+              : AppDecorations.lightOtpBox,
+          child: TextField(
+            controller: controller,
+            focusNode: focusNode,
+            textAlign: TextAlign.center,
+            keyboardType: TextInputType.number,
+            maxLength: 1,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            style: AppTextStyles.pMedium.copyWith(
+              color: AppColors.lightInputText,
+            ),
+            onChanged: onChanged,
+            decoration: const InputDecoration(
+              counterText: '',
+              contentPadding: EdgeInsets.zero,
+              filled: true,
+              fillColor: AppColors.transparent,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -24,18 +24,21 @@ class WalletController extends BaseController {
   }
 
   Future<void> loadTransactions() async {
-    await runAsync(() async {
-      final summaryResult = await _repo.getWalletSummary();
-      if (summaryResult.success && summaryResult.data != null) {
-        balance.value = (summaryResult.data!['balance'] as num).toDouble();
-      }
+    _page = 1;
+    await runAsync(_fetchTransactions);
+  }
 
-      final txResult = await _repo.getTransactions(page: 1);
-      if (txResult.success && txResult.data != null) {
-        transactions.value = txResult.data!;
-        hasMore.value = txResult.data!.length >= AppConstants.paginationLimit;
-      }
-    });
+  Future<void> _fetchTransactions() async {
+    final summaryResult = await _repo.getWalletSummary();
+    if (summaryResult.success && summaryResult.data != null) {
+      balance.value = (summaryResult.data!['balance'] as num).toDouble();
+    }
+
+    final txResult = await _repo.getTransactions(page: 1);
+    if (txResult.success && txResult.data != null) {
+      transactions.value = txResult.data!;
+      hasMore.value = txResult.data!.length >= AppConstants.paginationLimit;
+    }
   }
 
   Future<void> loadMore() async {
@@ -58,8 +61,8 @@ class WalletController extends BaseController {
       final result = await _repo.addFunds(amount);
       if (result.success) {
         balance.value += amount;
-        AppUtils.showSuccess('£${amount.toStringAsFixed(2)} added to your wallet.');
-        await loadTransactions();
+        AppUtils.showSuccess('${AppUtils.formatCurrency(amount)} added to your wallet.');
+        await _fetchTransactions();
       }
     });
   }

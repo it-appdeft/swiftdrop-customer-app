@@ -14,6 +14,9 @@ class AppUtils {
 
   static bool isValidPhone(String phone) => phone.length >= 5;
 
+  static bool isValidEmail(String email) =>
+      RegExp(r'^[\w.+\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$').hasMatch(email);
+
   static String formatPhoneDisplay(String raw) {
     if (raw.startsWith('0')) return '+44 ${raw.substring(1)}';
     return raw;

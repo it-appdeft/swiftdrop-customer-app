@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import '../../../base/base_controller.dart';
 import '../../../constants/app_constants.dart';
@@ -7,6 +9,8 @@ import '../../../services/auth_service.dart';
 import '../../../services/storage_service.dart';
 
 class SplashController extends BaseController {
+  Timer? _timer;
+
   @override
   void onInit() {
     super.onInit();
@@ -14,13 +18,15 @@ class SplashController extends BaseController {
   }
 
   void _startTimer() {
-    Future.delayed(
+    _timer = Timer(
       const Duration(milliseconds: AppConstants.splashDuration),
       _navigate,
     );
   }
 
   void _navigate() {
+    if (isClosed) return;
+
     final isLoggedIn = AuthService.to.isAuthenticated;
     if (isLoggedIn) {
       Get.offAllNamed(AppRoutes.dashboard);
@@ -34,5 +40,11 @@ class SplashController extends BaseController {
     } else {
       Get.offAllNamed(AppRoutes.onboarding);
     }
+  }
+
+  @override
+  void onClose() {
+    _timer?.cancel();
+    super.onClose();
   }
 }

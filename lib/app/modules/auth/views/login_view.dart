@@ -29,7 +29,7 @@ class LoginView extends GetView<AuthController> {
             top: 0,
             left: 0,
             right: 0,
-            height: Responsive.hpc(context, 55),
+            height: Responsive.hpc(context, 60),
             child: Image.asset(
               'assets/images/login.png',
               fit: BoxFit.cover,
@@ -45,7 +45,7 @@ class LoginView extends GetView<AuthController> {
                 children: [
                   Column(
                     children: [
-                      SizedBox(height: Responsive.hpc(context, 46)),
+                      SizedBox(height: Responsive.hpc(context, 50)),
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppDimensions.paddingMd,
@@ -96,7 +96,7 @@ class _LoginCard extends GetView<AuthController> {
     return Container(
       width: double.infinity,
       decoration: AppDecorations.lightCard,
-      padding: const EdgeInsets.all(AppDimensions.paddingXl),
+      padding: const EdgeInsets.all(AppDimensions.paddingLg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -106,29 +106,29 @@ class _LoginCard extends GetView<AuthController> {
               children: [
                 TextSpan(
                   text: 'Craving Something\n',
-                  style: AppTextStyles.h4.copyWith(
+                  style: AppTextStyles.h3.copyWith(
                     color: AppColors.lightSurfaceText,
                   ),
                 ),
                 TextSpan(
                   text: 'Delicious?',
-                  style: AppTextStyles.h4.copyWith(color: AppColors.primary),
+                  style: AppTextStyles.h3.copyWith(color: AppColors.primary),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AppDimensions.gapXl),
+          const SizedBox(height: AppDimensions.gapLg),
           Row(
             children: [
               Text(
                 'Mobile Number ',
-                style: AppTextStyles.pSmallSemiBold.copyWith(
+                style: AppTextStyles.pSmallMedium.copyWith(
                   color: AppColors.lightSurfaceLabel,
                 ),
               ),
               Text(
                 '*',
-                style: AppTextStyles.pSmallSemiBold.copyWith(
+                style: AppTextStyles.pSmallMedium.copyWith(
                   color: AppColors.error,
                 ),
               ),
@@ -137,22 +137,25 @@ class _LoginCard extends GetView<AuthController> {
           const SizedBox(height: AppDimensions.gapSm),
           _PhoneInputRow(),
           Obx(() {
-            if (controller.phoneNumber.value.isEmpty ||
-                controller.isPhoneValid.value) {
-              return const SizedBox.shrink();
-            }
-            return Padding(
-              padding: const EdgeInsets.only(
-                top: AppDimensions.gapSm,
-                left: AppDimensions.gapSm,
-              ),
-              child: Text(
-                'Phone number invalid',
-                style: AppTextStyles.pXSmall.copyWith(color: AppColors.error),
-              ),
+            final showError = controller.phoneNumber.value.isNotEmpty &&
+                !controller.isPhoneValid.value;
+            if (!showError) return const SizedBox(height: AppDimensions.gapMd);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: AppDimensions.gapSm),
+                Padding(
+                  padding: const EdgeInsets.only(left: AppDimensions.gapSm),
+                  child: Text(
+                    'Phone number invalid',
+                    style: AppTextStyles.pXSmall.copyWith(color: AppColors.error),
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.gapMd),
+              ],
             );
           }),
-          const SizedBox(height: AppDimensions.gapXl),
           Obx(() => AppButton(
                 label: 'Get OTP',
                 onTap: controller.isPhoneValid.value ? controller.sendOtp : null,
@@ -218,7 +221,7 @@ class _PhoneInputRow extends GetView<AuthController> {
               style: AppTextStyles.pSmall.copyWith(
                 color: AppColors.lightSurfaceText,
               ),
-              maxLength: 15,
+              maxLength: 11,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: InputDecoration(
                 filled: true,
@@ -233,8 +236,10 @@ class _PhoneInputRow extends GetView<AuthController> {
                 errorBorder: InputBorder.none,
                 focusedErrorBorder: InputBorder.none,
                 counterText: '',
+                isCollapsed: true,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingMd,
+                  horizontal: AppDimensions.paddingSm,
+                  vertical: AppDimensions.gapMd,
                 ),
               ),
             ),

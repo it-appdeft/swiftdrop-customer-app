@@ -10,4 +10,7 @@ class StorageKeys {
   static const String selectedLanguage = 'selected_language';
   static const String isOnlineMode = 'is_online_mode';
   static const String lastSyncTime = 'last_sync_time';
+  static const String settingPushNotifications = 'setting_push_notifications';
+  static const String settingOrderUpdates = 'setting_order_updates';
+  static const String settingPromotions = 'setting_promotions';
 }

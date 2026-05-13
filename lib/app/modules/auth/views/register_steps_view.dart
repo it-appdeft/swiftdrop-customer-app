@@ -6,7 +6,7 @@ import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../widgets/app_button.dart';
 
-class RegisterStepsView extends GetView {
+class RegisterStepsView extends StatelessWidget {
   const RegisterStepsView({super.key});
 
   @override

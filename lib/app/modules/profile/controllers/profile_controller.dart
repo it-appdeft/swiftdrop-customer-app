@@ -12,6 +12,7 @@ class ProfileController extends BaseController {
   void onInit() {
     super.onInit();
     user.value = AuthService.to.currentUser.value;
+    ever(AuthService.to.currentUser, (u) => user.value = u);
   }
 
   Future<void> logout() async {

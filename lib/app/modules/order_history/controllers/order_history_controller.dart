@@ -30,6 +30,7 @@ class OrderHistoryController extends BaseController {
   }
 
   Future<void> _loadHistory() async {
+    _historyPage = 1;
     final historyResult = await _repo.getOrderHistory(page: 1);
     if (historyResult.success && historyResult.data != null) {
       historyOrders.value = historyResult.data!;

@@ -88,4 +88,10 @@ class AppDecorations {
     borderRadius: AppRadius.sm,
     border: Border.all(color: AppColors.lightOtpFocusBorder),
   );
+
+  static BoxDecoration lightOtpBoxInactive = BoxDecoration(
+    color: AppColors.transparent,
+    borderRadius: AppRadius.sm,
+    border: Border.all(color: AppColors.lightSurfaceBorder),
+  );
 }

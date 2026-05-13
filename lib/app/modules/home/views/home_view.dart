@@ -46,55 +46,57 @@ class HomeView extends GetView<HomeController> {
 class _Header extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
-    final user = AuthService.to.currentUser.value;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.paddingMd,
-        AppDimensions.paddingMd,
-        AppDimensions.paddingMd,
-        0,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hello, ${user?.name.split(' ').first ?? 'there'}!',
-                  style: AppTextStyles.h5,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      'London, UK',
-                      style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: AppDimensions.avatarMd,
-            height: AppDimensions.avatarMd,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                user?.name.substring(0, 1).toUpperCase() ?? 'U',
-                style: AppTextStyles.pMediumBold.copyWith(color: AppColors.primary),
+    return Obx(() {
+      final user = AuthService.to.currentUser.value;
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingMd,
+          AppDimensions.paddingMd,
+          AppDimensions.paddingMd,
+          0,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hello, ${user?.name.split(' ').first ?? 'there'}!',
+                    style: AppTextStyles.h5,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'London, UK',
+                        style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
+            Container(
+              width: AppDimensions.avatarMd,
+              height: AppDimensions.avatarMd,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  user?.name.substring(0, 1).toUpperCase() ?? 'U',
+                  style: AppTextStyles.pMediumBold.copyWith(color: AppColors.primary),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 

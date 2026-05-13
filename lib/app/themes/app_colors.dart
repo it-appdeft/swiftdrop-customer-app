@@ -6,6 +6,7 @@ class AppColors {
   static const Color primary = Color(0xFF1BC27D);
   static const Color primaryDark = Color(0xFF169B64);
   static const Color primaryLight = Color(0xFF32C88A);
+  static const Color primaryFaded = Color(0xFF8DE1BE);
 
   static const Color darkBackground = Color(0xFF121212);
   static const Color darkSurface = Color(0xFF1E1E2E);
@@ -33,7 +34,9 @@ class AppColors {
   static const Color buttonLabel = Color(0xFFFEFEFD);
 
   // Light surface — used on white/off-white cards (login, OTP, register)
-  static const Color lightSurfaceText     = Color(0xFF071623);
+  static const Color lightSurfaceDarkText  = Color(0xFF0B243A);
+  static const Color lightSurfaceText      = Color(0xFF071623);
+  static const Color lightSurfaceVerified  = Color(0xFF10744B);
   static const Color lightInputText       = Color(0xFF0F191F);
   static const Color lightSurfaceHeading  = Color(0xFF3C4042);
   static const Color lightSurfaceLabel    = Color(0xFF595D70);

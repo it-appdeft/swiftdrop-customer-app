@@ -11,6 +11,7 @@ class AppDimensions {
   static const double sp40 = 40;
 
   static const double paddingXs = 8;
+  static const double paddingXsm = 10;
   static const double paddingSm = 12;
   static const double paddingMd = 16;
   static const double paddingLg = 20;
@@ -24,14 +25,15 @@ class AppDimensions {
 
   static const double radiusXs = 4;
   static const double radiusSm = 8;
+  static const double radiusSmd = 10;
   static const double radiusMd = 12;
   static const double radiusLg = 16;
   static const double radiusXl = 20;
   static const double radiusXxl = 24;
   static const double radiusFull = 100;
 
-  static const double inputHeight = 52;
-  static const double buttonHeight = 52;
+  static const double inputHeight = 44;
+  static const double buttonHeight = 48;
   static const double buttonHeightLg = 56;
   static const double bottomNavHeight = 64;
   static const double appBarHeight = 56;

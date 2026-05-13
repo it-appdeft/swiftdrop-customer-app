@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -11,6 +13,8 @@ class NotificationService extends GetxService {
 
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+  StreamSubscription<RemoteMessage>? _foregroundSub;
+  StreamSubscription<RemoteMessage>? _openedAppSub;
 
   @override
   void onInit() {
@@ -51,8 +55,8 @@ class NotificationService extends GetxService {
       AppLogger.i('FCM token saved');
     }
 
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+    _foregroundSub = FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    _openedAppSub = FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
@@ -65,6 +69,13 @@ class NotificationService extends GetxService {
 
   void _handleMessageOpenedApp(RemoteMessage message) {
     AppLogger.d('Notification opened app: ${message.data}');
+  }
+
+  @override
+  void onClose() {
+    _foregroundSub?.cancel();
+    _openedAppSub?.cancel();
+    super.onClose();
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {

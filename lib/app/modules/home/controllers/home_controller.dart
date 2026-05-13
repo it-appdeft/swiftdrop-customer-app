@@ -43,6 +43,7 @@ class HomeController extends BaseController {
 
   @override
   void onClose() {
+    searchController.removeListener(_onSearchChanged);
     searchController.dispose();
     super.onClose();
   }

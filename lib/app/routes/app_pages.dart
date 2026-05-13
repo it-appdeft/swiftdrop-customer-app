@@ -54,17 +54,14 @@ class AppPages {
     GetPage(
       name: AppRoutes.otp,
       page: () => const OtpView(),
-      binding: AuthBinding(),
     ),
     GetPage(
       name: AppRoutes.register,
       page: () => const RegisterView(),
-      binding: AuthBinding(),
     ),
     GetPage(
       name: AppRoutes.registerSteps,
       page: () => const RegisterStepsView(),
-      binding: AuthBinding(),
     ),
     GetPage(
       name: AppRoutes.verificationPending,

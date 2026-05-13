@@ -20,10 +20,12 @@ class AppTextStyles {
   static TextStyle pMediumBold = GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary);
 
   static TextStyle pSmall = GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
+  static TextStyle pSmallMedium = GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
   static TextStyle pSmallSemiBold = GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
 
   static TextStyle pXSmall = GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w400, color: AppColors.textPrimary);
   static TextStyle pXSmallMedium = GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textPrimary);
+  static TextStyle pXSmallSemiBold = GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary);
 
   static TextStyle label = GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.5, color: AppColors.textPrimary);
   static TextStyle caption = GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w400, color: AppColors.textHint);
