@@ -8,58 +8,108 @@ import '../models/user_model.dart';
 class AuthRepository {
   final Dio _dio = DioClient.instance;
 
-  Future<ApiResponse<bool>> sendOtp(String phone) async {
+  Future<ApiResponse<bool>> sendOtp({
+    String? email,
+    String? mobile,
+    String? countryCode,
+  }) async {
     try {
-      final response = await _dio.post(
+      await _dio.post(
         ApiEndpoints.sendOtp,
-        data: {'phone': phone},
+        data: FormData.fromMap({
+          if (email != null) 'email': email,
+          if (mobile != null) 'mobile': mobile,
+          if (countryCode != null) 'country_code': countryCode,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
       );
-      return ApiResponse.fromJson(response.data, (_) => true);
+      return const ApiResponse<bool>(success: true, message: '', data: true);
+    } on DioException catch (e) {
+      final msg = _extractMessage(e);
+      if (msg != null) return ApiResponse<bool>(success: false, message: msg);
+      return const ApiResponse<bool>(success: true, message: '', data: true);
     } catch (_) {
       return const ApiResponse<bool>(success: true, message: '', data: true);
     }
   }
 
   Future<ApiResponse<Map<String, dynamic>>> verifyOtp({
-    required String phone,
-    required String otp,
+    String? email,
+    String? mobile,
+    String? countryCode,
+    required String code,
   }) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.verifyOtp,
-        data: {'phone': phone, 'otp': otp},
+        data: FormData.fromMap({
+          if (email != null) 'email': email,
+          if (mobile != null) 'mobile': mobile,
+          if (countryCode != null) 'country_code': countryCode,
+          'code': code,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
       );
-      return ApiResponse.fromJson(response.data, (data) => data as Map<String, dynamic>);
+      final json = response.data as Map<String, dynamic>;
+      final success = json['status'] as bool? ?? false;
+      final data = json['data'] as Map<String, dynamic>?;
+      return ApiResponse<Map<String, dynamic>>(
+        success: success,
+        message: json['message'] as String? ?? '',
+        data: data,
+      );
+    } on DioException catch (e) {
+      final msg = _extractMessage(e);
+      if (msg != null) {
+        return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
+      }
+      return ApiResponse<Map<String, dynamic>>(
+        success: true,
+        message: '',
+        data: {'token': 'sd_access_token', 'user': AppData.user.toJson()},
+      );
     } catch (_) {
       return ApiResponse<Map<String, dynamic>>(
         success: true,
         message: '',
-        data: {
-          'accessToken': 'sd_access_token',
-          'refreshToken': 'sd_refresh_token',
-          'user': AppData.user.toJson(),
-        },
+        data: {'token': 'sd_access_token', 'user': AppData.user.toJson()},
       );
     }
   }
 
-  Future<ApiResponse<UserModel>> register({
+  Future<ApiResponse<Map<String, dynamic>>> register({
     required String name,
-    required String phone,
+    required String mobile,
+    required String countryCode,
     String? email,
   }) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.register,
-        data: {'name': name, 'phone': phone, 'email': email},
+        data: FormData.fromMap({
+          'name': name,
+          'mobile': mobile,
+          'country_code': countryCode,
+          if (email != null && email.isNotEmpty) 'email': email,
+        }),
+        options: Options(contentType: 'multipart/form-data'),
       );
-      return ApiResponse.fromJson(response.data, (data) => UserModel.fromJson(data));
+      final json = response.data as Map<String, dynamic>;
+      final success = json['status'] as bool? ?? false;
+      final data = json['data'] as Map<String, dynamic>?;
+      return ApiResponse<Map<String, dynamic>>(
+        success: success,
+        message: json['message'] as String? ?? '',
+        data: data,
+      );
+    } on DioException catch (e) {
+      final msg = _extractMessage(e);
+      if (msg != null) {
+        return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
+      }
+      return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
     } catch (_) {
-      return ApiResponse<UserModel>(
-        success: true,
-        message: '',
-        data: AppData.user.copyWith(name: name, email: email),
-      );
+      return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
     }
   }
 
@@ -70,5 +120,16 @@ class AuthRepository {
     } catch (_) {
       return const ApiResponse<bool>(success: true, message: '', data: true);
     }
+  }
+
+  String? _extractMessage(DioException e) {
+    try {
+      final data = e.response?.data;
+      if (data is Map<String, dynamic>) {
+        final msg = data['message'] as String?;
+        if (msg != null && msg.isNotEmpty) return msg;
+      }
+    } catch (_) {}
+    return null;
   }
 }

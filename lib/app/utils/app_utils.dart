@@ -12,7 +12,7 @@ class AppUtils {
     return '$symbol${amount.toStringAsFixed(2)}';
   }
 
-  static bool isValidPhone(String phone) => phone.length >= 5;
+  static bool isValidPhone(String phone) => phone.length >= 8;
 
   static bool isValidEmail(String email) =>
       RegExp(r'^[\w.+\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$').hasMatch(email);
@@ -28,7 +28,7 @@ class AppUtils {
       message,
       backgroundColor: AppColors.error.withOpacity(0.9),
       colorText: AppColors.white,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: Duration(seconds: AppConstants.snackbarDuration),
       margin: const EdgeInsets.all(AppDimensions.paddingMd),
       borderRadius: AppDimensions.radiusMd,
@@ -42,7 +42,7 @@ class AppUtils {
       message,
       backgroundColor: AppColors.success.withOpacity(0.9),
       colorText: AppColors.white,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: Duration(seconds: AppConstants.snackbarDuration),
       margin: const EdgeInsets.all(AppDimensions.paddingMd),
       borderRadius: AppDimensions.radiusMd,
@@ -56,7 +56,7 @@ class AppUtils {
       message,
       backgroundColor: AppColors.warning.withOpacity(0.9),
       colorText: AppColors.white,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: Duration(seconds: AppConstants.snackbarDuration),
       margin: const EdgeInsets.all(AppDimensions.paddingMd),
       borderRadius: AppDimensions.radiusMd,
@@ -70,7 +70,7 @@ class AppUtils {
       message,
       backgroundColor: AppColors.darkSurfaceElevated,
       colorText: AppColors.textPrimary,
-      snackPosition: SnackPosition.BOTTOM,
+      snackPosition: SnackPosition.TOP,
       duration: Duration(seconds: AppConstants.snackbarDuration),
       margin: const EdgeInsets.all(AppDimensions.paddingMd),
       borderRadius: AppDimensions.radiusMd,

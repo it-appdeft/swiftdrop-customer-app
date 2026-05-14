@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../themes/app_colors.dart';
+import '../themes/app_decorations.dart';
 import '../themes/app_dimensions.dart';
 import '../themes/app_text_styles.dart';
 
@@ -87,44 +88,106 @@ class AppTextField extends StatelessWidget {
 class AppPhoneField extends StatelessWidget {
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
-  final String? errorText;
   final FocusNode? focusNode;
   final TextInputAction textInputAction;
+  final String countryFlag;
+  final String countryCode;
+  final VoidCallback? onCountryTap;
+  final bool isLightSurface;
+  final Widget? suffixAction;
 
   const AppPhoneField({
     super.key,
     this.controller,
     this.onChanged,
-    this.errorText,
     this.focusNode,
-    this.textInputAction = TextInputAction.next,
+    this.textInputAction = TextInputAction.done,
+    this.countryFlag = '🇬🇧',
+    this.countryCode = '+44',
+    this.onCountryTap,
+    this.isLightSurface = false,
+    this.suffixAction,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AppTextField(
-      controller: controller,
-      hint: '07700 000000',
-      prefixIcon: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('🇬🇧', style: TextStyle(fontSize: 20)),
-            const SizedBox(width: AppDimensions.gapXs),
-            Text('+44', style: AppTextStyles.pMedium.copyWith(color: AppColors.textSecondary)),
-            const SizedBox(width: AppDimensions.gapSm),
-            Container(width: 1, height: 20, color: AppColors.darkBorder),
-          ],
-        ),
+    return Container(
+      height: AppDimensions.inputHeight,
+      decoration: isLightSurface ? AppDecorations.lightInput : AppDecorations.input,
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: onCountryTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingXs),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(countryFlag, style: const TextStyle(fontSize: 22)),
+                  const SizedBox(width: AppDimensions.gapXs),
+                  Text(
+                    countryCode,
+                    style: AppTextStyles.pSmall.copyWith(
+                      color: isLightSurface
+                          ? AppColors.lightSurfaceSubtitle
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.gapXs),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: AppDimensions.iconSm,
+                    color: isLightSurface
+                        ? AppColors.lightSurfaceSubtitle
+                        : AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            width: 1,
+            height: AppDimensions.inputHeight,
+            color: isLightSurface ? AppColors.lightSurfaceBorder : AppColors.darkBorder,
+          ),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              focusNode: focusNode,
+              keyboardType: TextInputType.phone,
+              textInputAction: textInputAction,
+              onChanged: onChanged,
+              maxLength: 11,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              style: AppTextStyles.pSmall.copyWith(
+                color: isLightSurface ? AppColors.lightSurfaceText : AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.transparent,
+                hintText: 'Enter Mobile Number',
+                hintStyle: AppTextStyles.pSmall.copyWith(
+                  color: isLightSurface
+                      ? AppColors.lightSurfaceSubtitle
+                      : AppColors.textHint,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                counterText: '',
+                isCollapsed: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingSm,
+                  vertical: AppDimensions.gapMd,
+                ),
+              ),
+            ),
+          ),
+          if (suffixAction != null) suffixAction!,
+        ],
       ),
-      keyboardType: TextInputType.phone,
-      textInputAction: textInputAction,
-      onChanged: onChanged,
-      errorText: errorText,
-      focusNode: focusNode,
-      maxLength: 11,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
     );
   }
 }

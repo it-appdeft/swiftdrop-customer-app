@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response;
 import '../../constants/storage_keys.dart';
+import '../../routes/app_routes.dart';
 import '../../services/storage_service.dart';
 
 class AuthInterceptor extends Interceptor {
@@ -16,7 +17,7 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
-      Get.offAllNamed('/login');
+      Get.offAllNamed(AppRoutes.login);
     }
     handler.next(err);
   }

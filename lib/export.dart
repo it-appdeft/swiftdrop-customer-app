@@ -43,7 +43,6 @@ export 'app/network/interceptors/retry_interceptor.dart';
 
 export 'app/middleware/auth_middleware.dart';
 export 'app/middleware/connectivity_middleware.dart';
-export 'app/middleware/notification_middleware.dart';
 
 export 'app/widgets/app_button.dart';
 export 'app/widgets/app_loader.dart';

@@ -4,6 +4,8 @@ class UserModel {
   final String phone;
   final String? email;
   final String? avatar;
+  final String? countryCode;
+  final String? type;
   final String? vehicleType;
   final String? vehicleNumber;
   final double? rating;
@@ -20,6 +22,8 @@ class UserModel {
     required this.phone,
     this.email,
     this.avatar,
+    this.countryCode,
+    this.type,
     this.vehicleType,
     this.vehicleNumber,
     this.rating,
@@ -32,12 +36,16 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final id = rawId is int ? rawId.toString() : rawId as String? ?? '';
     return UserModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      phone: json['phone'] as String,
+      id: id,
+      name: json['name'] as String? ?? '',
+      phone: (json['mobile'] ?? json['phone'] ?? '') as String,
       email: json['email'] as String?,
-      avatar: json['avatar'] as String?,
+      avatar: (json['profile_photo'] ?? json['avatar']) as String?,
+      countryCode: json['country_code'] as String?,
+      type: json['type'] as String?,
       vehicleType: json['vehicleType'] as String?,
       vehicleNumber: json['vehicleNumber'] as String?,
       rating: (json['rating'] as num?)?.toDouble(),
@@ -58,6 +66,8 @@ class UserModel {
         'phone': phone,
         'email': email,
         'avatar': avatar,
+        'country_code': countryCode,
+        'type': type,
         'vehicleType': vehicleType,
         'vehicleNumber': vehicleNumber,
         'rating': rating,
@@ -73,6 +83,8 @@ class UserModel {
     String? name,
     String? email,
     String? avatar,
+    String? countryCode,
+    String? type,
     double? walletBalance,
     bool? isVerified,
     bool? isOnline,
@@ -83,6 +95,8 @@ class UserModel {
       phone: phone,
       email: email ?? this.email,
       avatar: avatar ?? this.avatar,
+      countryCode: countryCode ?? this.countryCode,
+      type: type ?? this.type,
       vehicleType: vehicleType,
       vehicleNumber: vehicleNumber,
       rating: rating,

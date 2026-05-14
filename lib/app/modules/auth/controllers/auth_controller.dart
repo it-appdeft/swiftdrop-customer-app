@@ -1,14 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../../data/models/user_model.dart';
-import '../../../../data/repositories/auth_repository.dart';
-import '../../../base/base_controller.dart';
-import '../../../constants/app_constants.dart';
-import '../../../routes/app_routes.dart';
-import '../../../services/auth_service.dart';
-import '../../../utils/app_utils.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 
 class AuthController extends BaseController {
   final AuthRepository _repo;
@@ -45,6 +37,12 @@ class AuthController extends BaseController {
   final RxBool isPhoneVerified = false.obs;
   final RxBool emailOtpSent = false.obs;
   final RxBool regPhoneOtpSent = false.obs;
+
+  // --- Granular loading flags (one per inline action) ---
+  final RxBool isSendingEmailOtp = false.obs;
+  final RxBool isVerifyingEmailOtp = false.obs;
+  final RxBool isSendingPhoneOtp = false.obs;
+  final RxBool isVerifyingPhoneOtp = false.obs;
 
   final RxList<String> emailOtpValues =
       List.generate(AppConstants.otpLength, (_) => '').obs;
@@ -147,7 +145,14 @@ class AuthController extends BaseController {
     }
 
     await runAsync(() async {
-      await _repo.sendOtp(phoneController.text);
+      final result = await _repo.sendOtp(
+        mobile: phoneController.text,
+        countryCode: countryCode.value,
+      );
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
+      }
       _resetOtpState();
       Get.toNamed(AppRoutes.otp);
       _startResendTimer();
@@ -183,23 +188,25 @@ class AuthController extends BaseController {
 
     await runAsync(() async {
       final result = await _repo.verifyOtp(
-        phone: phoneController.text,
-        otp: _fullOtp,
+        mobile: phoneController.text,
+        countryCode: countryCode.value,
+        code: _fullOtp,
       );
 
-      if (result.success && result.data != null) {
-        final data = result.data!;
-        final user = data['user'] != null
-            ? (data['user'] as Map<String, dynamic>)
-            : null;
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
+      }
 
-        if (user != null) {
-          await AuthService.to.saveSession(
-            accessToken: data['accessToken'] as String? ?? 'sd_access_token',
-            refreshToken: data['refreshToken'] as String? ?? 'sd_refresh_token',
-            user: AuthService.to.currentUser.value ?? UserModel.fromJson(user),
-          );
-        }
+      if (result.data != null) {
+        final data = result.data!;
+        final token = data['token'] as String? ?? 'sd_access_token';
+        final userJson = data['user'] as Map<String, dynamic>?;
+        final user = userJson != null
+            ? UserModel.fromJson(userJson)
+            : AuthService.to.currentUser.value ?? AppData.user;
+
+        await AuthService.to.saveSession(accessToken: token, user: user);
         Get.offAllNamed(AppRoutes.dashboard);
       }
     });
@@ -208,7 +215,14 @@ class AuthController extends BaseController {
   Future<void> resendOtp() async {
     if (!canResend.value || isLoading.value) return;
     await runAsync(() async {
-      await _repo.sendOtp(phoneController.text);
+      final result = await _repo.sendOtp(
+        mobile: phoneController.text,
+        countryCode: countryCode.value,
+      );
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
+      }
       otpValues.fillRange(0, AppConstants.otpLength, '');
       for (final c in otpBoxControllers) {
         c.clear();
@@ -220,43 +234,68 @@ class AuthController extends BaseController {
 
   // ---- Register email OTP flow ----
 
-  void sendEmailOtp() {
-    if (!isEmailValid.value) {
-      AppUtils.showError('Please enter a valid email address.');
-      return;
+  Future<void> sendEmailOtp() async {
+    if (isSendingEmailOtp.value || !isEmailValid.value) return;
+    isSendingEmailOtp.value = true;
+    try {
+      final result = await _repo.sendOtp(email: emailController.text.trim());
+      if (!result.success) return;
+      emailOtpValues.fillRange(0, AppConstants.otpLength, '');
+      for (final c in emailOtpBoxControllers) c.clear();
+      emailOtpSent.value = true;
+      _startEmailResendTimer();
+    } finally {
+      isSendingEmailOtp.value = false;
     }
-    emailOtpValues.fillRange(0, AppConstants.otpLength, '');
-    for (final c in emailOtpBoxControllers) {
-      c.clear();
-    }
-    emailOtpSent.value = true;
-    _startEmailResendTimer();
   }
 
   void onEmailOtpDigitChanged(int index, String value) {
     emailOtpValues[index] = value;
   }
 
-  void verifyEmailOtp() {
+  Future<void> verifyEmailOtp() async {
     final code = emailOtpValues.join();
     if (code.length < AppConstants.otpLength) {
       AppUtils.showError('Please enter the complete verification code.');
       return;
     }
-    _emailResendCountdown?.cancel();
-    _emailResendCountdown = null;
-    isEmailVerified.value = true;
-    emailOtpSent.value = false;
+    if (isVerifyingEmailOtp.value) return;
+    isVerifyingEmailOtp.value = true;
+    try {
+      final result = await _repo.verifyOtp(
+        email: emailController.text.trim(),
+        code: code,
+      );
+      if (!result.success) {
+        AppUtils.showError(
+          result.message.isNotEmpty ? result.message : 'Invalid OTP. Please enter the correct code.',
+        );
+        return;
+      }
+      _emailResendCountdown?.cancel();
+      _emailResendCountdown = null;
+      isEmailVerified.value = true;
+      emailOtpSent.value = false;
+    } finally {
+      isVerifyingEmailOtp.value = false;
+    }
   }
 
-  void resendEmailOtp() {
+  Future<void> resendEmailOtp() async {
     if (!canResendEmail.value) return;
     emailOtpValues.fillRange(0, AppConstants.otpLength, '');
     for (final c in emailOtpBoxControllers) {
       c.clear();
     }
-    _startEmailResendTimer();
-    AppUtils.showSuccess('Verification code resent.');
+    isSendingEmailOtp.value = true;
+    try {
+      final result = await _repo.sendOtp(email: emailController.text.trim());
+      if (!result.success) return;
+      _startEmailResendTimer();
+      AppUtils.showSuccess('Verification code resent.');
+    } finally {
+      isSendingEmailOtp.value = false;
+    }
   }
 
   void _startEmailResendTimer() {
@@ -276,43 +315,75 @@ class AuthController extends BaseController {
 
   // ---- Register phone OTP flow ----
 
-  void sendRegisterPhoneOtp() {
-    if (!regIsPhoneValid.value) {
-      AppUtils.showError('Please enter a valid mobile number.');
-      return;
+  Future<void> sendRegisterPhoneOtp() async {
+    if (isSendingPhoneOtp.value || !regIsPhoneValid.value) return;
+    isSendingPhoneOtp.value = true;
+    try {
+      final result = await _repo.sendOtp(
+        mobile: regPhoneController.text,
+        countryCode: countryCode.value,
+      );
+      if (!result.success) return;
+      regPhoneOtpValues.fillRange(0, AppConstants.otpLength, '');
+      for (final c in regPhoneOtpBoxControllers) c.clear();
+      regPhoneOtpSent.value = true;
+      _startRegPhoneResendTimer();
+    } finally {
+      isSendingPhoneOtp.value = false;
     }
-    regPhoneOtpValues.fillRange(0, AppConstants.otpLength, '');
-    for (final c in regPhoneOtpBoxControllers) {
-      c.clear();
-    }
-    regPhoneOtpSent.value = true;
-    _startRegPhoneResendTimer();
   }
 
   void onRegPhoneOtpDigitChanged(int index, String value) {
     regPhoneOtpValues[index] = value;
   }
 
-  void verifyRegisterPhoneOtp() {
+  Future<void> verifyRegisterPhoneOtp() async {
     final code = regPhoneOtpValues.join();
     if (code.length < AppConstants.otpLength) {
       AppUtils.showError('Please enter the complete verification code.');
       return;
     }
-    _regPhoneResendCountdown?.cancel();
-    _regPhoneResendCountdown = null;
-    isPhoneVerified.value = true;
-    regPhoneOtpSent.value = false;
+    if (isVerifyingPhoneOtp.value) return;
+    isVerifyingPhoneOtp.value = true;
+    try {
+      final result = await _repo.verifyOtp(
+        mobile: regPhoneController.text,
+        countryCode: countryCode.value,
+        code: code,
+      );
+      if (!result.success) {
+        AppUtils.showError(
+          result.message.isNotEmpty ? result.message : 'Invalid OTP. Please enter the correct code.',
+        );
+        return;
+      }
+      _regPhoneResendCountdown?.cancel();
+      _regPhoneResendCountdown = null;
+      isPhoneVerified.value = true;
+      regPhoneOtpSent.value = false;
+    } finally {
+      isVerifyingPhoneOtp.value = false;
+    }
   }
 
-  void resendRegisterPhoneOtp() {
+  Future<void> resendRegisterPhoneOtp() async {
     if (!canResendRegPhone.value) return;
     regPhoneOtpValues.fillRange(0, AppConstants.otpLength, '');
     for (final c in regPhoneOtpBoxControllers) {
       c.clear();
     }
-    _startRegPhoneResendTimer();
-    AppUtils.showSuccess('OTP resent successfully.');
+    isSendingPhoneOtp.value = true;
+    try {
+      final result = await _repo.sendOtp(
+        mobile: regPhoneController.text,
+        countryCode: countryCode.value,
+      );
+      if (!result.success) return;
+      _startRegPhoneResendTimer();
+      AppUtils.showSuccess('OTP resent successfully.');
+    } finally {
+      isSendingPhoneOtp.value = false;
+    }
   }
 
   void _startRegPhoneResendTimer() {
@@ -370,18 +441,25 @@ class AuthController extends BaseController {
     await runAsync(() async {
       final result = await _repo.register(
         name: name,
-        phone: regPhoneController.text,
+        mobile: regPhoneController.text,
+        countryCode: countryCode.value,
         email: emailController.text.trim(),
       );
 
-      if (result.success && result.data != null) {
-        await AuthService.to.saveSession(
-          accessToken: 'sd_access_token',
-          refreshToken: 'sd_refresh_token',
-          user: result.data!,
-        );
-        Get.offAllNamed(AppRoutes.dashboard);
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
       }
+
+      final data = result.data;
+      final token = data?['token'] as String? ?? 'sd_access_token';
+      final userJson = data?['user'] as Map<String, dynamic>?;
+      final user = userJson != null
+          ? UserModel.fromJson(userJson)
+          : AppData.user.copyWith(name: name, email: emailController.text.trim());
+
+      await AuthService.to.saveSession(accessToken: token, user: user);
+      Get.offAllNamed(AppRoutes.dashboard);
     });
   }
 

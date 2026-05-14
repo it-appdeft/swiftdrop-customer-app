@@ -1,4 +1,4 @@
-import 'package:get/get.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/splash_controller.dart';
 
 class SplashBinding extends Bindings {

@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../themes/app_colors.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/splash_controller.dart';
 
 class SplashView extends GetView<SplashController> {

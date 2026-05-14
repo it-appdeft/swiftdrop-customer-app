@@ -1,15 +1,5 @@
 import 'package:country_picker/country_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import '../../../routes/app_routes.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_decorations.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../utils/responsive.dart';
-import '../../../widgets/app_button.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginView extends GetView<AuthController> {
@@ -135,7 +125,14 @@ class _LoginCard extends GetView<AuthController> {
             ],
           ),
           const SizedBox(height: AppDimensions.gapSm),
-          _PhoneInputRow(),
+          Obx(() => AppPhoneField(
+                controller: controller.phoneController,
+                countryFlag: controller.countryFlag.value,
+                countryCode: controller.countryCode.value,
+                onCountryTap: () => _openCountryPicker(context),
+                isLightSurface: true,
+                textInputAction: TextInputAction.done,
+              )),
           Obx(() {
             final showError = controller.phoneNumber.value.isNotEmpty &&
                 !controller.isPhoneValid.value;
@@ -166,88 +163,6 @@ class _LoginCard extends GetView<AuthController> {
       ),
     );
   }
-}
-
-class _PhoneInputRow extends GetView<AuthController> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: AppDimensions.inputHeight,
-      decoration: AppDecorations.lightInput,
-      child: Row(
-        children: [
-          Obx(
-            () => GestureDetector(
-              onTap: () => _openCountryPicker(context),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingXs,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      controller.countryFlag.value,
-                      style: const TextStyle(fontSize: 22),
-                    ),
-                    const SizedBox(width: AppDimensions.gapXs),
-                    Text(
-                      controller.countryCode.value,
-                      style: AppTextStyles.pSmall.copyWith(
-                        color: AppColors.lightSurfaceSubtitle,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.gapXs),
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: AppDimensions.iconSm,
-                      color: AppColors.lightSurfaceSubtitle,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Container(
-            width: 1,
-            height: AppDimensions.inputHeight,
-            color: AppColors.lightSurfaceBorder,
-          ),
-          Expanded(
-            child: TextField(
-              controller: controller.phoneController,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.done,
-              style: AppTextStyles.pSmall.copyWith(
-                color: AppColors.lightSurfaceText,
-              ),
-              maxLength: 11,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppColors.transparent,
-                hintText: 'Enter Mobile Number',
-                hintStyle: AppTextStyles.pSmall.copyWith(
-                  color: AppColors.lightSurfaceSubtitle,
-                ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                focusedErrorBorder: InputBorder.none,
-                counterText: '',
-                isCollapsed: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.gapMd,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _openCountryPicker(BuildContext context) {
     showCountryPicker(
@@ -260,20 +175,14 @@ class _PhoneInputRow extends GetView<AuthController> {
       countryListTheme: CountryListThemeData(
         backgroundColor: AppColors.white,
         borderRadius: AppRadius.topXl,
-        textStyle: AppTextStyles.pSmall.copyWith(
-          color: AppColors.lightSurfaceText,
-        ),
-        searchTextStyle: AppTextStyles.pSmall.copyWith(
-          color: AppColors.lightSurfaceText,
-        ),
+        textStyle: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceText),
+        searchTextStyle: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceText),
         inputDecoration: InputDecoration(
           filled: true,
           fillColor: AppColors.transparent,
           labelText: 'Search',
           prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
-          labelStyle: AppTextStyles.pSmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          labelStyle: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
           enabledBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: AppColors.lightSurfaceBorder),
           ),

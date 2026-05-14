@@ -1,14 +1,5 @@
 import 'package:country_picker/country_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import '../../../constants/app_constants.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_decorations.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../widgets/app_button.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/auth_controller.dart';
 
 class RegisterView extends GetView<AuthController> {
@@ -43,7 +34,7 @@ class RegisterView extends GetView<AuthController> {
         ),
         body: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd ),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -94,6 +85,7 @@ class RegisterView extends GetView<AuthController> {
                     otpValues: controller.emailOtpValues,
                     onDigitChanged: controller.onEmailOtpDigitChanged,
                     onVerify: controller.verifyEmailOtp,
+                    isVerifying: controller.isVerifyingEmailOtp,
                   );
                 }),
               ),
@@ -101,7 +93,94 @@ class RegisterView extends GetView<AuthController> {
 
               const _FieldLabel(label: 'Mobile Number'),
               const SizedBox(height: AppDimensions.gapSm),
-              _PhoneRegisterRow(),
+              Obx(() => AppPhoneField(
+                    controller: controller.regPhoneController,
+                    countryFlag: controller.countryFlag.value,
+                    countryCode: controller.countryCode.value,
+                    onCountryTap: () => _openCountryPicker(context),
+                    isLightSurface: true,
+                    suffixAction: Obx(() {
+                      if (controller.isSendingPhoneOtp.value) {
+                        return const Padding(
+                          padding: EdgeInsets.only(right: AppDimensions.paddingXs),
+                          child: AppInlineLoader(),
+                        );
+                      }
+                      if (controller.isPhoneVerified.value) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'VERIFIED',
+                                style: AppTextStyles.pXSmallMedium.copyWith(
+                                  color: AppColors.lightSurfaceVerified,
+                                ),
+                              ),
+                              const SizedBox(width: AppDimensions.gapXs),
+                              const Icon(
+                                Icons.check_circle,
+                                size: AppDimensions.iconSm,
+                                color: AppColors.lightSurfaceVerified,
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      if (controller.regPhoneOtpSent.value) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+                          child: GestureDetector(
+                            onTap: controller.canResendRegPhone.value
+                                ? controller.resendRegisterPhoneOtp
+                                : null,
+                            child: controller.canResendRegPhone.value
+                                ? Text(
+                                    'Resend OTP',
+                                    style: AppTextStyles.pXSmallMedium.copyWith(
+                                      color: AppColors.primary,
+                                    ),
+                                  )
+                                : Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: 'Resend OTP ',
+                                          style: AppTextStyles.pXSmallMedium.copyWith(
+                                            color: AppColors.lightSurfaceDisabled,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: '(${controller.regPhoneResendTimer.value})',
+                                          style: AppTextStyles.pXSmallMedium.copyWith(
+                                            color: AppColors.lightSurfaceLabel,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          ),
+                        );
+                      }
+                      return Padding(
+                        padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
+                        child: GestureDetector(
+                          onTap: controller.regIsPhoneValid.value
+                              ? controller.sendRegisterPhoneOtp
+                              : null,
+                          child: Text(
+                            'Get OTP',
+                            style: AppTextStyles.pXSmallSemiBold.copyWith(
+                              color: controller.regIsPhoneValid.value
+                                  ? AppColors.primary
+                                  : AppColors.primaryFaded,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  )),
               AnimatedSize(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
@@ -114,6 +193,7 @@ class RegisterView extends GetView<AuthController> {
                     otpValues: controller.regPhoneOtpValues,
                     onDigitChanged: controller.onRegPhoneOtpDigitChanged,
                     onVerify: controller.verifyRegisterPhoneOtp,
+                    isVerifying: controller.isVerifyingPhoneOtp,
                   );
                 }),
               ),
@@ -155,6 +235,36 @@ class RegisterView extends GetView<AuthController> {
               ),
               SizedBox(height: bottomPadding + AppDimensions.paddingXl),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openCountryPicker(BuildContext context) {
+    showCountryPicker(
+      context: context,
+      showPhoneCode: true,
+      favorite: ['GB'],
+      onSelect: (Country country) {
+        controller.selectCountry(country.flagEmoji, '+${country.phoneCode}');
+      },
+      countryListTheme: CountryListThemeData(
+        backgroundColor: AppColors.white,
+        borderRadius: AppRadius.topXl,
+        textStyle: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceText),
+        searchTextStyle: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceText),
+        inputDecoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.transparent,
+          labelText: 'Search',
+          prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+          labelStyle: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.lightSurfaceBorder),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: AppColors.primary),
           ),
         ),
       ),
@@ -314,6 +424,12 @@ class _EmailFieldRow extends GetView<AuthController> {
                 ),
               );
             }
+            if (controller.isSendingEmailOtp.value) {
+              return const Padding(
+                padding: EdgeInsets.only(right: AppDimensions.paddingXs),
+                child: AppInlineLoader(),
+              );
+            }
             return Padding(
               padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
               child: GestureDetector(
@@ -337,200 +453,6 @@ class _EmailFieldRow extends GetView<AuthController> {
   }
 }
 
-class _PhoneRegisterRow extends GetView<AuthController> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: AppDimensions.inputHeight,
-      decoration: AppDecorations.lightInput,
-      child: Row(
-        children: [
-          Obx(
-            () => GestureDetector(
-              onTap: () => _openCountryPicker(context),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingXs,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      controller.countryFlag.value,
-                      style: const TextStyle(fontSize: 22),
-                    ),
-                    const SizedBox(width: AppDimensions.gapXs),
-                    Text(
-                      controller.countryCode.value,
-                      style: AppTextStyles.pSmall.copyWith(
-                        color: AppColors.lightSurfaceSubtitle,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.gapXs),
-                    const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      size: AppDimensions.iconSm,
-                      color: AppColors.lightSurfaceSubtitle,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Container(
-            width: 1,
-            height: AppDimensions.inputHeight,
-            color: AppColors.lightSurfaceBorder,
-          ),
-          Expanded(
-            child: TextField(
-              controller: controller.regPhoneController,
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.done,
-              style: AppTextStyles.pSmall.copyWith(
-                color: AppColors.lightSurfaceText,
-              ),
-              maxLength: 11,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppColors.transparent,
-                hintText: 'Enter Mobile Number',
-                hintStyle: AppTextStyles.pSmall.copyWith(
-                  color: AppColors.lightSurfaceSubtitle,
-                ),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                errorBorder: InputBorder.none,
-                focusedErrorBorder: InputBorder.none,
-                counterText: '',
-                isCollapsed: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.gapMd,
-                ),
-              ),
-            ),
-          ),
-          Obx(() {
-            if (controller.isPhoneVerified.value) {
-              return Padding(
-                padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'VERIFIED',
-                      style: AppTextStyles.pXSmallMedium.copyWith(
-                        color: AppColors.lightSurfaceVerified,
-                      ),
-                    ),
-                    const SizedBox(width: AppDimensions.gapXs),
-                    const Icon(
-                      Icons.check_circle,
-                      size: AppDimensions.iconSm,
-                      color: AppColors.lightSurfaceVerified,
-                    ),
-                  ],
-                ),
-              );
-            }
-            if (controller.regPhoneOtpSent.value) {
-              return Padding(
-                padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
-                child: GestureDetector(
-                  onTap: controller.canResendRegPhone.value
-                      ? controller.resendRegisterPhoneOtp
-                      : null,
-                  child: controller.canResendRegPhone.value
-                      ? Text(
-                          'Resend OTP',
-                          style: AppTextStyles.pXSmallMedium.copyWith(
-                            color: AppColors.primary,
-                          ),
-                        )
-                      : Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Resend OTP ',
-                                style: AppTextStyles.pXSmallMedium.copyWith(
-                                  color: AppColors.lightSurfaceDisabled,
-                                ),
-                              ),
-                              TextSpan(
-                                text:
-                                    '(${controller.regPhoneResendTimer.value})',
-                                style: AppTextStyles.pXSmallMedium.copyWith(
-                                  color: AppColors.lightSurfaceLabel,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                ),
-              );
-            }
-            return Padding(
-              padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
-              child: GestureDetector(
-                onTap: controller.regIsPhoneValid.value
-                    ? controller.sendRegisterPhoneOtp
-                    : null,
-                child: Text(
-                  'Get OTP',
-                  style: AppTextStyles.pXSmallSemiBold.copyWith(
-                    color: controller.regIsPhoneValid.value
-                        ? AppColors.primary
-                        : AppColors.primaryFaded,
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  void _openCountryPicker(BuildContext context) {
-    showCountryPicker(
-      context: context,
-      showPhoneCode: true,
-      favorite: ['GB'],
-      onSelect: (Country country) {
-        controller.selectCountry(country.flagEmoji, '+${country.phoneCode}');
-      },
-      countryListTheme: CountryListThemeData(
-        backgroundColor: AppColors.white,
-        borderRadius: AppRadius.topXl,
-        textStyle: AppTextStyles.pSmall.copyWith(
-          color: AppColors.lightSurfaceText,
-        ),
-        searchTextStyle: AppTextStyles.pSmall.copyWith(
-          color: AppColors.lightSurfaceText,
-        ),
-        inputDecoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.transparent,
-          labelText: 'Search',
-          prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
-          labelStyle: AppTextStyles.pSmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
-          enabledBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.lightSurfaceBorder),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.primary),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _InlineOtpPanel extends StatelessWidget {
   final String subtitle;
   final List<TextEditingController> otpBoxControllers;
@@ -538,6 +460,7 @@ class _InlineOtpPanel extends StatelessWidget {
   final RxList<String> otpValues;
   final Function(int, String) onDigitChanged;
   final VoidCallback onVerify;
+  final RxBool isVerifying;
 
   const _InlineOtpPanel({
     required this.subtitle,
@@ -546,6 +469,7 @@ class _InlineOtpPanel extends StatelessWidget {
     required this.otpValues,
     required this.onDigitChanged,
     required this.onVerify,
+    required this.isVerifying,
   });
 
   @override
@@ -604,17 +528,22 @@ class _InlineOtpPanel extends StatelessWidget {
                   ),
               ],
               const Spacer(),
-              Obx(() => GestureDetector(
-                    onTap: otpValues.every((v) => v.isNotEmpty) ? onVerify : null,
-                    child: Text(
-                      'VERIFY',
-                      style: AppTextStyles.pXSmallSemiBold.copyWith(
-                        color: otpValues.every((v) => v.isNotEmpty)
-                            ? AppColors.primary
-                            : AppColors.primaryFaded,
-                      ),
+              Obx(() {
+                if (isVerifying.value) {
+                  return const AppInlineLoader();
+                }
+                return GestureDetector(
+                  onTap: otpValues.every((v) => v.isNotEmpty) ? onVerify : null,
+                  child: Text(
+                    'VERIFY',
+                    style: AppTextStyles.pXSmallSemiBold.copyWith(
+                      color: otpValues.every((v) => v.isNotEmpty)
+                          ? AppColors.primary
+                          : AppColors.primaryFaded,
                     ),
-                  )),
+                  ),
+                );
+              }),
             ],
           ),
         ],

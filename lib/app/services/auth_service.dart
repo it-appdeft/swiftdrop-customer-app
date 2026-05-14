@@ -32,11 +32,13 @@ class AuthService extends GetxService {
 
   Future<void> saveSession({
     required String accessToken,
-    required String refreshToken,
+    String refreshToken = '',
     required UserModel user,
   }) async {
     await StorageService.to.write(StorageKeys.authToken, accessToken);
-    await StorageService.to.write(StorageKeys.refreshToken, refreshToken);
+    if (refreshToken.isNotEmpty) {
+      await StorageService.to.write(StorageKeys.refreshToken, refreshToken);
+    }
     await StorageService.to.write(StorageKeys.userData, jsonEncode(user.toJson()));
     currentUser.value = user;
   }

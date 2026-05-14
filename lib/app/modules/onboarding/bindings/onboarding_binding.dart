@@ -1,4 +1,4 @@
-import 'package:get/get.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/onboarding_controller.dart';
 
 class OnboardingBinding extends Bindings {

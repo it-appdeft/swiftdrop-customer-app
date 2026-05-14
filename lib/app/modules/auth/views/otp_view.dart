@@ -1,12 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:get/get.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_decorations.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../widgets/app_button.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/auth_controller.dart';
 
 class OtpView extends GetView<AuthController> {
@@ -70,21 +62,21 @@ class OtpView extends GetView<AuthController> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        for (int index = 0; index < 4; index++) ...[
+                        for (int index = 0; index < AppConstants.otpLength; index++) ...[
                           _OtpBox(
                             size: AppDimensions.otpBoxSize,
                             controller: controller.otpBoxControllers[index],
                             focusNode: controller.otpFocusNodes[index],
                             onChanged: (value) {
                               controller.onOtpDigitChanged(index, value);
-                              if (value.isNotEmpty && index < 3) {
+                              if (value.isNotEmpty && index < AppConstants.otpLength - 1) {
                                 controller.otpFocusNodes[index + 1].requestFocus();
                               } else if (value.isEmpty && index > 0) {
                                 controller.otpFocusNodes[index - 1].requestFocus();
                               }
                             },
                           ),
-                          if (index < 3) const SizedBox(width: AppDimensions.gapLg),
+                          if (index < AppConstants.otpLength - 1) const SizedBox(width: AppDimensions.gapLg),
                         ],
                       ],
                     ),

@@ -1,12 +1,6 @@
 import 'dart:async';
 
-import 'package:get/get.dart';
-import '../../../base/base_controller.dart';
-import '../../../constants/app_constants.dart';
-import '../../../constants/storage_keys.dart';
-import '../../../routes/app_routes.dart';
-import '../../../services/auth_service.dart';
-import '../../../services/storage_service.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 
 class SplashController extends BaseController {
   Timer? _timer;

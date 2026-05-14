@@ -1,5 +1,4 @@
-import 'package:get/get.dart';
-import '../../../../data/repositories/auth_repository.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/auth_controller.dart';
 
 class AuthBinding extends Bindings {
