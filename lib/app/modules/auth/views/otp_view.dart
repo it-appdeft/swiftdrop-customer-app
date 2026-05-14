@@ -116,6 +116,8 @@ class OtpView extends GetView<AuthController> {
                           'Resend OTP',
                           style: AppTextStyles.pSmallMedium.copyWith(
                             color: AppColors.lightSurfaceLabel,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.lightSurfaceLabel,
                           ),
                         ),
                       );

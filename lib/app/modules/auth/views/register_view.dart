@@ -263,17 +263,17 @@ class _EmailFieldRow extends GetView<AuthController> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.check_circle,
-                      size: AppDimensions.iconSm,
-                      color: AppColors.lightSurfaceVerified,
-                    ),
-                    const SizedBox(width: AppDimensions.gapXs),
                     Text(
                       'VERIFIED',
                       style: AppTextStyles.pXSmallMedium.copyWith(
                         color: AppColors.lightSurfaceVerified,
                       ),
+                    ),
+                    const SizedBox(width: AppDimensions.gapXs),
+                    const Icon(
+                      Icons.check_circle,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.lightSurfaceVerified,
                     ),
                   ],
                 ),
@@ -420,17 +420,17 @@ class _PhoneRegisterRow extends GetView<AuthController> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.check_circle,
-                      size: AppDimensions.iconSm,
-                      color: AppColors.lightSurfaceVerified,
-                    ),
-                    const SizedBox(width: AppDimensions.gapXs),
                     Text(
                       'VERIFIED',
                       style: AppTextStyles.pXSmallMedium.copyWith(
                         color: AppColors.lightSurfaceVerified,
                       ),
+                    ),
+                    const SizedBox(width: AppDimensions.gapXs),
+                    const Icon(
+                      Icons.check_circle,
+                      size: AppDimensions.iconSm,
+                      color: AppColors.lightSurfaceVerified,
                     ),
                   ],
                 ),

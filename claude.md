@@ -44,6 +44,8 @@ dependencies:
   logger: ^2.3.0
   intl: ^0.19.0
   google_fonts: ^6.2.1
+  country_picker: ^2.0.27
+  cupertino_icons: ^1.0.8
 ```
 
 Font: **Inter** via `google_fonts` package.
@@ -76,8 +78,16 @@ lib/
 │   │   ├── splash/
 │   │   ├── onboarding/
 │   │   ├── auth/                        ← login, otp, register, register_steps, verification_pending
-│   │   ├── dashboard/                   ← home (IndexedStack 5 tabs)
-│   │   ├── [feature]/                   ← one folder per screen group
+│   │   ├── dashboard/                   ← shell with bottom nav (IndexedStack 5 tabs)
+│   │   ├── home/                        ← browse, search, categories, restaurants
+│   │   ├── cart/
+│   │   ├── checkout/
+│   │   ├── order_tracking/
+│   │   ├── order_history/
+│   │   ├── wallet/
+│   │   ├── notifications/
+│   │   ├── profile/
+│   │   ├── settings/
 │   ├── network/
 │   │   ├── interceptors/
 │   │   │   ├── auth_interceptor.dart
@@ -145,6 +155,7 @@ lib/
 primary        = Color(0xFF1BC27D)
 primaryDark    = Color(0xFF169B64)
 primaryLight   = Color(0xFF32C88A)
+primaryFaded   = Color(0xFF8DE1BE)
 
 // Dark theme surfaces
 darkBackground      = Color(0xFF121212)   ← scaffold bg
@@ -168,11 +179,29 @@ textSecondary = Color(0xFF85929D)   ← navyMuted200
 textHint      = Color(0xFF6D7C89)   ← navyMuted300
 
 // Semantic state
-success = Color(0xFF1BC27D)
-warning = Color(0xFFF5A623)
-error   = Color(0xFFE53935)
-white   = Color(0xFFFFFFFF)
+success     = Color(0xFF1BC27D)
+warning     = Color(0xFFF5A623)
+error       = Color(0xFFDC3545)
+white       = Color(0xFFFFFFFF)
+offWhite    = Color(0xFFF6F8FA)
+buttonLabel = Color(0xFFFEFEFD)   ← used for button text (not pure white)
+
+// Light-surface — used on auth screens (login, OTP, register — white background)
+lightSurfaceDarkText  = Color(0xFF0B243A)
+lightSurfaceText      = Color(0xFF071623)
+lightSurfaceVerified  = Color(0xFF10744B)
+lightInputText        = Color(0xFF0F191F)
+lightSurfaceHeading   = Color(0xFF3C4042)
+lightSurfaceLabel     = Color(0xFF595D70)
+lightSurfaceSubtitle  = Color(0xFF868AA5)
+lightSurfaceDisabled  = Color(0xFFE1E2E3)
+lightSurfaceBorder    = Color(0xFFF2F2E9)
+lightSurfaceHint      = Color(0xFFADB5BD)
+lightOtpBoxBg         = Color(0xFFEDEEF1)   ← OTP box empty state
+lightOtpFocusBorder   = Color(0xFF198754)   ← OTP box focused/filled border
 ```
+
+**Auth screens use a white/light surface design** (not dark theme). All `auth/` views set `backgroundColor: AppColors.white` and use `lightSurface*` colors. The dark `otpBox`/`otpBoxFocused` decorations in `AppDecorations` are reserved for post-auth screens.
 
 ### Typography (`lib/app/themes/app_text_styles.dart`)
 Font: **Inter** (Google Fonts). All styles via `GoogleFonts.inter(...)`.
@@ -180,16 +209,16 @@ Font: **Inter** (Google Fonts). All styles via `GoogleFonts.inter(...)`.
 h1 → 48px / w700    h2 → 40px / w700    h3 → 32px / w700
 h4 → 28px / w600    h5 → 24px / w600    h6 → 20px / w600
 
-pLarge       → 18px / w400    pLargeSemiBold → 18px / w600
-pMedium      → 16px / w400    pMediumSemiBold→ 16px / w600    pMediumBold → 16px / w700
-pSmall       → 14px / w400    pSmallSemiBold → 14px / w600
-pXSmall      → 12px / w400    pXSmallMedium  → 12px / w500
+pLarge       → 18px / w400    pLargeSemiBold  → 18px / w600
+pMedium      → 16px / w400    pMediumSemiBold → 16px / w600    pMediumBold → 16px / w700
+pSmall       → 14px / w400    pSmallMedium    → 14px / w500    pSmallSemiBold → 14px / w600
+pXSmall      → 12px / w400    pXSmallMedium   → 12px / w500    pXSmallSemiBold → 12px / w600
 
 label    → 12px / w600 / letterSpacing 0.5
 caption  → 11px / color textHint
 amount   → 22px / w700 / color success (green)
 amountLg → 32px / w700 / color success
-button   → 16px / w600 / color white
+button   → 16px / w600 / color buttonLabel
 ```
 Default color for all text styles: `AppColors.textPrimary` (near-white).
 
@@ -198,15 +227,19 @@ Default color for all text styles: `AppColors.textPrimary` (near-white).
 ```
 sp4=4  sp8=8  sp12=12  sp16=16  sp20=20  sp24=24  sp32=32  sp40=40
 
-Padding: paddingXs=8  paddingSm=12  paddingMd=16  paddingLg=20  paddingXl=24
-Gaps:    gapXs=4      gapSm=8       gapMd=12      gapLg=16      gapXl=24
+Padding: paddingXs=8  paddingXsm=10  paddingSm=12  paddingMd=16  paddingLg=20  paddingXl=24
+Gaps:    gapXs=4      gapSm=8        gapMd=12       gapLg=16      gapXl=24
 
 Border radius:
-  radiusXs=4  radiusSm=8  radiusMd=12  radiusLg=16  radiusXl=20  radiusXxl=24  radiusFull=100
+  radiusXs=4  radiusSm=8  radiusSmd=10  radiusMd=12  radiusLg=16  radiusXl=20  radiusXxl=24  radiusFull=100
+
+AppRadius helpers (BorderRadius objects in app_radius.dart):
+  xs  sm  smd  md  lg  xl  xxl  full
+  topLg  topXl  topXxl  ← top-corners-only variants for bottom sheets
 
 Components:
-  inputHeight=52    buttonHeight=52    buttonHeightLg=56
-  bottomNavHeight=64   appBarHeight=56
+  inputHeight=44    buttonHeight=48    buttonHeightLg=56
+  bottomNavHeight=64   appBarHeight=56   otpBoxSize=48
 
 Icons: iconXs=14  iconSm=18  iconMd=24  iconLg=32  iconXl=48
 Avatar: avatarSm=32  avatarMd=48  avatarLg=72  avatarXl=96
@@ -226,7 +259,7 @@ Avatar: avatarSm=32  avatarMd=48  avatarLg=72  avatarXl=96
 
 ## CONSTANTS (`lib/app/constants/app_constants.dart`)
 ```dart
-splashDuration  = 4000    // ms — increase if splash GIF is longer
+splashDuration  = 5600    // ms — matches splash animation length
 otpResendTimer  = 60      // seconds
 snackbarDuration= 3       // seconds
 otpLength       = 4       // boxes
@@ -239,15 +272,18 @@ mapDriverZoom   = 17.0
 
 ## STORAGE KEYS (`lib/app/constants/storage_keys.dart`)
 ```dart
-authToken           = 'auth_token'
-refreshToken        = 'refresh_token'
-userData            = 'user_data'
-onboardingCompleted = 'onboarding_completed'
-fcmToken            = 'fcm_token'
-appSettings         = 'app_settings'
-selectedLanguage    = 'selected_language'
-isOnlineMode        = 'is_online_mode'   // driver app only, keep for compat
-lastSyncTime        = 'last_sync_time'
+authToken               = 'auth_token'
+refreshToken            = 'refresh_token'
+userData                = 'user_data'
+onboardingCompleted     = 'onboarding_completed'
+fcmToken                = 'fcm_token'
+appSettings             = 'app_settings'
+selectedLanguage        = 'selected_language'
+isOnlineMode            = 'is_online_mode'            // keep for driver-app compat
+lastSyncTime            = 'last_sync_time'
+settingPushNotifications = 'setting_push_notifications'
+settingOrderUpdates     = 'setting_order_updates'
+settingPromotions       = 'setting_promotions'
 ```
 
 ---
@@ -310,7 +346,7 @@ Future<ApiResponse<T>> someMethod() async {
 ## AUTH FLOW
 
 ```
-Splash (4s GIF) → Onboarding (first launch) → Login → OTP → Dashboard
+Splash (~5.6s animation) → Onboarding (first launch) → Login → OTP → Dashboard
 ```
 
 **OTP logic (AuthController.verifyOtp):**
@@ -368,21 +404,28 @@ Use `runAsync()` for all async operations in controllers.
 
 ### AppRoutes (static const strings)
 ```dart
-splash           = '/splash'
-onboarding       = '/onboarding'
-login            = '/login'
-otp              = '/otp'
-register         = '/register'
-registerSteps    = '/register-steps'
+splash              = '/splash'
+onboarding          = '/onboarding'
+login               = '/login'
+otp                 = '/otp'
+register            = '/register'
+registerSteps       = '/register-steps'
 verificationPending = '/verification-pending'
-dashboard        = '/dashboard'
-// ... feature routes
+dashboard           = '/dashboard'
+orderTracking       = '/order-tracking'
+orderHistory        = '/order-history'
+wallet              = '/wallet'
+notifications       = '/notifications'
+profile             = '/profile'
+settings            = '/settings'
+cart                = '/cart'
+checkout            = '/checkout'
 ```
 
 ### AppPages rules
 - `splash`: **no middleware**. SplashBinding MUST use `Get.put` (not lazyPut).
-- `onboarding`, `login`, `otp`, `register`: **no middleware**.
-- `dashboard` and all post-auth routes: `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
+- `onboarding`, `login`, `otp`, `register`, `registerSteps`, `verificationPending`: **no middleware**.
+- `dashboard` and all post-auth routes (`orderTracking`, `orderHistory`, `wallet`, `notifications`, `profile`, `settings`, `cart`, `checkout`): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
 - `ConnectivityMiddleware`: shows warning snackbar only, returns null (no hard redirect).
 - `AuthMiddleware`: redirects to `/login` if not authenticated.
 
@@ -432,15 +475,20 @@ No "mock" or "demo" in class names, file names, or variable names.
 ```dart
 class AppData {
   AppData._();
-  static final user = UserModel(id: 'user_001', name: '...', phone: '07700900001', ...);
-  static final List<OrderModel> activeOrders = [...];
-  static final List<OrderModel> orderHistory = [...];
-  static final Map<String, dynamic> earningsSummary = {'today': 48.50, 'week': 285.00, ...};
-  static final List<TransactionModel> transactions = [...];
-  static final List<NotificationModel> notifications = [...];
+  static final user = UserModel(id: 'user_001', name: 'James Hartley', phone: '07700900001', ...);
+  static final List<OrderModel> activeOrders = [...];           // 1 active order
+  static final List<OrderModel> orderHistory = [...];           // 3 orders (delivered/cancelled)
+  static final Map<String, dynamic> walletSummary = {          // NOT earningsSummary
+    'balance': 24.50, 'totalSpent': 348.75, 'totalOrders': 18
+  };
+  static final List<TransactionModel> transactions = [...];     // 5 transactions
+  static final List<NotificationModel> notifications = [...];   // 4 notifications
+  static final List<Map<String, dynamic>> savedAddresses = [...]; // Home + Work (London)
+  static final List<Map<String, dynamic>> categories = [...];   // 8 food categories
+  static final List<Map<String, dynamic>> featuredRestaurants = [...]; // 5 UK restaurants
 }
 ```
-UK data: London addresses, UK names, £ amounts, 07700 9xxxxx phones.
+UK data: London addresses (EC1V, EC1M, WC2A, E20, E14, WC2H postcodes), UK names, £ amounts, 07700 9xxxxx phones. Restaurants: The Burger Joint, Wagamama, Pret A Manger, Dishoom, Nando's.
 
 ---
 
