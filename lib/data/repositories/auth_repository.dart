@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
+import '../../app/config/app_config.dart';
 import '../../app/network/api_endpoints.dart';
 import '../../app/network/dio_client.dart';
+import '../../app/utils/app_logger.dart';
 import '../local/app_data.dart';
 import '../models/api_response.dart';
 import '../models/user_model.dart';
@@ -8,28 +10,39 @@ import '../models/user_model.dart';
 class AuthRepository {
   final Dio _dio = DioClient.instance;
 
-  Future<ApiResponse<bool>> sendOtp({
+  Future<ApiResponse<Map<String, dynamic>>> sendOtp({
     String? email,
     String? mobile,
     String? countryCode,
+    required String type,
+    required String channel,
   }) async {
     try {
-      await _dio.post(
+      final response = await _dio.post(
         ApiEndpoints.sendOtp,
         data: FormData.fromMap({
+          'type': type,
+          'user_type': 'customer',
+          'channel': channel,
           if (email != null) 'email': email,
           if (mobile != null) 'mobile': mobile,
           if (countryCode != null) 'country_code': countryCode,
         }),
         options: Options(contentType: 'multipart/form-data'),
       );
-      return const ApiResponse<bool>(success: true, message: '', data: true);
+      final json = response.data as Map<String, dynamic>;
+      final data = json['data'] as Map<String, dynamic>?;
+      AppLogger.i('[AUTH] sendOtp SUCCESS | status: ${response.statusCode} | body: ${response.data}');
+      return ApiResponse<Map<String, dynamic>>(success: true, message: '', data: data);
     } on DioException catch (e) {
+      AppLogger.e('[AUTH] sendOtp FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data} | type: ${e.type}');
       final msg = _extractMessage(e);
-      if (msg != null) return ApiResponse<bool>(success: false, message: msg);
-      return const ApiResponse<bool>(success: true, message: '', data: true);
-    } catch (_) {
-      return const ApiResponse<bool>(success: true, message: '', data: true);
+      if (msg != null) return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
+      AppLogger.w('[AUTH] sendOtp — no real API, falling back to local');
+      return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
+    } catch (e) {
+      AppLogger.w('[AUTH] sendOtp — unexpected error, falling back to local | $e');
+      return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
     }
   }
 
@@ -38,11 +51,16 @@ class AuthRepository {
     String? mobile,
     String? countryCode,
     required String code,
+    required String type,
+    required String channel,
   }) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.verifyOtp,
         data: FormData.fromMap({
+          'type': type,
+          'user_type': 'customer',
+          'channel': channel,
           if (email != null) 'email': email,
           if (mobile != null) 'mobile': mobile,
           if (countryCode != null) 'country_code': countryCode,
@@ -51,28 +69,32 @@ class AuthRepository {
         options: Options(contentType: 'multipart/form-data'),
       );
       final json = response.data as Map<String, dynamic>;
-      final success = json['status'] as bool? ?? false;
+      final success = json['success'] as bool? ?? false;
       final data = json['data'] as Map<String, dynamic>?;
+      AppLogger.i('[AUTH] verifyOtp ${success ? "SUCCESS" : "FAILED"} | status: ${response.statusCode} | message: ${json['message']} | data: $data');
       return ApiResponse<Map<String, dynamic>>(
         success: success,
         message: json['message'] as String? ?? '',
         data: data,
       );
     } on DioException catch (e) {
+      AppLogger.e('[AUTH] verifyOtp FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data} | type: ${e.type}');
       final msg = _extractMessage(e);
       if (msg != null) {
         return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
       }
+      AppLogger.w('[AUTH] verifyOtp — no real API, falling back to local');
       return ApiResponse<Map<String, dynamic>>(
         success: true,
         message: '',
-        data: {'token': 'sd_access_token', 'user': AppData.user.toJson()},
+        data: {'token': AppConfig.accessTokenKey, 'user': AppData.user.toJson()},
       );
-    } catch (_) {
+    } catch (e) {
+      AppLogger.w('[AUTH] verifyOtp — unexpected error, falling back to local | $e');
       return ApiResponse<Map<String, dynamic>>(
         success: true,
         message: '',
-        data: {'token': 'sd_access_token', 'user': AppData.user.toJson()},
+        data: {'token': AppConfig.accessTokenKey, 'user': AppData.user.toJson()},
       );
     }
   }
@@ -95,29 +117,38 @@ class AuthRepository {
         options: Options(contentType: 'multipart/form-data'),
       );
       final json = response.data as Map<String, dynamic>;
-      final success = json['status'] as bool? ?? false;
+      final success = json['success'] as bool? ?? false;
       final data = json['data'] as Map<String, dynamic>?;
+      AppLogger.i('[AUTH] register ${success ? "SUCCESS" : "FAILED"} | status: ${response.statusCode} | message: ${json['message']} | data: $data');
       return ApiResponse<Map<String, dynamic>>(
         success: success,
         message: json['message'] as String? ?? '',
         data: data,
       );
     } on DioException catch (e) {
+      AppLogger.e('[AUTH] register FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data} | type: ${e.type}');
       final msg = _extractMessage(e);
       if (msg != null) {
         return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
       }
+      AppLogger.w('[AUTH] register — no real API, falling back to local');
       return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
-    } catch (_) {
+    } catch (e) {
+      AppLogger.w('[AUTH] register — unexpected error, falling back to local | $e');
       return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
     }
   }
 
   Future<ApiResponse<bool>> logout() async {
     try {
-      await _dio.post(ApiEndpoints.logout);
+      final response = await _dio.post(ApiEndpoints.logout);
+      AppLogger.i('[AUTH] logout SUCCESS | status: ${response.statusCode}');
       return const ApiResponse<bool>(success: true, message: '', data: true);
-    } catch (_) {
+    } on DioException catch (e) {
+      AppLogger.e('[AUTH] logout FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data}');
+      return const ApiResponse<bool>(success: true, message: '', data: true);
+    } catch (e) {
+      AppLogger.w('[AUTH] logout — unexpected error | $e');
       return const ApiResponse<bool>(success: true, message: '', data: true);
     }
   }

@@ -59,27 +59,37 @@ class OtpView extends GetView<AuthController> {
                           ),
                         )),
                     const SizedBox(height: AppDimensions.gapLg),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        for (int index = 0; index < AppConstants.otpLength; index++) ...[
-                          _OtpBox(
-                            size: AppDimensions.otpBoxSize,
-                            controller: controller.otpBoxControllers[index],
-                            focusNode: controller.otpFocusNodes[index],
-                            onChanged: (value) {
-                              controller.onOtpDigitChanged(index, value);
-                              if (value.isNotEmpty && index < AppConstants.otpLength - 1) {
-                                controller.otpFocusNodes[index + 1].requestFocus();
-                              } else if (value.isEmpty && index > 0) {
-                                controller.otpFocusNodes[index - 1].requestFocus();
-                              }
-                            },
-                          ),
-                          if (index < AppConstants.otpLength - 1) const SizedBox(width: AppDimensions.gapLg),
+                    Obx(() {
+                      final fi = controller.otpValues.indexWhere((v) => v.isEmpty);
+                      final target = fi == -1 ? AppConstants.otpLength - 1 : fi;
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (int index = 0; index < AppConstants.otpLength; index++) ...[
+                            GestureDetector(
+                              onTap: () => controller.otpFocusNodes[target].requestFocus(),
+                              child: AbsorbPointer(
+                                absorbing: index != target,
+                                child: _OtpBox(
+                                  size: AppDimensions.otpBoxSize,
+                                  controller: controller.otpBoxControllers[index],
+                                  focusNode: controller.otpFocusNodes[index],
+                                  onChanged: (value) {
+                                    controller.onOtpDigitChanged(index, value);
+                                    if (value.isNotEmpty && index < AppConstants.otpLength - 1) {
+                                      controller.otpFocusNodes[index + 1].requestFocus();
+                                    } else if (value.isEmpty && index > 0) {
+                                      controller.otpFocusNodes[index - 1].requestFocus();
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                            if (index < AppConstants.otpLength - 1) const SizedBox(width: AppDimensions.gapLg),
+                          ],
                         ],
-                      ],
-                    ),
+                      );
+                    }),
                     const SizedBox(height: AppDimensions.gapLg),
                     Obx(() {
                       if (!controller.canResend.value) {

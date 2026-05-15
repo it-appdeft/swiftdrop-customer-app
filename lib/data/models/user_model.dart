@@ -50,12 +50,12 @@ class UserModel {
       vehicleNumber: json['vehicleNumber'] as String?,
       rating: (json['rating'] as num?)?.toDouble(),
       totalDeliveries: json['totalDeliveries'] as int? ?? 0,
-      isActive: json['isActive'] as bool? ?? true,
+      isActive: json['status'] == 'active',
       isVerified: json['isVerified'] as bool? ?? false,
       isOnline: json['isOnline'] as bool? ?? false,
       walletBalance: (json['walletBalance'] as num?)?.toDouble() ?? 0.0,
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'] as String)
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
           : null,
     );
   }
@@ -76,7 +76,7 @@ class UserModel {
         'isVerified': isVerified,
         'isOnline': isOnline,
         'walletBalance': walletBalance,
-        'createdAt': createdAt?.toIso8601String(),
+        'created_at': createdAt?.toIso8601String(),
       };
 
   UserModel copyWith({

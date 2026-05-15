@@ -500,52 +500,59 @@ class _InlineOtpPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppDimensions.gapLg),
-          Row(
-            children: [
-              for (int i = 0; i < AppConstants.otpLength; i++) ...[
-                _OtpBox(
-                  controller: otpBoxControllers[i],
-                  focusNode: otpFocusNodes[i],
-                  onChanged: (value) {
-                    onDigitChanged(i, value);
-                    if (value.isNotEmpty && i < AppConstants.otpLength - 1) {
-                      otpFocusNodes[i + 1].requestFocus();
-                    } else if (value.isEmpty && i > 0) {
-                      otpFocusNodes[i - 1].requestFocus();
-                    }
-                  },
-                ),
-                if (i < AppConstants.otpLength - 1)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.gapXs,
+          Obx(() {
+            final fi = otpValues.indexWhere((v) => v.isEmpty);
+            final target = fi == -1 ? AppConstants.otpLength - 1 : fi;
+            final allFilled = otpValues.every((v) => v.isNotEmpty);
+            return Row(
+              children: [
+                for (int i = 0; i < AppConstants.otpLength; i++) ...[
+                  GestureDetector(
+                    onTap: () => otpFocusNodes[target].requestFocus(),
+                    child: AbsorbPointer(
+                      absorbing: i != target,
+                      child: _OtpBox(
+                        controller: otpBoxControllers[i],
+                        focusNode: otpFocusNodes[i],
+                        onChanged: (value) {
+                          onDigitChanged(i, value);
+                          if (value.isNotEmpty && i < AppConstants.otpLength - 1) {
+                            otpFocusNodes[i + 1].requestFocus();
+                          } else if (value.isEmpty && i > 0) {
+                            otpFocusNodes[i - 1].requestFocus();
+                          }
+                        },
+                      ),
                     ),
-                    child: Container(
-                      width: AppDimensions.gapSm,
-                      height: 1,
-                      color: AppColors.lightSurfaceDisabled,
+                  ),
+                  if (i < AppConstants.otpLength - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.gapXs,
+                      ),
+                      child: Container(
+                        width: AppDimensions.gapSm,
+                        height: 1,
+                        color: AppColors.lightSurfaceDisabled,
+                      ),
+                    ),
+                ],
+                const Spacer(),
+                if (isVerifying.value)
+                  const AppInlineLoader()
+                else
+                  GestureDetector(
+                    onTap: allFilled ? onVerify : null,
+                    child: Text(
+                      'VERIFY',
+                      style: AppTextStyles.pXSmallSemiBold.copyWith(
+                        color: allFilled ? AppColors.primary : AppColors.primaryFaded,
+                      ),
                     ),
                   ),
               ],
-              const Spacer(),
-              Obx(() {
-                if (isVerifying.value) {
-                  return const AppInlineLoader();
-                }
-                return GestureDetector(
-                  onTap: otpValues.every((v) => v.isNotEmpty) ? onVerify : null,
-                  child: Text(
-                    'VERIFY',
-                    style: AppTextStyles.pXSmallSemiBold.copyWith(
-                      color: otpValues.every((v) => v.isNotEmpty)
-                          ? AppColors.primary
-                          : AppColors.primaryFaded,
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -602,3 +609,4 @@ class _OtpBox extends StatelessWidget {
     );
   }
 }
+

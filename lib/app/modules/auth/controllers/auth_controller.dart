@@ -148,6 +148,8 @@ class AuthController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: phoneController.text,
         countryCode: countryCode.value,
+        type: 'login',
+        channel: 'phone',
       );
       if (!result.success) {
         if (result.message.isNotEmpty) AppUtils.showError(result.message);
@@ -156,6 +158,10 @@ class AuthController extends BaseController {
       _resetOtpState();
       Get.toNamed(AppRoutes.otp);
       _startResendTimer();
+      final testCode = result.data?['test_code'] as String?;
+      if (testCode != null && testCode.isNotEmpty) {
+        AppUtils.showSuccess('OTP sent successfully. Please enter $testCode as OTP.');
+      }
     });
   }
 
@@ -191,6 +197,8 @@ class AuthController extends BaseController {
         mobile: phoneController.text,
         countryCode: countryCode.value,
         code: _fullOtp,
+        type: 'login',
+        channel: 'phone',
       );
 
       if (!result.success) {
@@ -200,14 +208,17 @@ class AuthController extends BaseController {
 
       if (result.data != null) {
         final data = result.data!;
-        final token = data['token'] as String? ?? 'sd_access_token';
-        final userJson = data['user'] as Map<String, dynamic>?;
-        final user = userJson != null
-            ? UserModel.fromJson(userJson)
-            : AuthService.to.currentUser.value ?? AppData.user;
-
-        await AuthService.to.saveSession(accessToken: token, user: user);
-        Get.offAllNamed(AppRoutes.dashboard);
+        final token = data['token'] as String?;
+        if (token != null) {
+          final userJson = data['user'] as Map<String, dynamic>?;
+          final user = userJson != null
+              ? UserModel.fromJson(userJson)
+              : AuthService.to.currentUser.value ?? AppData.user;
+          await AuthService.to.saveSession(accessToken: token, user: user);
+          Get.offAllNamed(AppRoutes.dashboard);
+        } else {
+          Get.offAllNamed(AppRoutes.register);
+        }
       }
     });
   }
@@ -218,6 +229,8 @@ class AuthController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: phoneController.text,
         countryCode: countryCode.value,
+        type: 'login',
+        channel: 'phone',
       );
       if (!result.success) {
         if (result.message.isNotEmpty) AppUtils.showError(result.message);
@@ -228,7 +241,12 @@ class AuthController extends BaseController {
         c.clear();
       }
       _startResendTimer();
-      AppUtils.showSuccess('OTP resent successfully.');
+      final testCode = result.data?['test_code'] as String?;
+      if (testCode != null && testCode.isNotEmpty) {
+        AppUtils.showSuccess('OTP sent successfully. Please enter $testCode as OTP.');
+      } else {
+        AppUtils.showSuccess('OTP resent successfully.');
+      }
     });
   }
 
@@ -238,12 +256,20 @@ class AuthController extends BaseController {
     if (isSendingEmailOtp.value || !isEmailValid.value) return;
     isSendingEmailOtp.value = true;
     try {
-      final result = await _repo.sendOtp(email: emailController.text.trim());
+      final result = await _repo.sendOtp(
+        email: emailController.text.trim(),
+        type: 'signup',
+        channel: 'email',
+      );
       if (!result.success) return;
       emailOtpValues.fillRange(0, AppConstants.otpLength, '');
       for (final c in emailOtpBoxControllers) c.clear();
       emailOtpSent.value = true;
       _startEmailResendTimer();
+      final testCode = result.data?['test_code'] as String?;
+      if (testCode != null && testCode.isNotEmpty) {
+        AppUtils.showSuccess('OTP sent successfully. Please enter $testCode as OTP.');
+      }
     } finally {
       isSendingEmailOtp.value = false;
     }
@@ -265,6 +291,8 @@ class AuthController extends BaseController {
       final result = await _repo.verifyOtp(
         email: emailController.text.trim(),
         code: code,
+        type: 'signup',
+        channel: 'email',
       );
       if (!result.success) {
         AppUtils.showError(
@@ -289,10 +317,19 @@ class AuthController extends BaseController {
     }
     isSendingEmailOtp.value = true;
     try {
-      final result = await _repo.sendOtp(email: emailController.text.trim());
+      final result = await _repo.sendOtp(
+        email: emailController.text.trim(),
+        type: 'signup',
+        channel: 'email',
+      );
       if (!result.success) return;
       _startEmailResendTimer();
-      AppUtils.showSuccess('Verification code resent.');
+      final testCode = result.data?['test_code'] as String?;
+      if (testCode != null && testCode.isNotEmpty) {
+        AppUtils.showSuccess('OTP sent successfully. Please enter $testCode as OTP.');
+      } else {
+        AppUtils.showSuccess('Verification code resent.');
+      }
     } finally {
       isSendingEmailOtp.value = false;
     }
@@ -322,12 +359,18 @@ class AuthController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: regPhoneController.text,
         countryCode: countryCode.value,
+        type: 'signup',
+        channel: 'phone',
       );
       if (!result.success) return;
       regPhoneOtpValues.fillRange(0, AppConstants.otpLength, '');
       for (final c in regPhoneOtpBoxControllers) c.clear();
       regPhoneOtpSent.value = true;
       _startRegPhoneResendTimer();
+      final testCode = result.data?['test_code'] as String?;
+      if (testCode != null && testCode.isNotEmpty) {
+        AppUtils.showSuccess('OTP sent successfully. Please enter $testCode as OTP.');
+      }
     } finally {
       isSendingPhoneOtp.value = false;
     }
@@ -350,6 +393,8 @@ class AuthController extends BaseController {
         mobile: regPhoneController.text,
         countryCode: countryCode.value,
         code: code,
+        type: 'signup',
+        channel: 'phone',
       );
       if (!result.success) {
         AppUtils.showError(
@@ -377,10 +422,17 @@ class AuthController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: regPhoneController.text,
         countryCode: countryCode.value,
+        type: 'signup',
+        channel: 'phone',
       );
       if (!result.success) return;
       _startRegPhoneResendTimer();
-      AppUtils.showSuccess('OTP resent successfully.');
+      final testCode = result.data?['test_code'] as String?;
+      if (testCode != null && testCode.isNotEmpty) {
+        AppUtils.showSuccess('OTP sent successfully. Please enter $testCode as OTP.');
+      } else {
+        AppUtils.showSuccess('OTP resent successfully.');
+      }
     } finally {
       isSendingPhoneOtp.value = false;
     }
@@ -452,7 +504,7 @@ class AuthController extends BaseController {
       }
 
       final data = result.data;
-      final token = data?['token'] as String? ?? 'sd_access_token';
+      final token = data?['token'] as String? ?? AppConfig.accessTokenKey;
       final userJson = data?['user'] as Map<String, dynamic>?;
       final user = userJson != null
           ? UserModel.fromJson(userJson)

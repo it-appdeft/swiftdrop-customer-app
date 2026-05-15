@@ -22,6 +22,7 @@ class DioClient {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        if (AppConfig.isNgrok) 'ngrok-skip-browser-warning': 'true',
       },
     ));
 
