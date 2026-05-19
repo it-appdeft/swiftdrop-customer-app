@@ -13,7 +13,10 @@ class LoginView extends GetView<AuthController> {
     return Scaffold(
       backgroundColor: AppColors.white,
       resizeToAvoidBottomInset: true,
-      body: Stack(
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Stack(
         children: [
           Positioned(
             top: 0,
@@ -27,6 +30,7 @@ class LoginView extends GetView<AuthController> {
           ),
           SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            physics: const ClampingScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: screenHeight),
               child: Column(
@@ -76,6 +80,7 @@ class LoginView extends GetView<AuthController> {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -91,21 +96,21 @@ class _LoginCard extends GetView<AuthController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: 'Craving Something\n',
-                  style: AppTextStyles.h3.copyWith(
-                    color: AppColors.lightSurfaceText,
-                  ),
-                ),
-                TextSpan(
-                  text: 'Delicious?',
-                  style: AppTextStyles.h3.copyWith(color: AppColors.primary),
-                ),
-              ],
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Craving Something',
+              maxLines: 1,
+              style: AppTextStyles.h3.copyWith(
+                color: AppColors.lightSurfaceText,
+              ),
             ),
+          ),
+          Text(
+            'Delicious?',
+            maxLines: 1,
+            style: AppTextStyles.h3.copyWith(color: AppColors.primary),
           ),
           const SizedBox(height: AppDimensions.gapLg),
           Row(
@@ -142,12 +147,9 @@ class _LoginCard extends GetView<AuthController> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: AppDimensions.gapSm),
-                Padding(
-                  padding: const EdgeInsets.only(left: AppDimensions.gapSm),
-                  child: Text(
-                    'Phone number invalid',
-                    style: AppTextStyles.pXSmall.copyWith(color: AppColors.error),
-                  ),
+                Text(
+                  'Phone number invalid',
+                  style: AppTextStyles.pXSmall.copyWith(color: AppColors.error),
                 ),
                 const SizedBox(height: AppDimensions.gapMd),
               ],
@@ -155,7 +157,12 @@ class _LoginCard extends GetView<AuthController> {
           }),
           Obx(() => AppButton(
                 label: 'Get OTP',
-                onTap: controller.isPhoneValid.value ? controller.sendOtp : null,
+                onTap: controller.isPhoneValid.value
+                    ? () {
+                        FocusScope.of(context).unfocus();
+                        controller.sendOtp();
+                      }
+                    : null,
                 isLoading: controller.isLoading.value,
                 borderRadius: AppRadius.sm,
               )),
@@ -168,7 +175,6 @@ class _LoginCard extends GetView<AuthController> {
     showCountryPicker(
       context: context,
       showPhoneCode: true,
-      favorite: ['GB'],
       onSelect: (Country country) {
         controller.selectCountry(country.flagEmoji, '+${country.phoneCode}');
       },

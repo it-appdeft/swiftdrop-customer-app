@@ -36,6 +36,9 @@ class AuthRepository {
       return ApiResponse<Map<String, dynamic>>(success: true, message: '', data: data);
     } on DioException catch (e) {
       AppLogger.e('[AUTH] sendOtp FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data} | type: ${e.type}');
+      if (_isNetworkError(e)) {
+        return const ApiResponse<Map<String, dynamic>>(success: false, message: _offlineMessage);
+      }
       final msg = _extractMessage(e);
       if (msg != null) return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
       AppLogger.w('[AUTH] sendOtp — no real API, falling back to local');
@@ -79,6 +82,9 @@ class AuthRepository {
       );
     } on DioException catch (e) {
       AppLogger.e('[AUTH] verifyOtp FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data} | type: ${e.type}');
+      if (_isNetworkError(e)) {
+        return const ApiResponse<Map<String, dynamic>>(success: false, message: _offlineMessage);
+      }
       final msg = _extractMessage(e);
       if (msg != null) {
         return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
@@ -127,6 +133,9 @@ class AuthRepository {
       );
     } on DioException catch (e) {
       AppLogger.e('[AUTH] register FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data} | type: ${e.type}');
+      if (_isNetworkError(e)) {
+        return const ApiResponse<Map<String, dynamic>>(success: false, message: _offlineMessage);
+      }
       final msg = _extractMessage(e);
       if (msg != null) {
         return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
@@ -163,4 +172,13 @@ class AuthRepository {
     } catch (_) {}
     return null;
   }
+
+  bool _isNetworkError(DioException e) =>
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.sendTimeout ||
+      e.type == DioExceptionType.receiveTimeout ||
+      e.type == DioExceptionType.connectionError;
+
+  static const String _offlineMessage =
+      'No internet connection. Please check your network and try again.';
 }

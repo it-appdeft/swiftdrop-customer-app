@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 import '../../data/models/user_model.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../constants/storage_keys.dart';
 import '../network/dio_client.dart';
 import '../utils/app_logger.dart';
@@ -44,6 +45,11 @@ class AuthService extends GetxService {
   }
 
   Future<void> logout() async {
+    try {
+      await AuthRepository().logout();
+    } catch (e) {
+      AppLogger.w('[AUTH] logout API call failed — clearing local state anyway', e);
+    }
     await StorageService.to.clearAuth();
     DioClient.reset();
     currentUser.value = null;

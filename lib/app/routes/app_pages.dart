@@ -14,6 +14,12 @@ import '../modules/checkout/bindings/checkout_binding.dart';
 import '../modules/checkout/views/checkout_view.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
 import '../modules/dashboard/views/dashboard_view.dart';
+import '../modules/edit_profile/bindings/edit_profile_binding.dart';
+import '../modules/edit_profile/views/delete_account_confirmation_view.dart';
+import '../modules/edit_profile/views/delete_account_reason_view.dart';
+import '../modules/edit_profile/views/edit_entry_view.dart';
+import '../modules/edit_profile/views/edit_otp_view.dart';
+import '../modules/edit_profile/views/edit_profile_view.dart';
 import '../modules/notifications/bindings/notifications_binding.dart';
 import '../modules/notifications/views/notifications_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
@@ -121,6 +127,66 @@ class AppPages {
       name: AppRoutes.checkout,
       page: () => const CheckoutView(),
       binding: CheckoutBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.editProfile,
+      page: () => const EditProfileView(),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.changePhone,
+      page: () => const EditEntryView(flow: EditEntryFlow.phone),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.verifyExisting,
+      page: () => const EditOtpView(flow: EditOtpFlow.existing),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.verifyNewPhone,
+      page: () => const EditOtpView(flow: EditOtpFlow.newPhone),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.changeEmail,
+      page: () => const EditEntryView(flow: EditEntryFlow.email),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.verifyEmail,
+      page: () => const EditOtpView(flow: EditOtpFlow.email),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.verifyAccount,
+      page: () => const EditOtpView(flow: EditOtpFlow.account),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.verifyAccountDeletion,
+      page: () => const EditOtpView(flow: EditOtpFlow.deleteAccount),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.deleteAccountReason,
+      page: () => const DeleteAccountReasonView(),
+      binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.deleteAccountConfirmation,
+      page: () => const DeleteAccountConfirmationView(),
+      binding: EditProfileBinding(),
       middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
     ),
   ];

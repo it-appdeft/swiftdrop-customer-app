@@ -81,7 +81,22 @@ class AuthController extends BaseController {
   void selectCountry(String flag, String code) {
     countryFlag.value = flag;
     countryCode.value = code;
+
     phoneController.clear();
+
+    regPhoneController.clear();
+    regPhoneNumber.value = '';
+    regIsPhoneValid.value = false;
+    isPhoneVerified.value = false;
+    regPhoneOtpSent.value = false;
+    regPhoneOtpValues.fillRange(0, AppConstants.otpLength, '');
+    for (final c in regPhoneOtpBoxControllers) {
+      c.clear();
+    }
+    _regPhoneResendCountdown?.cancel();
+    _regPhoneResendCountdown = null;
+    regPhoneResendTimer.value = AppConstants.otpResendTimer;
+    canResendRegPhone.value = false;
   }
 
   String get _fullOtp => otpValues.join();
@@ -261,9 +276,14 @@ class AuthController extends BaseController {
         type: 'signup',
         channel: 'email',
       );
-      if (!result.success) return;
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
+      }
       emailOtpValues.fillRange(0, AppConstants.otpLength, '');
-      for (final c in emailOtpBoxControllers) c.clear();
+      for (final c in emailOtpBoxControllers) {
+        c.clear();
+      }
       emailOtpSent.value = true;
       _startEmailResendTimer();
       final testCode = result.data?['test_code'] as String?;
@@ -322,7 +342,10 @@ class AuthController extends BaseController {
         type: 'signup',
         channel: 'email',
       );
-      if (!result.success) return;
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
+      }
       _startEmailResendTimer();
       final testCode = result.data?['test_code'] as String?;
       if (testCode != null && testCode.isNotEmpty) {
@@ -362,9 +385,14 @@ class AuthController extends BaseController {
         type: 'signup',
         channel: 'phone',
       );
-      if (!result.success) return;
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
+      }
       regPhoneOtpValues.fillRange(0, AppConstants.otpLength, '');
-      for (final c in regPhoneOtpBoxControllers) c.clear();
+      for (final c in regPhoneOtpBoxControllers) {
+        c.clear();
+      }
       regPhoneOtpSent.value = true;
       _startRegPhoneResendTimer();
       final testCode = result.data?['test_code'] as String?;
@@ -425,7 +453,10 @@ class AuthController extends BaseController {
         type: 'signup',
         channel: 'phone',
       );
-      if (!result.success) return;
+      if (!result.success) {
+        if (result.message.isNotEmpty) AppUtils.showError(result.message);
+        return;
+      }
       _startRegPhoneResendTimer();
       final testCode = result.data?['test_code'] as String?;
       if (testCode != null && testCode.isNotEmpty) {
@@ -467,9 +498,13 @@ class AuthController extends BaseController {
     emailOtpSent.value = false;
     regPhoneOtpSent.value = false;
     emailOtpValues.fillRange(0, AppConstants.otpLength, '');
-    for (final c in emailOtpBoxControllers) c.clear();
+    for (final c in emailOtpBoxControllers) {
+      c.clear();
+    }
     regPhoneOtpValues.fillRange(0, AppConstants.otpLength, '');
-    for (final c in regPhoneOtpBoxControllers) c.clear();
+    for (final c in regPhoneOtpBoxControllers) {
+      c.clear();
+    }
     _emailResendCountdown?.cancel();
     _emailResendCountdown = null;
     _regPhoneResendCountdown?.cancel();

@@ -1,3 +1,5 @@
+import '../../app/config/app_config.dart';
+
 class UserModel {
   final String id;
   final String name;
@@ -43,7 +45,7 @@ class UserModel {
       name: json['name'] as String? ?? '',
       phone: (json['mobile'] ?? json['phone'] ?? '') as String,
       email: json['email'] as String?,
-      avatar: (json['profile_photo'] ?? json['avatar']) as String?,
+      avatar: _resolveAvatar(json['profile_photo'] ?? json['avatar']),
       countryCode: json['country_code'] as String?,
       type: json['type'] as String?,
       vehicleType: json['vehicleType'] as String?,
@@ -58,6 +60,19 @@ class UserModel {
           ? DateTime.tryParse(json['created_at'] as String)
           : null,
     );
+  }
+
+  /// Resolves a server-supplied avatar URL. The backend returns either a full
+  /// URL (`https://…`) or a relative `/storage/...` path; the latter is rooted
+  /// at the API host (BASE_URL with its trailing `/api` stripped).
+  static String? _resolveAvatar(dynamic raw) {
+    if (raw is! String || raw.isEmpty) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;
+    final base = AppConfig.baseUrl;
+    if (base.isEmpty) return raw;
+    final host = base.endsWith('/api') ? base.substring(0, base.length - 4) : base;
+    final path = raw.startsWith('/') ? raw : '/$raw';
+    return '$host$path';
   }
 
   Map<String, dynamic> toJson() => {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../themes/app_colors.dart';
-import '../../../themes/app_decorations.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
@@ -14,25 +13,25 @@ class ProfileView extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        title: Text('Profile', style: AppTextStyles.h6),
+        title: Text(
+          'Account',
+          style: AppTextStyles.h6.copyWith(color: AppColors.white),
+        ),
+        centerTitle: true,
         automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: controller.navigateToSettings,
-          ),
-        ],
+        backgroundColor: AppColors.primary,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppDimensions.paddingMd),
         child: Column(
           children: [
-            _ProfileHeader(),
+            const SizedBox(height: AppDimensions.gapSm),
+            _ProfileCard(),
             const SizedBox(height: AppDimensions.gapLg),
-            _MenuSection(),
-            const SizedBox(height: AppDimensions.gapLg),
-            _LogoutButton(),
+            _MenuList(),
             const SizedBox(height: AppDimensions.sp32),
           ],
         ),
@@ -41,58 +40,76 @@ class ProfileView extends GetView<ProfileController> {
   }
 }
 
-class _ProfileHeader extends GetView<ProfileController> {
+// ─── Profile Card ─────────────────────────────────────────────────────────────
+
+class _ProfileCard extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
       final user = controller.user.value;
+      final initial = user?.name.isNotEmpty == true
+          ? user!.name.substring(0, 1).toUpperCase()
+          : 'U';
+
       return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(AppDimensions.paddingXl),
-        color: AppColors.darkSurface,
-        child: Column(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingMd,
+          vertical: AppDimensions.paddingMd,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: AppRadius.lg,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
           children: [
+            // Avatar circle
             Container(
-              width: AppDimensions.avatarXl,
-              height: AppDimensions.avatarXl,
+              width: AppDimensions.avatarMd,
+              height: AppDimensions.avatarMd,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.15),
+                color: AppColors.lightSurfaceBorder,
                 shape: BoxShape.circle,
               ),
-              child: Center(
-                child: Text(
-                  user?.name.substring(0, 1).toUpperCase() ?? 'U',
-                  style: AppTextStyles.h3.copyWith(color: AppColors.primary),
-                ),
-              ),
+              clipBehavior: Clip.antiAlias,
+              child: _AvatarContent(avatar: user?.avatar, initial: initial),
             ),
-            const SizedBox(height: AppDimensions.gapMd),
-            Text(user?.name ?? '', style: AppTextStyles.h6),
-            const SizedBox(height: 4),
-            Text(
-              AppUtils.formatPhoneDisplay(user?.phone ?? ''),
-              style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
-            ),
-            if (user?.email != null) ...[
-              const SizedBox(height: 4),
-              Text(
-                user!.email!,
-                style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary),
-              ),
-            ],
-            const SizedBox(height: AppDimensions.gapMd),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.verified, size: 16, color: AppColors.success),
-                const SizedBox(width: 4),
-                Text(
-                  user?.isVerified == true ? 'Verified account' : 'Unverified',
-                  style: AppTextStyles.pXSmall.copyWith(
-                    color: user?.isVerified == true ? AppColors.success : AppColors.warning,
+            const SizedBox(width: AppDimensions.gapMd),
+            // Name & email
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user?.name ?? '',
+                    style: AppTextStyles.pMediumSemiBold.copyWith(
+                      color: AppColors.lightSurfaceDarkText,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    user?.email ?? AppUtils.formatPhoneDisplay(user?.phone ?? ''),
+                    style: AppTextStyles.pXSmall.copyWith(
+                      color: AppColors.lightSurfaceSubtitle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Edit icon
+            GestureDetector(
+              onTap: controller.navigateToEditProfile,
+              child: Icon(
+                Icons.edit_outlined,
+                color: AppColors.primary,
+                size: AppDimensions.iconSm,
+              ),
             ),
           ],
         ),
@@ -101,89 +118,120 @@ class _ProfileHeader extends GetView<ProfileController> {
   }
 }
 
-class _MenuSection extends StatelessWidget {
+class _AvatarContent extends StatelessWidget {
+  final String? avatar;
+  final String initial;
+
+  const _AvatarContent({required this.avatar, required this.initial});
+
+  Widget _fallback() {
+    return Center(
+      child: Text(
+        initial,
+        style: AppTextStyles.h6.copyWith(color: AppColors.lightSurfaceText),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-      child: Container(
-        decoration: AppDecorations.card,
-        child: Column(
-          children: [
-            _MenuItem(icon: Icons.location_on_outlined, label: 'Saved addresses', onTap: () {}),
-            const Divider(height: 1, color: AppColors.darkBorder),
-            _MenuItem(icon: Icons.payment_outlined, label: 'Payment methods', onTap: () {}),
-            const Divider(height: 1, color: AppColors.darkBorder),
-            _MenuItem(icon: Icons.history, label: 'Order history', onTap: () {}),
-            const Divider(height: 1, color: AppColors.darkBorder),
-            _MenuItem(icon: Icons.headset_mic_outlined, label: 'Help & support', onTap: () {}),
-            const Divider(height: 1, color: AppColors.darkBorder),
-            _MenuItem(icon: Icons.privacy_tip_outlined, label: 'Privacy policy', onTap: () {}),
-          ],
-        ),
-      ),
+    if (avatar == null || avatar!.isEmpty) return _fallback();
+    return Image.network(
+      avatar!,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => _fallback(),
     );
   }
 }
 
-class _MenuItem extends StatelessWidget {
+// ─── Menu List ────────────────────────────────────────────────────────────────
+
+class _MenuList extends GetView<ProfileController> {
+  @override
+  Widget build(BuildContext context) {
+    void comingSoon() => AppUtils.showInfo('Feature coming soon.');
+    final items = [
+      _MenuItemData(icon: Icons.location_on_outlined,   label: 'Saved Address',      onTap: comingSoon),
+      _MenuItemData(icon: Icons.favorite_border_rounded, label: 'Favorites',          onTap: comingSoon),
+      _MenuItemData(icon: Icons.credit_card_outlined,    label: 'Payments',           onTap: comingSoon),
+      _MenuItemData(icon: Icons.settings_outlined,       label: 'Settings',           onTap: controller.navigateToSettings),
+      _MenuItemData(icon: Icons.privacy_tip_outlined,    label: 'Privacy Policy',     onTap: comingSoon),
+      _MenuItemData(icon: Icons.article_outlined,        label: 'Terms & Conditions', onTap: comingSoon),
+      _MenuItemData(icon: Icons.help_outline_rounded,    label: 'Help',               onTap: comingSoon),
+      _MenuItemData(icon: Icons.logout_rounded,          label: 'Logout',             onTap: controller.logout),
+    ];
+
+    return Column(
+      children: items
+          .map((item) => _MenuItemCard(data: item))
+          .toList(),
+    );
+  }
+}
+
+class _MenuItemData {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
-  const _MenuItem({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingMd,
-            vertical: AppDimensions.paddingMd,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: AppDimensions.iconSm, color: AppColors.textSecondary),
-              const SizedBox(width: AppDimensions.gapMd),
-              Expanded(child: Text(label, style: AppTextStyles.pSmall)),
-              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textHint),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  const _MenuItemData({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 }
 
-class _LogoutButton extends GetView<ProfileController> {
+class _MenuItemCard extends StatelessWidget {
+  final _MenuItemData data;
+
+  const _MenuItemCard({required this.data});
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppDimensions.gapSm),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: AppRadius.md,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
       child: Material(
-        color: AppColors.error.withOpacity(0.1),
+        color: AppColors.transparent,
         borderRadius: AppRadius.md,
         child: InkWell(
-          onTap: controller.logout,
+          onTap: data.onTap,
           borderRadius: AppRadius.md,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppDimensions.paddingMd),
-            decoration: BoxDecoration(
-              borderRadius: AppRadius.md,
-              border: Border.all(color: AppColors.error.withOpacity(0.3)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingMd,
+              vertical: AppDimensions.paddingMd,
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.logout, size: AppDimensions.iconSm, color: AppColors.error),
-                const SizedBox(width: AppDimensions.gapSm),
-                Text(
-                  'Sign out',
-                  style: AppTextStyles.pSmallSemiBold.copyWith(color: AppColors.error),
+                Icon(
+                  data.icon,
+                  size: AppDimensions.iconSm,
+                  color: AppColors.lightSurfaceSubtitle,
+                ),
+                const SizedBox(width: AppDimensions.gapMd),
+                Expanded(
+                  child: Text(
+                    data.label,
+                    style: AppTextStyles.pSmall.copyWith(
+                      color: AppColors.lightSurfaceDarkText,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: AppDimensions.iconXs,
+                  color: AppColors.lightSurfaceHint,
                 ),
               ],
             ),

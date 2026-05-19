@@ -46,6 +46,8 @@ export 'app/middleware/connectivity_middleware.dart';
 
 export 'app/widgets/app_button.dart';
 export 'app/widgets/app_loader.dart';
+export 'app/widgets/app_otp_box.dart';
+export 'app/widgets/app_otp_screen.dart';
 export 'app/widgets/app_text_field.dart';
 export 'app/widgets/connectivity_widget.dart';
 export 'app/widgets/empty_state_widget.dart';
@@ -57,6 +59,7 @@ export 'app/widgets/shimmer_widgets.dart';
 export 'app/widgets/status_badge.dart';
 
 export 'data/models/api_response.dart';
+export 'data/models/deletion_reason.dart';
 export 'data/models/notification_model.dart';
 export 'data/models/order_model.dart';
 export 'data/models/transaction_model.dart';
@@ -66,5 +69,7 @@ export 'data/local/app_data.dart';
 
 export 'data/repositories/auth_repository.dart';
 export 'data/repositories/earnings_repository.dart';
+export 'data/repositories/home_repository.dart';
 export 'data/repositories/notification_repository.dart';
 export 'data/repositories/order_repository.dart';
+export 'data/repositories/profile_repository.dart';

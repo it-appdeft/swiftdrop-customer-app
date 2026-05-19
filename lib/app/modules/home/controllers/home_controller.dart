@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../../data/local/app_data.dart';
-import '../../../base/base_controller.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 
 class HomeController extends BaseController {
+  final HomeRepository _repo;
+  HomeController(this._repo);
+
   final searchController = TextEditingController();
   final RxString searchQuery = ''.obs;
   final RxList<Map<String, dynamic>> categories = <Map<String, dynamic>>[].obs;
@@ -17,10 +17,18 @@ class HomeController extends BaseController {
     searchController.addListener(_onSearchChanged);
   }
 
-  void _loadData() {
-    categories.value = AppData.categories;
-    restaurants.value = AppData.featuredRestaurants;
-    filteredRestaurants.value = AppData.featuredRestaurants;
+  Future<void> _loadData() async {
+    await runAsync(() async {
+      final catResult = await _repo.getCategories();
+      if (catResult.success && catResult.data != null) {
+        categories.value = catResult.data!;
+      }
+      final restResult = await _repo.getFeaturedRestaurants();
+      if (restResult.success && restResult.data != null) {
+        restaurants.value = restResult.data!;
+        filteredRestaurants.value = restResult.data!;
+      }
+    });
   }
 
   void _onSearchChanged() {

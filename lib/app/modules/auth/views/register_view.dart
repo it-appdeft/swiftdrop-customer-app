@@ -133,7 +133,10 @@ class RegisterView extends GetView<AuthController> {
                           padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
                           child: GestureDetector(
                             onTap: controller.canResendRegPhone.value
-                                ? controller.resendRegisterPhoneOtp
+                                ? () {
+                                    FocusScope.of(context).unfocus();
+                                    controller.resendRegisterPhoneOtp();
+                                  }
                                 : null,
                             child: controller.canResendRegPhone.value
                                 ? Text(
@@ -167,7 +170,10 @@ class RegisterView extends GetView<AuthController> {
                         padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
                         child: GestureDetector(
                           onTap: controller.regIsPhoneValid.value
-                              ? controller.sendRegisterPhoneOtp
+                              ? () {
+                                  FocusScope.of(context).unfocus();
+                                  controller.sendRegisterPhoneOtp();
+                                }
                               : null,
                           child: Text(
                             'Get OTP',
@@ -203,7 +209,10 @@ class RegisterView extends GetView<AuthController> {
                     label: 'Register',
                     onTap: (controller.isEmailVerified.value &&
                             controller.isPhoneVerified.value)
-                        ? controller.submitRegister
+                        ? () {
+                            FocusScope.of(context).unfocus();
+                            controller.submitRegister();
+                          }
                         : null,
                     isLoading: controller.isLoading.value,
                     borderRadius: AppRadius.sm,
@@ -245,7 +254,6 @@ class RegisterView extends GetView<AuthController> {
     showCountryPicker(
       context: context,
       showPhoneCode: true,
-      favorite: ['GB'],
       onSelect: (Country country) {
         controller.selectCountry(country.flagEmoji, '+${country.phoneCode}');
       },
@@ -305,28 +313,36 @@ class _NameField extends GetView<AuthController> {
     return Container(
       height: AppDimensions.inputHeight,
       decoration: AppDecorations.lightInput,
-      child: TextField(
-        controller: controller.nameController,
-        keyboardType: TextInputType.name,
-        textCapitalization: TextCapitalization.words,
-        textInputAction: TextInputAction.next,
-        style: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceText),
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.transparent,
-          hintText: 'Enter Your Full Name',
-          hintStyle: AppTextStyles.pSmall.copyWith(
-            color: AppColors.lightSurfaceSubtitle,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller.nameController,
+              keyboardType: TextInputType.name,
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              textAlignVertical: TextAlignVertical.center,
+              style: AppTextStyles.pSmall.copyWith(
+                color: AppColors.lightSurfaceText,
+              ),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.transparent,
+                hintText: 'Enter Your Full Name',
+                hintStyle: AppTextStyles.pSmall.copyWith(
+                  color: AppColors.lightSurfaceSubtitle,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                isCollapsed: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AppDimensions.paddingXs,
+                ),
+              ),
+            ),
           ),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          isCollapsed: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingSm,
-            vertical: AppDimensions.gapMd,
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -345,6 +361,7 @@ class _EmailFieldRow extends GetView<AuthController> {
               controller: controller.emailController,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.done,
+              textAlignVertical: TextAlignVertical.center,
               style: AppTextStyles.pSmall.copyWith(
                 color: AppColors.lightSurfaceText,
               ),
@@ -360,8 +377,7 @@ class _EmailFieldRow extends GetView<AuthController> {
                 focusedBorder: InputBorder.none,
                 isCollapsed: true,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.gapMd,
+                  horizontal: AppDimensions.paddingXs,
                 ),
               ),
             ),
@@ -394,7 +410,10 @@ class _EmailFieldRow extends GetView<AuthController> {
                 padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
                 child: GestureDetector(
                   onTap: controller.canResendEmail.value
-                      ? controller.resendEmailOtp
+                      ? () {
+                          FocusScope.of(context).unfocus();
+                          controller.resendEmailOtp();
+                        }
                       : null,
                   child: controller.canResendEmail.value
                       ? Text(
@@ -434,10 +453,13 @@ class _EmailFieldRow extends GetView<AuthController> {
               padding: const EdgeInsets.only(right: AppDimensions.paddingXs),
               child: GestureDetector(
                 onTap: controller.isEmailValid.value
-                    ? controller.sendEmailOtp
+                    ? () {
+                        FocusScope.of(context).unfocus();
+                        controller.sendEmailOtp();
+                      }
                     : null,
                 child: Text(
-                  'VERIFY',
+                  'Get OTP',
                   style: AppTextStyles.pXSmallSemiBold.copyWith(
                     color: controller.isEmailValid.value
                         ? AppColors.primary
@@ -511,14 +533,18 @@ class _InlineOtpPanel extends StatelessWidget {
                     onTap: () => otpFocusNodes[target].requestFocus(),
                     child: AbsorbPointer(
                       absorbing: i != target,
-                      child: _OtpBox(
+                      child: AppOtpBox(
                         controller: otpBoxControllers[i],
                         focusNode: otpFocusNodes[i],
                         onChanged: (value) {
                           onDigitChanged(i, value);
-                          if (value.isNotEmpty && i < AppConstants.otpLength - 1) {
+                          if (value.isNotEmpty &&
+                              i < AppConstants.otpLength - 1) {
                             otpFocusNodes[i + 1].requestFocus();
-                          } else if (value.isEmpty && i > 0) {
+                          }
+                        },
+                        onBackspaceOnEmpty: () {
+                          if (i > 0) {
                             otpFocusNodes[i - 1].requestFocus();
                           }
                         },
@@ -542,7 +568,12 @@ class _InlineOtpPanel extends StatelessWidget {
                   const AppInlineLoader()
                 else
                   GestureDetector(
-                    onTap: allFilled ? onVerify : null,
+                    onTap: allFilled
+                        ? () {
+                            FocusScope.of(context).unfocus();
+                            onVerify();
+                          }
+                        : null,
                     child: Text(
                       'VERIFY',
                       style: AppTextStyles.pXSmallSemiBold.copyWith(
@@ -559,54 +590,4 @@ class _InlineOtpPanel extends StatelessWidget {
   }
 }
 
-class _OtpBox extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final ValueChanged<String> onChanged;
-
-  const _OtpBox({
-    required this.controller,
-    required this.focusNode,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([controller, focusNode]),
-      builder: (_, _) {
-        final isFocused = focusNode.hasFocus;
-        final hasContent = controller.text.isNotEmpty;
-        return Container(
-          width: AppDimensions.otpBoxSize,
-          height: AppDimensions.otpBoxSize,
-          decoration: (isFocused || hasContent)
-              ? AppDecorations.lightOtpBoxFocused
-              : AppDecorations.lightOtpBox,
-          child: TextField(
-            controller: controller,
-            focusNode: focusNode,
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
-            maxLength: 1,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: AppTextStyles.pMedium.copyWith(
-              color: AppColors.lightInputText,
-            ),
-            onChanged: onChanged,
-            decoration: const InputDecoration(
-              counterText: '',
-              contentPadding: EdgeInsets.zero,
-              filled: true,
-              fillColor: AppColors.transparent,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
 

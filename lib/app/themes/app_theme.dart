@@ -76,8 +76,8 @@ class AppTheme {
           filled: true,
           fillColor: AppColors.darkInputBg,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingMd,
-            vertical: AppDimensions.paddingMd,
+            horizontal: AppDimensions.paddingSm,
+            vertical: AppDimensions.paddingSm,
           ),
           border: OutlineInputBorder(
             borderRadius: AppRadius.md,

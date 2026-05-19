@@ -11,6 +11,11 @@ class ApiEndpoints {
   static const String updateProfile = '/user/profile/update';
   static const String updateAvatar = '/user/profile/avatar';
 
+  static const String customerProfile = '/customer/profile';
+  static const String customerProfileDeleteInitiate =
+      '/customer/profile/delete/initiate';
+  static const String deletionReasons = '/deletion-reasons';
+
   static const String activeOrders = '/user/orders/active';
   static const String orderHistory = '/user/orders/history';
   static const String orderDetail = '/user/orders';

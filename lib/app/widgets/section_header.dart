@@ -6,12 +6,14 @@ class SectionHeader extends StatelessWidget {
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final Color? titleColor;
 
   const SectionHeader({
     super.key,
     required this.title,
     this.actionLabel,
     this.onAction,
+    this.titleColor,
   });
 
   @override
@@ -19,7 +21,7 @@ class SectionHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: AppTextStyles.pMediumBold),
+        Text(title, style: AppTextStyles.pMediumBold.copyWith(color: titleColor)),
         if (actionLabel != null && onAction != null)
           GestureDetector(
             onTap: onAction,

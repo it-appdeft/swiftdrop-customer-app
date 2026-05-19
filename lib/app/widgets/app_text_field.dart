@@ -95,6 +95,7 @@ class AppPhoneField extends StatelessWidget {
   final VoidCallback? onCountryTap;
   final bool isLightSurface;
   final Widget? suffixAction;
+  final bool readOnly;
 
   const AppPhoneField({
     super.key,
@@ -107,6 +108,7 @@ class AppPhoneField extends StatelessWidget {
     this.onCountryTap,
     this.isLightSurface = false,
     this.suffixAction,
+    this.readOnly = false,
   });
 
   @override
@@ -129,7 +131,7 @@ class AppPhoneField extends StatelessWidget {
                     countryCode,
                     style: AppTextStyles.pSmall.copyWith(
                       color: isLightSurface
-                          ? AppColors.lightSurfaceSubtitle
+                          ? AppColors.lightSurfaceText
                           : AppColors.textSecondary,
                     ),
                   ),
@@ -138,7 +140,7 @@ class AppPhoneField extends StatelessWidget {
                     Icons.keyboard_arrow_down_rounded,
                     size: AppDimensions.iconSm,
                     color: isLightSurface
-                        ? AppColors.lightSurfaceSubtitle
+                        ? AppColors.lightSurfaceText
                         : AppColors.textSecondary,
                   ),
                 ],
@@ -154,8 +156,10 @@ class AppPhoneField extends StatelessWidget {
             child: TextField(
               controller: controller,
               focusNode: focusNode,
+              readOnly: readOnly,
               keyboardType: TextInputType.phone,
               textInputAction: textInputAction,
+              textAlignVertical: TextAlignVertical.center,
               onChanged: onChanged,
               maxLength: 11,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -179,8 +183,7 @@ class AppPhoneField extends StatelessWidget {
                 counterText: '',
                 isCollapsed: true,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingSm,
-                  vertical: AppDimensions.gapMd,
+                  horizontal: AppDimensions.paddingXs,
                 ),
               ),
             ),
