@@ -299,7 +299,7 @@ class _NameField extends GetView<EditProfileController> {
             ),
           ),
         ],
-      ),
+       ),
     );
   }
 }
