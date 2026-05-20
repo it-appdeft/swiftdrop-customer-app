@@ -45,6 +45,7 @@ dependencies:
   intl: ^0.19.0
   google_fonts: ^6.2.1
   country_picker: ^2.0.27
+  image_picker: ^1.0.7
   cupertino_icons: ^1.0.8
 ```
 
@@ -53,6 +54,7 @@ State: GetX `^4.6.6`
 Storage: GetStorage (local, persistent, no SQLite)
 HTTP: Dio with 3 interceptors (auth, logging, retry)
 Maps: google_maps_flutter
+Avatar: image_picker (used in edit_profile for camera/gallery selection)
 
 ---
 
@@ -72,8 +74,7 @@ lib/
 │   │   └── storage_keys.dart
 │   ├── middleware/
 │   │   ├── auth_middleware.dart
-│   │   ├── connectivity_middleware.dart
-│   │   └── notification_middleware.dart
+│   │   └── connectivity_middleware.dart
 │   ├── modules/                         ← feature modules, each has bindings/controllers/views
 │   │   ├── splash/
 │   │   ├── onboarding/
@@ -88,6 +89,7 @@ lib/
 │   │   ├── notifications/
 │   │   ├── profile/
 │   │   ├── settings/
+│   │   └── edit_profile/                ← name/phone/email change + account deletion flow
 │   ├── network/
 │   │   ├── interceptors/
 │   │   │   ├── auth_interceptor.dart
@@ -118,6 +120,8 @@ lib/
 │   └── widgets/                         ← shared UI components
 │       ├── app_button.dart
 │       ├── app_loader.dart
+│       ├── app_otp_box.dart             ← single OTP digit input box
+│       ├── app_otp_screen.dart          ← full OTP screen with resend timer
 │       ├── app_text_field.dart
 │       ├── connectivity_widget.dart
 │       ├── empty_state_widget.dart
@@ -132,15 +136,18 @@ lib/
 │   │   └── app_data.dart                ← class AppData, all fallback data
 │   ├── models/
 │   │   ├── api_response.dart
+│   │   ├── deletion_reason.dart         ← account deletion reason model
 │   │   ├── user_model.dart
 │   │   ├── order_model.dart
 │   │   ├── transaction_model.dart
 │   │   └── notification_model.dart
 │   └── repositories/                    ← all have try/catch fallback to AppData
 │       ├── auth_repository.dart
+│       ├── home_repository.dart
 │       ├── order_repository.dart
 │       ├── earnings_repository.dart
-│       └── notification_repository.dart
+│       ├── notification_repository.dart
+│       └── profile_repository.dart
 ├── export.dart                           ← barrel file, imported by main.dart
 └── main.dart
 ```
@@ -186,7 +193,7 @@ white       = Color(0xFFFFFFFF)
 offWhite    = Color(0xFFF6F8FA)
 buttonLabel = Color(0xFFFEFEFD)   ← used for button text (not pure white)
 
-// Light-surface — used on auth screens (login, OTP, register — white background)
+// Light-surface — used on auth screens AND edit_profile (white background)
 lightSurfaceDarkText  = Color(0xFF0B243A)
 lightSurfaceText      = Color(0xFF071623)
 lightSurfaceVerified  = Color(0xFF10744B)
@@ -201,7 +208,38 @@ lightOtpBoxBg         = Color(0xFFEDEEF1)   ← OTP box empty state
 lightOtpFocusBorder   = Color(0xFF198754)   ← OTP box focused/filled border
 ```
 
-**Auth screens use a white/light surface design** (not dark theme). All `auth/` views set `backgroundColor: AppColors.white` and use `lightSurface*` colors. The dark `otpBox`/`otpBoxFocused` decorations in `AppDecorations` are reserved for post-auth screens.
+**Auth screens and edit_profile screens use a white/light surface design** (not dark theme). All `auth/` and `edit_profile/` views set `backgroundColor: AppColors.white` and use `lightSurface*` colors. The dark `otpBox`/`otpBoxFocused` decorations in `AppDecorations` are reserved for post-auth dark screens.
+
+### AppDecorations (`lib/app/themes/app_decorations.dart`)
+```dart
+// Dark variants (post-auth screens)
+card              ← darkSurface + darkBorder
+cardElevated      ← darkSurfaceElevated + shadow
+input             ← darkInputBg + darkBorder
+inputFocused      ← darkInputBg + primary border 1.5px
+surface           ← darkSurface + darkBorder
+primaryButton     ← primary fill + primary shadow
+bottomSheet       ← darkSurface + topLg radius
+otpBox            ← dark variant, reserved for post-auth
+otpBoxFocused     ← dark variant, reserved for post-auth
+
+// Light variants (auth + edit_profile screens)
+lightInput           ← white fill + lightSurfaceBorder
+lightCard            ← white fill + lightSurfaceBorder + shadow
+lightOtpBox          ← lightOtpBoxBg fill, no border
+lightOtpBoxFocused   ← white fill + lightOtpFocusBorder 1.5px
+lightOtpBoxInactive  ← lightOtpBoxBg fill + lightSurfaceDisabled border
+```
+
+### AppShadows (`lib/app/themes/app_shadows.dart`)
+```dart
+sm      ← 4px blur, subtle
+md      ← 8px blur
+lg      ← 16px blur
+card    ← 8px blur, used on cards
+xl      ← 24px soft shadow, used on light-surface cards
+primary ← 12px colored shadow (primary color tint)
+```
 
 ### Typography (`lib/app/themes/app_text_styles.dart`)
 Font: **Inter** (Google Fonts). All styles via `GoogleFonts.inter(...)`.
@@ -297,8 +335,9 @@ settingPromotions       = 'setting_promotions'
 - `clearAuth()`: removes token + refreshToken + userData.
 
 ### AuthService
+- `currentUser` (Rx<UserModel?>) — reactive, kept in sync with session
 - `isAuthenticated` → `StorageService.to.isLoggedIn`
-- `saveSession(accessToken, refreshToken, user)` → saves to storage, updates `currentUser`
+- `saveSession(accessToken, refreshToken?, user)` → saves to storage, updates `currentUser`
 - `logout()` → clears storage, resets DioClient, sets currentUser=null
 
 ### ConnectivityService
@@ -308,6 +347,7 @@ settingPromotions       = 'setting_promotions'
 ### NotificationService
 - Firebase optional. `onInit()` checks `Firebase.apps.isEmpty` first — returns silently if Firebase not configured.
 - ENTIRE setup wrapped in try/catch. Logs warning on failure, never crashes.
+- Android notification channel ID: `'swiftdrop_channel'`
 
 ---
 
@@ -317,7 +357,13 @@ settingPromotions       = 'setting_promotions'
 - Singleton `DioClient.instance` (Dio object)
 - Base URL from `.env` → `AppConfig.baseUrl`
 - Interceptors: `AuthInterceptor` (injects token), `LoggingInterceptor`, `RetryInterceptor`
+- Auth header: `'Authorization': 'Bearer $token'`. On 401, redirects to `/login`.
+- Adds `ngrok-skip-browser-warning` header when `AppConfig.isNgrok` is true.
 - `DioClient.reset()` called on logout
+
+### RetryInterceptor
+- Max 2 retries. Retries on: connection timeout, receive timeout, connection error.
+- Does NOT retry on auth errors (4xx).
 
 ### Repository pattern
 Every repository method wraps HTTP call in try/catch. On any error, returns `AppData` fallback:
@@ -333,12 +379,36 @@ Future<ApiResponse<T>> someMethod() async {
 ```
 `message` is always `''` (empty string) in fallback — never `'demo'` or `'mock'`.
 
-### API Endpoints (driver-side, for reference — user-side will differ)
+### API Endpoints (`lib/app/network/api_endpoints.dart`)
 ```
-/auth/send-otp          /auth/verify-otp        /auth/refresh-token     /auth/logout
-/driver/profile         /driver/orders/active   /driver/orders/history
-/driver/orders/accept   /driver/orders/reject   /driver/orders/status
-/driver/earnings/summary /driver/transactions   /driver/notifications
+// Auth
+/auth/send-otp            /auth/verify-otp          /auth/refresh-token
+/auth/logout              /auth/register/customer
+
+// User profile
+/user/profile             /user/profile/update       /user/profile/avatar
+
+// Customer-specific
+/customer/profile                           /customer/profile/delete/initiate
+/customer/profile/delete/reasons
+
+// Orders
+/customer/orders/active   /customer/orders/history   /customer/orders/:id
+/customer/orders/place    /customer/orders/:id/cancel
+
+// Wallet
+/customer/wallet/balance  /customer/wallet/transactions
+/customer/wallet/add-funds  /customer/wallet/withdraw
+
+// Notifications
+/customer/notifications   /customer/notifications/:id/read
+
+// Addresses
+/customer/addresses       /customer/addresses/add    /customer/addresses/:id/delete
+
+// Restaurants & categories
+/restaurants              /restaurants/:id           /categories
+/restaurants/search
 ```
 
 ---
@@ -394,9 +464,67 @@ abstract class BaseController extends GetxController {
     bool showLoadingIndicator = true,
     bool handleErrors = true,
   }) async { ... }
+
+  void clearError()
 }
 ```
 Use `runAsync()` for all async operations in controllers.
+
+---
+
+## UTILITIES
+
+### AppUtils (`lib/app/utils/app_utils.dart`)
+```dart
+AppUtils.formatCurrency(amount, symbol: '£')    // → "£24.50"
+AppUtils.isValidPhone(phone)                    // UK: ^07\d{9}$
+AppUtils.isValidEmail(email)                    // regex validation
+AppUtils.formatPhoneDisplay(raw)               // "07700900001" → "+44 7700900001"
+
+// Snackbars (use these, never Get.snackbar directly)
+AppUtils.showError(message)
+AppUtils.showSuccess(message)
+AppUtils.showWarning(message)
+AppUtils.showInfo(message)
+
+// Dialogs / sheets
+AppUtils.showBottomSheet(child, isDismissible: true)
+AppUtils.showConfirmDialog(title, message, confirmText, cancelText)
+
+// Relative time formatting
+AppUtils.timeAgo(dateTime)   // → "Just now", "5m ago", "2h ago", "3d ago"
+```
+
+### Responsive (`lib/app/utils/responsive.dart`)
+GetX-based, no BuildContext required for `wp`/`hp`:
+```dart
+Responsive.width        // screen width
+Responsive.height       // screen height
+Responsive.hp(percent)  // % of screen height
+Responsive.wp(percent)  // % of screen width
+Responsive.sp(size)     // scaled font size (baseline 375px)
+Responsive.statusBarHeight
+Responsive.bottomSafeArea
+
+// Breakpoints
+Responsive.isSmallPhone   // width < 360
+Responsive.isPhone        // width < 600
+Responsive.isTablet       // width >= 600
+
+// Context variants (inside build())
+Responsive.hpc(context, percent)
+Responsive.wpc(context, percent)
+Responsive.clamp(value, min, max)
+```
+
+### AppLogger (`lib/app/utils/app_logger.dart`)
+```dart
+AppLogger.d(message)   // debug
+AppLogger.i(message)   // info
+AppLogger.w(message)   // warning
+AppLogger.e(message)   // error
+```
+Uses `logger` package with pretty-printer. Never use `print()`.
 
 ---
 
@@ -420,12 +548,25 @@ profile             = '/profile'
 settings            = '/settings'
 cart                = '/cart'
 checkout            = '/checkout'
+
+// edit_profile sub-routes (all require auth)
+editProfile              = '/edit-profile'
+changePhone              = '/edit-profile/change-phone'
+verifyExisting           = '/edit-profile/verify-existing'
+verifyNewPhone           = '/edit-profile/verify-new-phone'
+changeEmail              = '/edit-profile/change-email'
+verifyEmail              = '/edit-profile/verify-email'
+verifyAccount            = '/edit-profile/verify-account'
+verifyAccountDeletion    = '/edit-profile/verify-account-deletion'
+deleteAccountReason      = '/edit-profile/delete-account'
+deleteAccountConfirmation= '/edit-profile/delete-account-confirmation'
 ```
 
 ### AppPages rules
 - `splash`: **no middleware**. SplashBinding MUST use `Get.put` (not lazyPut).
 - `onboarding`, `login`, `otp`, `register`, `registerSteps`, `verificationPending`: **no middleware**.
 - `dashboard` and all post-auth routes (`orderTracking`, `orderHistory`, `wallet`, `notifications`, `profile`, `settings`, `cart`, `checkout`): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
+- All `edit_profile` routes (`editProfile`, `changePhone`, `verifyExisting`, `verifyNewPhone`, `changeEmail`, `verifyEmail`, `verifyAccount`, `verifyAccountDeletion`, `deleteAccountReason`, `deleteAccountConfirmation`): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
 - `ConnectivityMiddleware`: shows warning snackbar only, returns null (no hard redirect).
 - `AuthMiddleware`: redirects to `/login` if not authenticated.
 
@@ -435,27 +576,48 @@ checkout            = '/checkout'
 
 ### UserModel (fields)
 ```
-id, name, phone, email?, avatar?, vehicleType?, vehicleNumber?,
+id, name, phone, email?, avatar?, countryCode?,
+type?,                     ← 'customer' for this app
+vehicleType?, vehicleNumber?,   ← kept for shared model compat, not used in user app
 rating?, totalDeliveries, isActive, isVerified, isOnline, walletBalance, createdAt?
 ```
-- For User App: `vehicleType`/`vehicleNumber` not relevant but keep field for shared model compat.
 
 ### OrderModel (key fields)
 ```
-id, orderNumber, status, pickupAddress, deliveryAddress, items,
+id, orderNumber, status, pickupAddress, deliveryAddress, items (List<OrderItem>),
 totalAmount(£), deliveryFee(£), driverTip(£), distance, estimatedTime,
 createdAt, acceptedAt, pickedUpAt, deliveredAt
+
+// Computed getters
+isPending, isAccepted, isPickedUp, isDelivered, isCancelled, isActive
 ```
 Status values: `'pending'`, `'accepted'`, `'picked_up'`, `'delivered'`, `'cancelled'`
+
+### OrderItem (fields)
+```
+name, quantity, price(£)
+```
 
 ### TransactionModel (key fields)
 ```
 id, type ('credit'/'debit'), amount(£), description, createdAt, status
+
+// Computed getters
+isCredit, isDebit
 ```
 
 ### NotificationModel (key fields)
 ```
 id, title, body, type, data(Map), isRead, createdAt
+
+// Methods
+copyWith(...)   ← used to mark as read
+```
+
+### DeletionReason (fields)
+```
+id, reason
+// fromJson handles id as int or String, and flexible reason field names
 ```
 
 ### ApiResponse<T>
@@ -465,6 +627,8 @@ class ApiResponse<T> {
   final String message;
   final T? data;
   final int? statusCode;
+  // Factory: fromJson with custom parser function
+  // copyWith method
 }
 ```
 
@@ -492,6 +656,123 @@ UK data: London addresses (EC1V, EC1M, WC2A, E20, E14, WC2H postcodes), UK names
 
 ---
 
+## SHARED WIDGETS (`lib/app/widgets/`)
+
+| Widget | Purpose |
+|--------|---------|
+| `AppButton` | Primary/outlined button with loading state, customizable colors/size |
+| `AppLoader` | Centered circular progress indicator (40px default) |
+| `AppInlineLoader` | Inline spinner for use inside badges or buttons |
+| `AppTextField` | Themed text input with validation, icon support, formatters |
+| `AppOtpBox` | Single OTP digit input box with focus/backspace handling |
+| `AppOtpScreen` | Full reusable OTP screen with resend countdown timer, configurable subtitle and button builders |
+| `ConnectivityWidget` | Shows red offline banner when not connected |
+| `EmptyStateWidget` | Centered icon + message + optional action button |
+| `ErrorStateWidget` | Error icon + message + retry button |
+| `InfoRow` | Label/value pair row with optional divider |
+| `PaginationList<T>` | ListView with infinite scroll load-more callback |
+| `SectionHeader` | Title row with optional action link |
+| `ShimmerBox` | Skeleton loader with shimmer animation |
+| `StatusBadge` | Colored pill for order status (pending/accepted/delivered/cancelled) |
+
+`AppOtpScreen` is a reusable screen used in both auth (login OTP) and edit_profile (verify phone/email OTP). It accepts builder callbacks for the subtitle and action button so each use-case can customize the copy without duplicating the layout.
+
+---
+
+## MODULE CONTROLLER STATE REFERENCE
+
+| Module | Key Rx Fields |
+|--------|--------------|
+| `AuthController` | `phoneNumber`, `isPhoneValid`, `countryCode`, `countryFlag`, `otpValues[]`, `resendTimer`, `canResend`, loading flags per OTP type |
+| `DashboardController` | `currentIndex` (bottom nav tab) |
+| `HomeController` | `searchQuery`, `categories[]`, `restaurants[]`, `filteredRestaurants[]` |
+| `CartController` | `items` (List<CartItem>), `deliveryFee`; methods: `addItem`, `removeItem`, `decrementItem`, `clearCart`, `proceedToCheckout` |
+| `CheckoutController` | `selectedPayment`, `deliveryAddress` |
+| `WalletController` | `balance`, `transactions[]`, `hasMore`, page counter; methods: `loadTransactions`, `loadMore`, `addFunds` |
+| `NotificationsController` | `notifications[]`, `unreadCount`; methods: `loadNotifications`, `markAsRead`, `markAllAsRead` |
+| `OrderHistoryController` | `activeOrders[]`, `historyOrders[]`, `hasMoreHistory`; methods: `loadOrders`, `loadMoreHistory` |
+| `OrderTrackingController` | `order` (Rx<OrderModel?>); loads via route param `orderId` |
+| `ProfileController` | `user` (Rx<UserModel?>), `isLoggingOut`; syncs with `AuthService.currentUser` |
+| `SettingsController` | `pushNotifications`, `orderUpdates`, `promotions` (RxBool); persisted to StorageService |
+| `EditProfileController` | See edit_profile section below |
+
+### CartItem (local class in CartController)
+```dart
+class CartItem {
+  final String id, name;
+  final double price;
+  int quantity;
+}
+```
+
+---
+
+## EDIT_PROFILE MODULE (`lib/app/modules/edit_profile/`)
+
+Complete flow for updating user profile, changing phone/email, and deleting account.
+
+### Views and enums
+```dart
+// Main editor — name, phone, email, avatar
+EditProfileView
+
+// Entry view for initiating phone or email change
+EditEntryView
+enum EditEntryFlow { phone, email }
+
+// OTP verification screen (reuses AppOtpScreen widget)
+EditOtpView
+enum EditOtpFlow { existing, newPhone, email, account, deleteAccount }
+
+// Account deletion screens
+DeleteAccountReasonView       // reason picker + optional feedback text
+DeleteAccountConfirmationView // final confirmation before delete
+```
+
+### EditProfileController Rx state
+```dart
+// Current user (synced from AuthService)
+Rx<UserModel?> currentUser
+
+// Name
+TextEditingController nameController
+RxBool isNameDirty
+
+// Avatar
+RxString selectedAvatarPath   // local file path after ImagePicker pick
+
+// Phone change flow
+RxString countryCode, newPhoneNumber
+RxBool isNewPhoneValid
+
+// Email change flow
+RxString newEmail
+RxBool isNewEmailValid
+
+// 3 independent OTP buckets (existing phone / new phone / email)
+// each has its own resend timer and canResend flag
+
+// Deletion flow
+RxString deletionTarget       // masked phone shown in deletion OTP screen
+RxList<DeletionReason> deletionReasons
+Rx<DeletionReason?> selectedReason
+TextEditingController deletionFeedbackController
+
+// Granular loading flags (one per async action, never share isLoading)
+RxBool isSavingName, isSavingAvatar, isSendingExistingOtp,
+       isSendingNewPhoneOtp, isSendingEmailOtp, isVerifyingOtp,
+       isDeletingAccount
+```
+
+### edit_profile flow summary
+1. **EditProfileView** — user edits name (saved inline), taps phone/email row to start change flow
+2. **Change phone**: `changePhone` → `verifyExisting` (OTP for current phone) → `verifyNewPhone` (OTP for new number)
+3. **Change email**: `changeEmail` → `verifyEmail` (OTP to new email address)
+4. **Delete account**: `verifyAccount` → `verifyAccountDeletion` (OTP) → `deleteAccountReason` → `deleteAccountConfirmation`
+5. Avatar change: `ImagePicker` opens camera/gallery; local path stored in `selectedAvatarPath`; upload on save
+
+---
+
 ## .env FILE
 ```
 BASE_URL=https://api.swiftdrop.com
@@ -503,6 +784,8 @@ IS_DEBUG=true
 API_TIMEOUT=30
 ```
 No DEMO_MODE key.
+
+`AppConfig` reads: `baseUrl`, `socketUrl`, `googleMapsApiKey`, `firebaseWebApiKey`, `appName`, `isDebug`, `apiTimeout`. Also exposes `isNgrok` getter (true when baseUrl contains "ngrok").
 
 ---
 
@@ -563,7 +846,6 @@ class FeatureController extends BaseController {
   final FeatureRepository _repo;
   FeatureController(this._repo);
 
-  // Rx state
   final items = <ItemModel>[].obs;
 
   @override
@@ -634,6 +916,7 @@ Every view that handles these must follow:
 | — | cart (items, quantities, checkout) |
 | — | checkout (address, payment, place order) |
 | — | restaurants/shops list |
+| — | edit_profile (name/phone/email change, account deletion) |
 
 ---
 
@@ -677,6 +960,9 @@ Get.put<SplashController>(SplashController());
 Access token: `'sd_access_token'`
 Refresh token: `'sd_refresh_token'`
 
+### Granular loading flags (edit_profile pattern)
+When a screen has multiple independent async actions, use one `RxBool` per action instead of sharing `isLoading`. This prevents one action's spinner from blocking unrelated UI.
+
 ---
 
 ## EXPORT BARREL (`lib/export.dart`)
@@ -698,3 +984,4 @@ Any new file must be added to export.dart.
 - Do NOT create new `StatefulWidget`s when GetX controller state works
 - Do NOT use `Get.lazyPut` for SplashController — it will never instantiate
 - Do NOT wrap non-Rx values in `Obx` — use `Builder` instead
+- Do NOT share a single `isLoading` flag across multiple independent async actions — use granular per-action flags
