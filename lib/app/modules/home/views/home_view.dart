@@ -1,65 +1,7 @@
 import 'package:swiftdrop_customer_app/export.dart';
+import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
 import '../controllers/home_controller.dart';
-
-// gradient pairs indexed by AppData.categories order
-const List<List<Color>> _catGradients = [
-  [Color(0xFFFF6B35), Color(0xFFCC3300)],
-  [Color(0xFF2563EB), Color(0xFF1741B0)],
-  [Color(0xFF06B6D4), Color(0xFF0369A1)],
-  [Color(0xFF9333EA), Color(0xFF6B21A8)],
-  [Color(0xFFF59E0B), Color(0xFFB45309)],
-  [Color(0xFF22C55E), Color(0xFF15803D)],
-  [Color(0xFFEC4899), Color(0xFFBE185D)],
-  [Color(0xFF92400E), Color(0xFF57300A)],
-];
-
-// gradient pairs indexed by AppData.featuredRestaurants order
-const List<List<Color>> _restGradients = [
-  [Color(0xFF7A3F15), Color(0xFF3D1F0A)],
-  [Color(0xFF153F7A), Color(0xFF0A1F3D)],
-  [Color(0xFF154D2C), Color(0xFF0A2A1A)],
-  [Color(0xFF3F154D), Color(0xFF1F0A2A)],
-  [Color(0xFF4D1519), Color(0xFF2A0A0D)],
-];
-
-const List<List<Color>> _cuisineGradients = [
-  [Color(0xFF3A803E), Color(0xFF1F4A22)],
-  [Color(0xFF1C6B7A), Color(0xFF0E3A42)],
-  [Color(0xFF8B3A3A), Color(0xFF4A1F1F)],
-  [Color(0xFF7A3A1C), Color(0xFF421F0E)],
-  [Color(0xFF7A1C4D), Color(0xFF420E2A)],
-  [Color(0xFF6B3A7A), Color(0xFF3A1F42)],
-];
-
-const List<Map<String, String>> _cuisines = [
-  {'name': 'Italian', 'emoji': '🍝'},
-  {'name': 'Asian', 'emoji': '🍜'},
-  {'name': 'Mexican', 'emoji': '🌮'},
-  {'name': 'Chinese', 'emoji': '🥡'},
-  {'name': 'Indian', 'emoji': '🍛'},
-  {'name': 'Thai', 'emoji': '🥘'},
-];
-
-String _emojiForCategory(String category) {
-  switch (category.toLowerCase()) {
-    case 'burgers':
-      return '🍔';
-    case 'asian':
-      return '🍜';
-    case 'sandwiches & coffee':
-      return '☕';
-    case 'indian':
-      return '🍛';
-    case 'chicken':
-      return '🍗';
-    case 'pizza':
-      return '🍕';
-    case 'sushi':
-      return '🍣';
-    default:
-      return '🍽️';
-  }
-}
 
 class HomeView extends GetView<HomeController> {
   const HomeView({super.key});
@@ -67,25 +9,34 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: AppColors.buttonLabel,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
             SliverToBoxAdapter(child: _LocationBar()),
             SliverToBoxAdapter(child: _SearchBar()),
-            SliverToBoxAdapter(child: _CategoriesSection()),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: _CategoriesSection(),
+              ),
+            ),
             SliverToBoxAdapter(child: _TopPicksSection()),
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
             SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
             SliverToBoxAdapter(child: _PromoBannerSection()),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.paddingMd,
-                  AppDimensions.gapXl,
-                  AppDimensions.paddingMd,
-                  AppDimensions.gapMd,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: SectionHeader(
+                  title: 'All Restaurants',
+                  style: const TextStyle(
+                    fontFamily: 'Helvetica Neue',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.lightSurfaceDarkText,
+                  ),
                 ),
-                child: SectionHeader(title: 'All Restaurants', titleColor: AppColors.lightSurfaceDarkText),
               ),
             ),
             _AllRestaurantsList(),
@@ -102,20 +53,23 @@ class _LocationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.paddingMd,
-        AppDimensions.paddingMd,
-        AppDimensions.paddingMd,
-        AppDimensions.gapSm,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.location_on_rounded, color: AppColors.primary, size: AppDimensions.iconSm),
-          const SizedBox(width: AppDimensions.gapXs),
-          Text('London, UK', style: AppTextStyles.pSmallSemiBold.copyWith(color: AppColors.lightSurfaceDarkText)),
-          const SizedBox(width: 2),
-          const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.lightSurfaceSubtitle, size: 20),
+          Assets.images.locationIcon.image(width: 24, height: 24),
+          const SizedBox(width: 8),
+          Text(
+            'West Coker, Yelovil, UK',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: AppColors.lightSurfaceNavy,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(width: 4),
+          Assets.images.locationdropIcon.image(width: 24, height: 24),
         ],
       ),
     );
@@ -124,48 +78,35 @@ class _LocationBar extends StatelessWidget {
 
 // ─── Search Bar ───────────────────────────────────────────────────────────────
 
-class _SearchBar extends GetView<HomeController> {
+class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.paddingMd,
-        0,
-        AppDimensions.paddingMd,
-        AppDimensions.gapLg,
-      ),
-      child: SizedBox(
-        height: AppDimensions.inputHeight,
-        child: TextField(
-          controller: controller.searchController,
-          textAlignVertical: TextAlignVertical.center,
-          style: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceText),
-          decoration: InputDecoration(
-            fillColor: AppColors.white,
-            filled: true,
-            hintText: 'Search restaurants, cuisines...',
-            hintStyle: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceHint),
-            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.lightSurfaceHint, size: AppDimensions.iconMd),
-            border: OutlineInputBorder(
-              borderRadius: AppRadius.sm,
-              borderSide: const BorderSide(color: AppColors.lightSurfaceBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: AppRadius.sm,
-              borderSide: const BorderSide(color: AppColors.lightSurfaceBorder),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: AppRadius.sm,
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            suffixIcon: Obx(
-              () => controller.searchQuery.value.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.close_rounded, color: AppColors.lightSurfaceHint, size: AppDimensions.iconMd),
-                      onPressed: controller.clearSearch,
-                    )
-                  : const SizedBox.shrink(),
-            ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: GestureDetector(
+        onTap: () => Get.find<DashboardController>().changePage(1),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppColors.offWhite,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.lightSurfaceBorder),
+          ),
+          child: Row(
+            children: [
+              Assets.images.homeSearchIcon.image(width: 24, height: 24),
+              const SizedBox(width: 15),
+              Text(
+                'Search',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF868AA5),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -175,88 +116,58 @@ class _SearchBar extends GetView<HomeController> {
 
 // ─── Categories ───────────────────────────────────────────────────────────────
 
-class _CategoriesSection extends GetView<HomeController> {
+class _CategoriesSection extends StatelessWidget {
+  static const _items = [
+    {'name': 'Pizza',    'image': 'assets/images/onbording1.png'},
+    {'name': 'Momo',     'image': 'assets/images/onbording2.png'},
+    {'name': 'Drinks',   'image': 'assets/images/onbording3.png'},
+    {'name': 'Sandwich', 'image': 'assets/images/onbording1.png'},
+  ];
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 90,
-      child: Obx(() {
-        if (controller.isLoading.value && controller.categories.isEmpty) {
-          return ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-            itemCount: 6,
-            itemBuilder: (_, _) => Padding(
-              padding: const EdgeInsets.only(right: AppDimensions.gapSm),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const ShimmerCircle(size: 58),
-                  const SizedBox(height: AppDimensions.gapXs),
-                  ShimmerBox(width: 50, height: 10),
-                ],
-              ),
-            ),
-          );
-        }
-        return ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-          itemCount: controller.categories.length,
-          itemBuilder: (_, i) {
-            final cat = controller.categories[i];
-            final colors = _catGradients[i % _catGradients.length];
-            return _CategoryItem(
-              name: cat['name'] as String,
-              emoji: cat['icon'] as String,
-              startColor: colors[0],
-              endColor: colors[1],
-            );
-          },
-        );
-      }),
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _items.length,
+        itemBuilder: (_, i) => _CategoryItem(
+          name: _items[i]['name']!,
+          imageUrl: _items[i]['image']!,
+        ),
+      ),
     );
   }
 }
 
 class _CategoryItem extends StatelessWidget {
   final String name;
-  final String emoji;
-  final Color startColor;
-  final Color endColor;
-
-  const _CategoryItem({
-    required this.name,
-    required this.emoji,
-    required this.startColor,
-    required this.endColor,
-  });
+  final String imageUrl;
+  const _CategoryItem({required this.name, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 70,
-      margin: const EdgeInsets.only(right: AppDimensions.gapSm),
+      width: 75,
+      margin: const EdgeInsets.only(right: 14),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [startColor, endColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 26))),
+            width: 64,
+            height: 64,
+            decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+            clipBehavior: Clip.antiAlias,
+            child: _buildImage(imageUrl),
           ),
-          const SizedBox(height: AppDimensions.gapXs),
+          const SizedBox(height: 8),
           Text(
             name,
-            style: AppTextStyles.caption.copyWith(color: AppColors.lightSurfaceLabel),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.lightSurfaceSubtitle,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -265,64 +176,67 @@ class _CategoryItem extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildImage(String url) {
+    if (url.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => const ShimmerCircle(size: 64),
+      );
+    } else {
+      return Image.asset(url, fit: BoxFit.cover);
+    }
+  }
 }
 
 // ─── Top Pick's ───────────────────────────────────────────────────────────────
 
-class _TopPicksSection extends GetView<HomeController> {
+class _TopPicksSection extends StatelessWidget {
+  static const _picks = [
+    {
+      'name': "McDonald's",
+      'image': 'assets/images/onbording1.png',
+      'rating': '4.5',
+      'reviews': '120',
+      'time': '20-30 min',
+    },
+    {
+      'name': 'Handmade B..',
+      'image': 'assets/images/onbording2.png',
+      'rating': '4.8',
+      'reviews': '210',
+      'time': '25-35 min',
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    // show 2 full cards with a peek of the 3rd
-    final cardWidth = (screenWidth - AppDimensions.paddingMd * 2 - AppDimensions.gapMd) / 2;
-
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingMd,
-            AppDimensions.gapXl,
-            AppDimensions.paddingMd,
-            AppDimensions.gapMd,
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+          child: SectionHeader(
+            title: "Top Pick's",
+            actionLabel: 'See All',
+            onAction: () {},
+            style: const TextStyle(
+              fontFamily: 'Helvetica Neue',
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+              color: AppColors.lightSurfaceDarkText,
+            ),
           ),
-          child: SectionHeader(title: "Top Pick's", titleColor: AppColors.lightSurfaceDarkText, actionLabel: 'See all', onAction: () => AppUtils.showInfo('Feature coming soon.')),
         ),
         SizedBox(
           height: 200,
-          child: Obx(() {
-            if (controller.isLoading.value && controller.restaurants.isEmpty) {
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-                itemCount: 3,
-                itemBuilder: (_, _) => Padding(
-                  padding: const EdgeInsets.only(right: AppDimensions.gapMd),
-                  child: ShimmerBox(
-                    width: cardWidth,
-                    height: 200,
-                    borderRadius: AppDimensions.radiusMd,
-                  ),
-                ),
-              );
-            }
-            return ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-              itemCount: controller.restaurants.length,
-              itemBuilder: (_, i) {
-                final r = controller.restaurants[i];
-                final colors = _restGradients[i % _restGradients.length];
-                return _TopPickCard(
-                  restaurant: r,
-                  width: cardWidth,
-                  startColor: colors[0],
-                  endColor: colors[1],
-                );
-              },
-            );
-          }),
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: _picks.length,
+            itemBuilder: (_, i) => _TopPickCard(data: _picks[i]),
+          ),
         ),
       ],
     );
@@ -330,83 +244,130 @@ class _TopPicksSection extends GetView<HomeController> {
 }
 
 class _TopPickCard extends StatelessWidget {
-  final Map<String, dynamic> restaurant;
-  final double width;
-  final Color startColor;
-  final Color endColor;
-
-  const _TopPickCard({
-    required this.restaurant,
-    required this.width,
-    required this.startColor,
-    required this.endColor,
-  });
+  final Map<String, dynamic> data;
+  const _TopPickCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: width,
-      margin: const EdgeInsets.only(right: AppDimensions.gapMd),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: AppRadius.md,
-        border: Border.all(color: AppColors.lightSurfaceBorder, width: 0.5),
-      ),
-      clipBehavior: Clip.antiAlias,
+      width: 220,
+      margin: const EdgeInsets.only(right: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 116,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [startColor, endColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: _buildImage(data['image']),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  data['name'],
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.lightSurfaceDarkText,
             ),
-            child: Center(
-              child: Text(
-                _emojiForCategory(restaurant['category'] as String),
-                style: const TextStyle(fontSize: 44),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Row(
+                children: [
+                  Assets.images.ratingStar.image(width: 16, height: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${data['rating']} (${data['reviews']})',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.lightSurfaceSubtitle,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Assets.images.timeIcon.image(width: 15, height: 15),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  data['time'],
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.lightSurfaceSubtitle,
+                    height: 16 / 12, // 16px line height
+                    letterSpacing: 0,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImage(String url) {
+    return Assets.images.restaurantImage.image(
+      height: 130,
+      width: 220,
+      fit: BoxFit.cover,
+    );
+  }
+}
+
+// ─── Discover Cuisines ────────────────────────────────────────────────────────
+
+class _DiscoverCuisinesSection extends StatelessWidget {
+  static const _cuisines = [
+    {'name': 'Italian', 'image': 'assets/images/onbording1.png'},
+    {'name': 'Asian',   'image': 'assets/images/onbording2.png'},
+    {'name': 'Mexican', 'image': 'assets/images/onbording3.png'},
+    {'name': 'Chinese', 'image': 'assets/images/onbording1.png'},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 214,
+      color: AppColors.offWhite,
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: SectionHeader(
+              title: 'Discover Cuisines',
+              style: const TextStyle(
+                fontFamily: 'Helvetica Neue',
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: AppColors.lightSurfaceDarkText,
               ),
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingSm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Text(
-                    restaurant['name'] as String,
-                    style: AppTextStyles.pXSmallSemiBold.copyWith(color: AppColors.lightSurfaceText),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rounded, size: 11, color: AppColors.warning),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${restaurant['rating']} (${restaurant['reviewCount'] ?? 0})',
-                        style: AppTextStyles.pXSmall.copyWith(color: AppColors.lightSurfaceLabel),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      const Icon(Icons.schedule_rounded, size: 11, color: AppColors.lightSurfaceHint),
-                      const SizedBox(width: 3),
-                      Text(
-                        restaurant['deliveryTime'] as String,
-                        style: AppTextStyles.pXSmall.copyWith(color: AppColors.lightSurfaceLabel),
-                      ),
-                    ],
-                  ),
-                ],
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _cuisines.length,
+              itemBuilder: (_, i) => _CuisineItem(
+                name: _cuisines[i]['name']!,
+                imageUrl: _cuisines[i]['image']!,
               ),
             ),
           ),
@@ -416,84 +377,33 @@ class _TopPickCard extends StatelessWidget {
   }
 }
 
-// ─── Discover Cuisines ────────────────────────────────────────────────────────
-
-class _DiscoverCuisinesSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingMd,
-            AppDimensions.gapXl,
-            AppDimensions.paddingMd,
-            AppDimensions.gapMd,
-          ),
-          child: SectionHeader(title: 'Discover Cuisines', titleColor: AppColors.lightSurfaceDarkText),
-        ),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-            itemCount: _cuisines.length,
-            itemBuilder: (_, i) {
-              final colors = _cuisineGradients[i % _cuisineGradients.length];
-              return _CuisineItem(
-                name: _cuisines[i]['name']!,
-                emoji: _cuisines[i]['emoji']!,
-                startColor: colors[0],
-                endColor: colors[1],
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _CuisineItem extends StatelessWidget {
   final String name;
-  final String emoji;
-  final Color startColor;
-  final Color endColor;
-
-  const _CuisineItem({
-    required this.name,
-    required this.emoji,
-    required this.startColor,
-    required this.endColor,
-  });
+  final String imageUrl;
+  const _CuisineItem({required this.name, required this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 78,
-      margin: const EdgeInsets.only(right: AppDimensions.gapSm),
+      width: 88,
+      margin: const EdgeInsets.only(right: 14),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [startColor, endColor],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(child: Text(emoji, style: const TextStyle(fontSize: 30))),
+            width: 88,
+            height: 88,
+            decoration: const BoxDecoration(color: AppColors.offWhite, shape: BoxShape.circle),
+            clipBehavior: Clip.antiAlias,
+            child: _buildImage(imageUrl),
           ),
-          const SizedBox(height: AppDimensions.gapXs),
+          const SizedBox(height: 10),
           Text(
             name,
-            style: AppTextStyles.caption.copyWith(color: AppColors.lightSurfaceLabel),
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.lightSurfaceCusinsSubtitle,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
@@ -502,74 +412,156 @@ class _CuisineItem extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildImage(String url) {
+    if (url.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => const ShimmerCircle(size: 88),
+      );
+    } else {
+      return Image.asset(url, fit: BoxFit.cover);
+    }
+  }
 }
 
-// ─── Promo Banner ─────────────────────────────────────────────────────────────
+// ─── Promo Banners (carousel) ─────────────────────────────────────────────────
 
-class _PromoBannerSection extends StatelessWidget {
+class _PromoBannerSection extends GetView<HomeController> {
+  static final _banners = [
+    {
+      'bg': AppColors.bannerPink,
+      'nameColor': AppColors.darkNavy,
+      'offerColor': AppColors.navyMedium,
+      'image': 'assets/images/onbording1.png',
+    },
+    {
+      'bg': AppColors.bannerYellow,
+      'nameColor': AppColors.lightSurfaceDarkText,
+      'offerColor': AppColors.navyMuted400,
+      'image': 'assets/images/onbording2.png',
+    },
+    {
+      'bg': AppColors.bannerOrange,
+      'nameColor': AppColors.darkNavy,
+      'offerColor': AppColors.navyMedium,
+      'image': 'assets/images/onbording3.png',
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.paddingMd,
-        AppDimensions.gapXl,
-        AppDimensions.paddingMd,
-        0,
-      ),
-      child: Container(
-        height: 112,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF4A5E20), Color(0xFF7A9432)],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+          child: SizedBox(
+            height: 174,
+            child: PageView.builder(
+              controller: controller.bannerPageController,
+              onPageChanged: (i) => controller.currentBannerPage.value = i,
+              itemCount: _banners.length,
+              itemBuilder: (_, i) => _BannerCard(data: _banners[i]),
+            ),
           ),
-          borderRadius: AppRadius.lg,
         ),
-        child: Row(
+        const SizedBox(height: 12),
+        Obx(() => Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_banners.length, (i) {
+            final isActive = controller.currentBannerPage.value == i;
+            return Container(
+              width: 6,
+              height: 6,
+              margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.primary : AppColors.lightSurfaceDisabled,
+                shape: BoxShape.circle,
+              ),
+            );
+          }),
+        )),
+      ],
+    );
+  }
+}
+
+class _BannerCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+  const _BannerCard({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+     // borderRadius: BorderRadius.circular(0),
+      child: Container(
+        height: 174,
+        color: data['bg'] as Color,
+        child: Stack(
           children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.paddingMd,
-                  AppDimensions.paddingSm,
-                  0,
-                  AppDimensions.paddingSm,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'SwiftDrop Pass',
-                      style: AppTextStyles.pMediumBold.copyWith(color: AppColors.white),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Special offer up to -25%',
-                      style: AppTextStyles.pXSmall.copyWith(
-                        color: AppColors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'Up to 5 free deliveries/month',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ],
-                ),
+            Positioned(
+              left: 180,
+              top: -33,
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: const BoxDecoration(shape: BoxShape.circle),
+                clipBehavior: Clip.antiAlias,
+                child: _buildImage(data['image']),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(right: AppDimensions.paddingMd),
-              child: Text('🎂', style: TextStyle(fontSize: 52)),
+            Positioned(
+              left: 23,
+              top: 35,
+              width: 131,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Kooker',
+                    style: GoogleFonts.inter(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      color: data['nameColor'] as Color,
+                    ),
+                  ),
+                  Text(
+                    'Special birthday\noffer up to -25%',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: data['offerColor'] as Color,
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    'Up to 3 delivery promo',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.navyMedium,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildImage(String url) {
+    if (url.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => const ShimmerCircle(size: 240),
+      );
+    } else {
+      return Image.asset(url, fit: BoxFit.cover);
+    }
   }
 }
 
@@ -579,236 +571,52 @@ class _AllRestaurantsList extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isLoading.value && controller.filteredRestaurants.isEmpty) {
+      final list = controller.filteredRestaurants;
+      if (controller.isLoading.value && list.isEmpty) {
         return SliverPadding(
-          padding: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
-              (_, _) => Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppDimensions.paddingMd,
-                  0,
-                  AppDimensions.paddingMd,
-                  AppDimensions.paddingMd,
-                ),
-                child: ShimmerBox(
-                  width: double.infinity,
-                  height: 220,
-                  borderRadius: AppDimensions.radiusLg,
-                ),
+              (_, __) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: ShimmerBox(width: double.infinity, height: 276, borderRadius: 16),
               ),
               childCount: 3,
             ),
           ),
         );
       }
-      if (controller.filteredRestaurants.isEmpty) {
-        return SliverToBoxAdapter(
-          child: EmptyStateWidget(
-            message: 'No restaurants found',
-            subtitle: 'Try a different search term',
-            icon: Icons.search_off_rounded,
-          ),
-        );
-      }
+
+      final List displayList = list.isNotEmpty
+          ? list
+          : [
+              {
+                'name': 'The Marble Grill',
+                'image': 'assets/images/onbording1.png',
+                'rating': 4.5,
+                'time': '20-30 min',
+                'distance': '4.9 mi',
+                'offer': '60% OFF select items',
+              },
+              {
+                'name': 'Grand Chinese',
+                'image': 'assets/images/onbording2.png',
+                'rating': 4.6,
+                'time': '20-30 min',
+                'distance': '4.9 mi',
+                'offer': 'Buy 1 Get 1 Free',
+              },
+            ];
+
       return SliverPadding(
-        padding: const EdgeInsets.only(bottom: AppDimensions.paddingMd),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (_, i) {
-              final r = controller.filteredRestaurants[i];
-              final colors = _restGradients[i % _restGradients.length];
-              return _RestaurantCard(
-                restaurant: r,
-                startColor: colors[0],
-                endColor: colors[1],
-              );
-            },
-            childCount: controller.filteredRestaurants.length,
+            (_, i) => RestaurantCard(restaurant: displayList[i]),
+            childCount: displayList.length,
           ),
         ),
       );
     });
-  }
-}
-
-class _RestaurantCard extends StatelessWidget {
-  final Map<String, dynamic> restaurant;
-  final Color startColor;
-  final Color endColor;
-
-  const _RestaurantCard({
-    required this.restaurant,
-    required this.startColor,
-    required this.endColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isOpen = restaurant['isOpen'] as bool;
-    final badge = restaurant['badge'] as String?;
-    final distance = (restaurant['distance'] as String?) ?? '';
-
-    return GestureDetector(
-      onTap: isOpen ? () => AppUtils.showInfo('Feature coming soon.') : null,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingMd,
-          0,
-          AppDimensions.paddingMd,
-          AppDimensions.paddingMd,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: AppRadius.lg,
-          border: Border.all(color: AppColors.lightSurfaceBorder, width: 0.5),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(
-              height: 176,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [startColor, endColor],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        _emojiForCategory(restaurant['category'] as String),
-                        style: const TextStyle(fontSize: 64),
-                      ),
-                    ),
-                  ),
-                  if (!isOpen)
-                    Container(
-                      color: Colors.black.withValues(alpha:0.55),
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: AppRadius.full,
-                          ),
-                          child: Text(
-                            'Closed',
-                            style: AppTextStyles.pSmallSemiBold.copyWith(color: AppColors.lightSurfaceSubtitle),
-                          ),
-                        ),
-                      ),
-                    ),
-                  // rating badge — top right
-                  Positioned(
-                    top: AppDimensions.gapMd,
-                    right: AppDimensions.gapMd,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.55),
-                        borderRadius: AppRadius.full,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star_rounded, size: 12, color: AppColors.warning),
-                          const SizedBox(width: 3),
-                          Text(
-                            '${restaurant['rating']}',
-                            style: AppTextStyles.pXSmallSemiBold.copyWith(color: AppColors.white),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  if (badge != null)
-                    Positioned(
-                      bottom: AppDimensions.gapMd,
-                      left: AppDimensions.gapMd,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: AppColors.warning,
-                          borderRadius: AppRadius.full,
-                        ),
-                        child: Text(
-                          badge,
-                          style: AppTextStyles.pXSmall.copyWith(
-                            color: AppColors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            Padding(
-  padding: const EdgeInsets.fromLTRB(
-    AppDimensions.paddingMd,
-    AppDimensions.paddingSm,
-    AppDimensions.paddingMd,
-    AppDimensions.paddingSm,
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              restaurant['name'] as String,
-              style: AppTextStyles.pMediumSemiBold.copyWith(
-                  color: AppColors.lightSurfaceText),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          GestureDetector(
-            onTap: () => AppUtils.showInfo('Feature coming soon.'),
-            child: const Icon(
-              Icons.favorite_border_rounded,
-              color: AppColors.lightSurfaceHint,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: AppDimensions.gapXs),
-      Row(
-        children: [
-          const Icon(Icons.schedule_rounded,
-              size: 13, color: AppColors.lightSurfaceHint),
-          const SizedBox(width: 4),
-          Text(
-            restaurant['deliveryTime'] as String,
-            style: AppTextStyles.pXSmall
-                .copyWith(color: AppColors.lightSurfaceLabel),
-          ),
-          if (distance.isNotEmpty) ...[
-            Text(' · ',
-                style: AppTextStyles.pXSmall
-                    .copyWith(color: AppColors.lightSurfaceHint)),
-            Text(distance,
-                style: AppTextStyles.pXSmall
-                    .copyWith(color: AppColors.lightSurfaceLabel)),
-          ],
-        ],
-      ),
-    ],
-  ),
-),
-          ],
-        ),
-      ),
-    );
   }
 }

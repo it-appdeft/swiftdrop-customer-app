@@ -72,13 +72,12 @@ lib/
 │   │   └── storage_keys.dart
 │   ├── middleware/
 │   │   ├── auth_middleware.dart
-│   │   ├── connectivity_middleware.dart
-│   │   └── notification_middleware.dart
+│   │   └── connectivity_middleware.dart
 │   ├── modules/                         ← feature modules, each has bindings/controllers/views
 │   │   ├── splash/
 │   │   ├── onboarding/
 │   │   ├── auth/                        ← login, otp, register, register_steps, verification_pending
-│   │   ├── dashboard/                   ← shell with bottom nav (IndexedStack 5 tabs)
+│   │   ├── dashboard/                   ← shell with bottom nav (IndexedStack 4 tabs: Home, Search, History, Account)
 │   │   ├── home/                        ← browse, search, categories, restaurants
 │   │   ├── cart/
 │   │   ├── checkout/
@@ -88,6 +87,7 @@ lib/
 │   │   ├── notifications/
 │   │   ├── profile/
 │   │   ├── settings/
+│   │   ├── edit_profile/                ← change phone/email, verify OTP, delete account flow
 │   ├── network/
 │   │   ├── interceptors/
 │   │   │   ├── auth_interceptor.dart
@@ -118,6 +118,8 @@ lib/
 │   └── widgets/                         ← shared UI components
 │       ├── app_button.dart
 │       ├── app_loader.dart
+│       ├── app_otp_box.dart
+│       ├── app_otp_screen.dart
 │       ├── app_text_field.dart
 │       ├── connectivity_widget.dart
 │       ├── empty_state_widget.dart
@@ -132,15 +134,18 @@ lib/
 │   │   └── app_data.dart                ← class AppData, all fallback data
 │   ├── models/
 │   │   ├── api_response.dart
+│   │   ├── deletion_reason.dart
 │   │   ├── user_model.dart
 │   │   ├── order_model.dart
 │   │   ├── transaction_model.dart
 │   │   └── notification_model.dart
 │   └── repositories/                    ← all have try/catch fallback to AppData
 │       ├── auth_repository.dart
+│       ├── home_repository.dart
 │       ├── order_repository.dart
 │       ├── earnings_repository.dart
-│       └── notification_repository.dart
+│       ├── notification_repository.dart
+│       └── profile_repository.dart
 ├── export.dart                           ← barrel file, imported by main.dart
 └── main.dart
 ```
@@ -333,12 +338,34 @@ Future<ApiResponse<T>> someMethod() async {
 ```
 `message` is always `''` (empty string) in fallback — never `'demo'` or `'mock'`.
 
-### API Endpoints (driver-side, for reference — user-side will differ)
+### API Endpoints (`lib/app/network/api_endpoints.dart`)
 ```
-/auth/send-otp          /auth/verify-otp        /auth/refresh-token     /auth/logout
-/driver/profile         /driver/orders/active   /driver/orders/history
-/driver/orders/accept   /driver/orders/reject   /driver/orders/status
-/driver/earnings/summary /driver/transactions   /driver/notifications
+Auth:
+  /auth/send-otp                /auth/verify-otp              /auth/refresh-token
+  /auth/logout                  /auth/register/customer
+
+Profile:
+  /user/profile                 /user/profile/update          /user/profile/avatar
+  /customer/profile             /customer/profile/delete/initiate
+  /deletion-reasons
+
+Orders:
+  /user/orders/active           /user/orders/history          /user/orders (detail)
+  /user/orders/place            /user/orders/cancel
+
+Wallet:
+  /user/wallet/balance          /user/transactions            /user/wallet/add-funds
+  /user/wallet/withdraw
+
+Notifications:
+  /user/notifications           /user/notifications/read
+
+Addresses:
+  /user/addresses               /user/addresses/add           /user/addresses/delete
+
+Restaurants & Discovery:
+  /restaurants                  /restaurants (detail)         /categories
+  /restaurants/search
 ```
 
 ---
@@ -404,28 +431,38 @@ Use `runAsync()` for all async operations in controllers.
 
 ### AppRoutes (static const strings)
 ```dart
-splash              = '/splash'
-onboarding          = '/onboarding'
-login               = '/login'
-otp                 = '/otp'
-register            = '/register'
-registerSteps       = '/register-steps'
-verificationPending = '/verification-pending'
-dashboard           = '/dashboard'
-orderTracking       = '/order-tracking'
-orderHistory        = '/order-history'
-wallet              = '/wallet'
-notifications       = '/notifications'
-profile             = '/profile'
-settings            = '/settings'
-cart                = '/cart'
-checkout            = '/checkout'
+splash                    = '/splash'
+onboarding                = '/onboarding'
+login                     = '/login'
+otp                       = '/otp'
+register                  = '/register'
+registerSteps             = '/register-steps'
+verificationPending       = '/verification-pending'
+dashboard                 = '/dashboard'
+orderTracking             = '/order-tracking'
+orderHistory              = '/order-history'
+wallet                    = '/wallet'
+notifications             = '/notifications'
+profile                   = '/profile'
+settings                  = '/settings'
+cart                      = '/cart'
+checkout                  = '/checkout'
+editProfile               = '/edit-profile'
+changePhone               = '/edit-profile/change-phone'
+verifyExisting            = '/edit-profile/verify-existing'
+verifyNewPhone            = '/edit-profile/verify-new-phone'
+changeEmail               = '/edit-profile/change-email'
+verifyEmail               = '/edit-profile/verify-email'
+verifyAccount             = '/edit-profile/verify-account'
+verifyAccountDeletion     = '/edit-profile/verify-account-deletion'
+deleteAccountReason       = '/edit-profile/delete-account'
+deleteAccountConfirmation = '/edit-profile/delete-account-confirmation'
 ```
 
 ### AppPages rules
 - `splash`: **no middleware**. SplashBinding MUST use `Get.put` (not lazyPut).
 - `onboarding`, `login`, `otp`, `register`, `registerSteps`, `verificationPending`: **no middleware**.
-- `dashboard` and all post-auth routes (`orderTracking`, `orderHistory`, `wallet`, `notifications`, `profile`, `settings`, `cart`, `checkout`): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
+- `dashboard` and all post-auth routes (`orderTracking`, `orderHistory`, `wallet`, `notifications`, `profile`, `settings`, `cart`, `checkout`, `editProfile` and all its sub-routes): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
 - `ConnectivityMiddleware`: shows warning snackbar only, returns null (no hard redirect).
 - `AuthMiddleware`: redirects to `/login` if not authenticated.
 

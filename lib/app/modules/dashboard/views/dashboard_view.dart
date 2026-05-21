@@ -4,10 +4,10 @@ import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
-import '../../../widgets/empty_state_widget.dart';
 import '../../home/views/home_view.dart';
 import '../../order_history/views/order_history_view.dart';
 import '../../profile/views/profile_view.dart';
+import '../../search/views/search_view.dart';
 import '../controllers/dashboard_controller.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -15,7 +15,7 @@ class DashboardView extends GetView<DashboardController> {
 
   static const List<Widget> _pages = [
     HomeView(),
-    _SearchTabView(),
+    SearchView(),
     OrderHistoryView(),
     ProfileView(),
   ];
@@ -23,6 +23,7 @@ class DashboardView extends GetView<DashboardController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: AppColors.darkBackground,
       body: Obx(() => IndexedStack(
             index: controller.currentIndex.value,
@@ -32,27 +33,6 @@ class DashboardView extends GetView<DashboardController> {
             currentIndex: controller.currentIndex.value,
             onTap: controller.changePage,
           )),
-    );
-  }
-}
-
-class _SearchTabView extends StatelessWidget {
-  const _SearchTabView();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.offWhite,
-      appBar: AppBar(
-        title: Text('Search', style: AppTextStyles.h6.copyWith(color: AppColors.lightSurfaceDarkText)),
-        backgroundColor: AppColors.white,
-        elevation: 0,
-      ),
-      body: const EmptyStateWidget(
-        icon: Icons.search_rounded,
-        message: 'Feature coming soon',
-        subtitle: 'Search for restaurants and cuisines will be available shortly.',
-      ),
     );
   }
 }
@@ -68,7 +48,7 @@ class _BottomNav extends StatelessWidget {
     final bottom = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      color: AppColors.offWhite, // matches page bg so it blends
+      color: Colors.transparent,
       child: Padding(
         padding: EdgeInsets.fromLTRB(
           AppDimensions.paddingMd,
