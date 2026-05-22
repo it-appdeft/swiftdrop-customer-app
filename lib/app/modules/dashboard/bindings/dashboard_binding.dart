@@ -7,6 +7,7 @@ import '../../home/bindings/home_binding.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../../order_history/controllers/order_history_controller.dart';
 import '../../profile/controllers/profile_controller.dart';
+import '../../search/controllers/search_controller.dart';
 import '../../wallet/controllers/wallet_controller.dart';
 import '../controllers/dashboard_controller.dart';
 
@@ -15,6 +16,7 @@ class DashboardBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<DashboardController>(() => DashboardController());
     HomeBinding().dependencies();
+    Get.lazyPut<SearchTabController>(() => SearchTabController());
     Get.lazyPut<OrderRepository>(() => OrderRepository());
     Get.lazyPut<EarningsRepository>(() => EarningsRepository());
     Get.lazyPut<NotificationRepository>(() => NotificationRepository());

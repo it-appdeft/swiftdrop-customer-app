@@ -41,11 +41,27 @@ class AppColors {
   static const Color lightSurfaceHeading  = Color(0xFF3C4042);
   static const Color lightSurfaceLabel    = Color(0xFF595D70);
   static const Color lightSurfaceSubtitle = Color(0xFF868AA5);
+  static const Color lightSurfaceCusinsSubtitle = Color(0xFF0B243A);
   static const Color lightSurfaceDisabled = Color(0xFFE1E2E3);
   static const Color lightSurfaceBorder   = Color(0xFFF2F2E9);
   static const Color lightSurfaceHint     = Color(0xFFADB5BD);
   static const Color lightOtpBoxBg        = Color(0xFFEDEEF1);
   static const Color lightOtpFocusBorder  = Color(0xFF198754);
+
+  // Shared across home / search / restaurant-detail light surfaces
+  static const Color lightSurfaceNavy  = Color(0xFF0A2034);
+  static const Color darkNavy          = Color(0xFF081929);
+  static const Color navyMedium        = Color(0xFF3C5061);
+  static const Color iconDark          = Color(0xFF292D32);
+  static const Color shadowLight       = Color(0x14000000);
+
+  // Promo banner backgrounds
+  static const Color bannerPink        = Color(0xFFFFE2EA);
+  static const Color bannerYellow      = Color(0xFFFFD996);
+  static const Color bannerOrange      = Color(0xFFFFC865);
+
+  // Component surfaces
+  static const Color primarySurface    = Color(0xFFF1FBF7);
 
   static const Color transparent = Colors.transparent;
 }

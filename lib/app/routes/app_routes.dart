@@ -27,4 +27,5 @@ abstract class AppRoutes {
   static const String deleteAccountReason = '/edit-profile/delete-account';
   static const String deleteAccountConfirmation =
       '/edit-profile/delete-account-confirmation';
+  static const String restaurantDetail = '/restaurant-detail';
 }

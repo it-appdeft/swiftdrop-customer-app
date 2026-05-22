@@ -4,17 +4,25 @@ class HomeController extends BaseController {
   final HomeRepository _repo;
   HomeController(this._repo);
 
-  final searchController = TextEditingController();
-  final RxString searchQuery = ''.obs;
   final RxList<Map<String, dynamic>> categories = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> restaurants = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> filteredRestaurants = <Map<String, dynamic>>[].obs;
 
+  final RxInt currentBannerPage = 1.obs;
+  late final PageController bannerPageController;
+
   @override
   void onInit() {
     super.onInit();
+    bannerPageController = PageController(initialPage: 1);
+    bannerPageController.addListener(_onBannerPage);
     _loadData();
-    searchController.addListener(_onSearchChanged);
+  }
+
+  void _onBannerPage() {
+    if (bannerPageController.page != null) {
+      currentBannerPage.value = bannerPageController.page!.round();
+    }
   }
 
   Future<void> _loadData() async {
@@ -31,28 +39,10 @@ class HomeController extends BaseController {
     });
   }
 
-  void _onSearchChanged() {
-    final query = searchController.text.toLowerCase().trim();
-    searchQuery.value = query;
-    if (query.isEmpty) {
-      filteredRestaurants.value = restaurants;
-    } else {
-      filteredRestaurants.value = restaurants.where((r) {
-        return (r['name'] as String).toLowerCase().contains(query) ||
-            (r['category'] as String).toLowerCase().contains(query);
-      }).toList();
-    }
-  }
-
-  void clearSearch() {
-    searchController.clear();
-    filteredRestaurants.value = restaurants;
-  }
-
   @override
   void onClose() {
-    searchController.removeListener(_onSearchChanged);
-    searchController.dispose();
+    bannerPageController.removeListener(_onBannerPage);
+    bannerPageController.dispose();
     super.onClose();
   }
 }

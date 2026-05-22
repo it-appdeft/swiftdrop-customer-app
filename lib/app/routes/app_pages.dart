@@ -34,6 +34,8 @@ import '../modules/settings/bindings/settings_binding.dart';
 import '../modules/settings/views/settings_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
+import '../modules/restaurant_detail/bindings/restaurant_detail_binding.dart';
+import '../modules/restaurant_detail/views/restaurant_detail_view.dart';
 import '../modules/wallet/bindings/wallet_binding.dart';
 import '../modules/wallet/views/wallet_view.dart';
 import 'app_routes.dart';
@@ -187,6 +189,12 @@ class AppPages {
       name: AppRoutes.deleteAccountConfirmation,
       page: () => const DeleteAccountConfirmationView(),
       binding: EditProfileBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.restaurantDetail,
+      page: () => const RestaurantDetailView(),
+      binding: RestaurantDetailBinding(),
       middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
     ),
   ];

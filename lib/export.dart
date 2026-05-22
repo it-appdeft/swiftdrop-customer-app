@@ -54,6 +54,8 @@ export 'app/widgets/empty_state_widget.dart';
 export 'app/widgets/error_state_widget.dart';
 export 'app/widgets/info_row.dart';
 export 'app/widgets/pagination_list.dart';
+export 'app/widgets/dish_card.dart';
+export 'app/widgets/restaurant_card.dart';
 export 'app/widgets/section_header.dart';
 export 'app/widgets/shimmer_widgets.dart';
 export 'app/widgets/status_badge.dart';
@@ -66,6 +68,9 @@ export 'data/models/transaction_model.dart';
 export 'data/models/user_model.dart';
 
 export 'data/local/app_data.dart';
+
+export 'app/modules/search/controllers/search_controller.dart';
+export 'app/modules/search/views/search_view.dart';
 
 export 'data/repositories/auth_repository.dart';
 export 'data/repositories/earnings_repository.dart';
