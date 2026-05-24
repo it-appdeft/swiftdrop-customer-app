@@ -115,9 +115,7 @@ class SearchTabController extends BaseController {
 
   @override
   void onClose() {
-    queryController
-      ..removeListener(_onQuery)
-      ..dispose();
+    queryController.removeListener(_onQuery);
     super.onClose();
   }
 }

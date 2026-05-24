@@ -16,7 +16,7 @@ class DashboardBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<DashboardController>(() => DashboardController());
     HomeBinding().dependencies();
-    Get.lazyPut<SearchTabController>(() => SearchTabController());
+    Get.lazyPut<SearchTabController>(() => SearchTabController(), fenix: true);
     Get.lazyPut<OrderRepository>(() => OrderRepository());
     Get.lazyPut<EarningsRepository>(() => EarningsRepository());
     Get.lazyPut<NotificationRepository>(() => NotificationRepository());

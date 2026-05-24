@@ -59,6 +59,7 @@ export 'app/widgets/restaurant_card.dart';
 export 'app/widgets/section_header.dart';
 export 'app/widgets/shimmer_widgets.dart';
 export 'app/widgets/status_badge.dart';
+export 'app/widgets/cart_floating_bar.dart';
 
 export 'data/models/api_response.dart';
 export 'data/models/deletion_reason.dart';

@@ -45,7 +45,7 @@ class AppButton extends StatelessWidget {
                 side: BorderSide(color: bg),
                 foregroundColor: bg,
                 shape: RoundedRectangleBorder(
-                  borderRadius: borderRadius ?? AppRadius.lg,
+                  borderRadius: borderRadius ?? BorderRadius.circular(8.0),
                 ),
               ),
               child: _buildChild(bg),
@@ -58,7 +58,7 @@ class AppButton extends StatelessWidget {
                 disabledBackgroundColor: bg.withValues(alpha: 0.5),
                 disabledForegroundColor: fg.withValues(alpha: 0.8),
                 shape: RoundedRectangleBorder(
-                  borderRadius: borderRadius ?? AppRadius.lg,
+                  borderRadius: borderRadius ?? BorderRadius.circular(8.0),
                 ),
               ),
               child: _buildChild(fg),

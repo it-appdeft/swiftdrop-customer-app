@@ -30,6 +30,7 @@ class AppColors {
   static const Color warning = Color(0xFFF5A623);
   static const Color error = Color(0xFFDC3545);
   static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
   static const Color offWhite = Color(0xFFF6F8FA);
   static const Color buttonLabel = Color(0xFFFEFEFD);
 

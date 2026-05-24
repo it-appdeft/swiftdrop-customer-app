@@ -21,6 +21,18 @@ class $AssetsImagesGen {
     'assets/images/alertIcon.png',
   );
   final AssetGenImage back = const AssetGenImage('assets/images/back.png');
+  final AssetGenImage cartMinus = const AssetGenImage(
+    'assets/images/cartMinus.png',
+  );
+  final AssetGenImage cartPlus = const AssetGenImage(
+    'assets/images/cartPlus.png',
+  );
+  final AssetGenImage checkButton = const AssetGenImage(
+    'assets/images/checkButton.png',
+  );
+  final AssetGenImage counponIcon = const AssetGenImage(
+    'assets/images/counponIcon.png',
+  );
   final AssetGenImage crossIcon = const AssetGenImage(
     'assets/images/crossIcon.png',
   );
@@ -36,8 +48,20 @@ class $AssetsImagesGen {
   final AssetGenImage highestRated = const AssetGenImage(
     'assets/images/highestRated.png',
   );
+  final AssetGenImage historySelcted = const AssetGenImage(
+    'assets/images/historySelcted.png',
+  );
+  final AssetGenImage historyUnselected = const AssetGenImage(
+    'assets/images/historyUnselected.png',
+  );
   final AssetGenImage homeSearchIcon = const AssetGenImage(
     'assets/images/homeSearchIcon.png',
+  );
+  final AssetGenImage homeSelected = const AssetGenImage(
+    'assets/images/homeSelected.png',
+  );
+  final AssetGenImage homeUnselected = const AssetGenImage(
+    'assets/images/homeUnselected.png',
   );
   final AssetGenImage info = const AssetGenImage('assets/images/info.png');
   final AssetGenImage locationIcon = const AssetGenImage(
@@ -49,6 +73,9 @@ class $AssetsImagesGen {
   final AssetGenImage login = const AssetGenImage('assets/images/login.png');
   final AssetGenImage minus = const AssetGenImage('assets/images/minus.png');
   final AssetGenImage offers = const AssetGenImage('assets/images/offers.png');
+  final AssetGenImage offersIcon = const AssetGenImage(
+    'assets/images/offersIcon.png',
+  );
   final AssetGenImage onbording1 = const AssetGenImage(
     'assets/images/onbording1.png',
   );
@@ -59,6 +86,12 @@ class $AssetsImagesGen {
     'assets/images/onbording3.png',
   );
   final AssetGenImage plus = const AssetGenImage('assets/images/plus.png');
+  final AssetGenImage profileSelected = const AssetGenImage(
+    'assets/images/profileSelected.png',
+  );
+  final AssetGenImage profileUnselcetd = const AssetGenImage(
+    'assets/images/profileUnselcetd.png',
+  );
   final AssetGenImage ratingStar = const AssetGenImage(
     'assets/images/ratingStar.png',
   );
@@ -71,9 +104,18 @@ class $AssetsImagesGen {
   final AssetGenImage rightIcon = const AssetGenImage(
     'assets/images/rightIcon.png',
   );
+  final AssetGenImage searchSelected = const AssetGenImage(
+    'assets/images/searchSelected.png',
+  );
+  final AssetGenImage searchUnselected = const AssetGenImage(
+    'assets/images/searchUnselected.png',
+  );
   final AssetGenImage share = const AssetGenImage('assets/images/share.png');
   final AssetGenImage timeIcon = const AssetGenImage(
     'assets/images/timeIcon.png',
+  );
+  final AssetGenImage unCheckButton = const AssetGenImage(
+    'assets/images/unCheckButton.png',
   );
   final AssetGenImage vegIcon = const AssetGenImage(
     'assets/images/vegIcon.png',

@@ -1,13 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_decorations.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../utils/app_utils.dart';
-import '../../../widgets/app_button.dart';
-import '../../../widgets/empty_state_widget.dart';
+import 'package:swiftdrop_customer_app/export.dart';
+import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../controllers/cart_controller.dart';
 
 class CartView extends GetView<CartController> {
@@ -16,163 +8,676 @@ class CartView extends GetView<CartController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
-      appBar: AppBar(
-        title: Text('Cart', style: AppTextStyles.h6),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Get.back(),
+      backgroundColor: AppColors.white,
+      appBar: _buildAppBar(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 100), // Spacing for sticky button
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDeliveryAddress(),
+            const SizedBox(height: 24),
+            _buildItemsSection(),
+            const SizedBox(height: 16),
+            _buildCouponSection(),
+            const SizedBox(height: 24),
+            _buildBillSummary(),
+            const SizedBox(height: 24),
+            _buildCancellationPolicy(),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
-      body: Obx(() {
-        if (controller.items.isEmpty) {
-          return const EmptyStateWidget(
-            message: 'Your cart is empty',
-            subtitle: 'Add items from a restaurant to get started',
-            icon: Icons.shopping_cart_outlined,
-          );
-        }
-
-        return Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                itemCount: controller.items.length,
-                itemBuilder: (_, index) {
-                  final item = controller.items[index];
-                  return _CartItemTile(item: item);
-                },
-              ),
-            ),
-            _OrderSummary(),
-          ],
-        );
-      }),
+      bottomSheet: _buildPlaceOrderButton(),
     );
   }
-}
 
-class _CartItemTile extends GetView<CartController> {
-  final CartItem item;
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: AppColors.white,
+      elevation: 0,
+      centerTitle: true,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.iconDark, size: 20),
+        onPressed: () => Get.back(),
+      ),
+      title: Text(
+        'The Marble Grill',
+        style: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w500,
+          color: AppColors.lightSurfaceDarkText,
+        ),
+      ),
+    );
+  }
 
-  const _CartItemTile({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildDeliveryAddress() {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppDimensions.gapSm),
-      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-      decoration: AppDecorations.card,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.offWhite,
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Assets.images.locationIcon.image(width: 24, height: 24),
+
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name, style: AppTextStyles.pSmallSemiBold),
-                const SizedBox(height: 4),
                 Text(
-                  AppUtils.formatCurrency(item.price),
-                  style: AppTextStyles.pXSmall.copyWith(color: AppColors.textSecondary),
+                  'Delivery to',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceSubtitle,
+                  ),
+                ),
+                Text(
+                  '221B Baker St, London, UK',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceDarkText,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          Obx(() => Row(
-                children: [
-                  _QuantityButton(
-                    icon: Icons.remove,
-                    onTap: () => controller.decrementItem(item.id),
-                  ),
-                  SizedBox(
-                    width: 32,
-                    child: Text(
-                      '${item.quantity.value}',
-                      style: AppTextStyles.pSmallSemiBold,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  _QuantityButton(
-                    icon: Icons.add,
-                    onTap: () => controller.addItem(item.id, item.name, item.price),
-                  ),
-                ],
-              )),
+          GestureDetector(
+            onTap: () {},
+            child: Text(
+              'Change',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
-}
 
-class _QuantityButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _QuantityButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: AppColors.darkSurfaceElevated,
-          borderRadius: AppRadius.sm,
-          border: Border.all(color: AppColors.darkBorder),
+  Widget _buildItemsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Items In cart',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.lightSurfaceDarkText,
+            ),
+          ),
         ),
-        child: Icon(icon, size: 16, color: AppColors.textPrimary),
+        const SizedBox(height: 16),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.offWhite,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Obx(() => ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: controller.items.length,
+                    separatorBuilder: (context, index) => const Divider(
+                      height: 32,
+                      color: AppColors.lightSurfaceBorder,
+                      thickness: 1,
+                    ),
+                    itemBuilder: (context, index) => _buildCartItem(controller.items[index]),
+                  )),
+              const SizedBox(height: 2),
+              _buildAddAndCookingButtons(),
+              Obx(() => _buildCookingRequestArea()),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCartItem(CartItem item) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Assets.images.onbording1.image(
+            width: 96,
+            height: 96,
+            fit: BoxFit.cover,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.name,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.lightSurfaceDarkText,
+                ),
+              ),
+              if (item.addons != null) ...[
+                const SizedBox(height: 4),
+                Obx(() => GestureDetector(
+                  onTap: () => item.isExpanded.toggle(),
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          item.addons!,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.lightSurfaceSubtitle,
+                          ),
+                          maxLines: item.isExpanded.value ? null : 1,
+                          overflow: item.isExpanded.value ? null : TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Transform.rotate(
+                          angle: item.isExpanded.value ? 3.14159 : 0,
+                          child: Assets.images.locationdropIcon.image(
+                            width: 16,
+                            height: 16,
+                            color: AppColors.lightSurfaceSubtitle,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+              ],
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '£${item.price.toStringAsFixed(2)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.lightSurfaceLabel,
+                    ),
+                  ),
+                  _buildQuantitySelector(item),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuantitySelector(CartItem item) {
+    return Container(
+      width: 112,
+      height: 40,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F3F7),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildQtyBtn(Assets.images.cartMinus, () => controller.decrementItem(item.id)),
+          Obx(() => Text(
+                '${item.quantity.value}',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.lightSurfaceDarkText,
+                ),
+              )),
+          _buildQtyBtn(Assets.images.cartPlus, () => controller.addItem(item.id), isAdd: true),
+        ],
       ),
     );
   }
-}
 
-class _OrderSummary extends GetView<CartController> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingXl),
-      decoration: const BoxDecoration(
-        color: AppColors.darkSurface,
-        border: Border(top: BorderSide(color: AppColors.darkBorder, width: 0.5)),
+  Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap, {bool isAdd = false}) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(0),
+        child: icon.image(
+          width: 32,
+          height: 32,
+        ),
       ),
-      child: Obx(() => Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Subtotal', style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary)),
-                  Text(AppUtils.formatCurrency(controller.subtotal), style: AppTextStyles.pSmallSemiBold),
-                ],
+    );
+  }
+
+  Widget _buildAddAndCookingButtons() {
+    return Obx(() => Row(
+          children: [
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                width: 112,
+                height: 39,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.lightSurfaceBorder),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.add, color: AppColors.lightSurfaceSubtitle, size: 16),
+                    const SizedBox(width: 3),
+                    Flexible(
+                      child: Text(
+                        'Add Items',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.lightSurfaceDarkText,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppDimensions.gapSm),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Delivery fee', style: AppTextStyles.pSmall.copyWith(color: AppColors.textSecondary)),
-                  Text(AppUtils.formatCurrency(controller.deliveryFee.value), style: AppTextStyles.pSmallSemiBold),
-                ],
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: controller.toggleCookingRequest,
+              child: Container(
+                width: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value) ? 190 : 160,
+                height: 39,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value)
+                      ? AppColors.primary
+                      : AppColors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value)
+                      ? null
+                      : Border.all(color: AppColors.lightSurfaceBorder),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.edit_outlined,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Cooking Requests',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value)
+                              ? AppColors.white
+                              : AppColors.lightSurfaceDarkText,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          controller.clearCookingRequest();
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: const Icon(
+                          Icons.close,
+                          color: AppColors.white,
+                          size: 18,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              const Divider(height: AppDimensions.gapXl, color: AppColors.darkBorder),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            ),
+          ],
+        ));
+  }
+
+  Widget _buildCookingRequestArea() {
+    if (controller.isCookingRequestExpanded.value) {
+      return Container(
+        margin: const EdgeInsets.only(top: 16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Total', style: AppTextStyles.pMediumBold),
-                  Text(
-                    AppUtils.formatCurrency(controller.total),
-                    style: AppTextStyles.amount,
+                  Expanded(
+                    child: TextField(
+                      controller: controller.cookingRequestController,
+                      maxLength: 300,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.lightSurfaceDarkText,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Type cooking requests',
+                        hintStyle: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.lightSurfaceSubtitle,
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isCollapsed: true,
+                        filled: false,
+                        contentPadding: EdgeInsets.zero,
+                        counterText: "",
+                      ),
+                      maxLines: 3,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: controller.saveCookingRequest,
+                    child: Text(
+                      'Save',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: AppDimensions.gapLg),
-              AppButton(
-                label: 'Proceed to Checkout',
-                onTap: controller.proceedToCheckout,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Align(
+                alignment: Alignment.bottomRight,
+                child: Obx(() => Text(
+                      '${controller.cookingRequestTemp.value.length}/300',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppColors.lightSurfaceSubtitle,
+                      ),
+                    )),
               ),
-            ],
-          )),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.offWhite, // Light grey for disclaimer
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+              ),
+              child: Text(
+                'The restaurant will do its best to accommodate your request. However, refunds cannot be issued for unmet special requests.',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.navyMuted600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (controller.isCookingRequestSaved.value) {
+      return Container(
+        margin: const EdgeInsets.only(top: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                controller.cookingRequest.value,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.lightSurfaceDarkText,
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: controller.editCookingRequest,
+              child: const Icon(Icons.edit_outlined, color: AppColors.iconDark, size: 18),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildCouponSection() {
+    return Obx(() => Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.offWhite,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: GestureDetector(
+            onTap: () => Get.toNamed(AppRoutes.coupons),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                Assets.images.offers.image(width: 20, height: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        controller.isCouponApplied.value
+                            ? '£12.00 Saved EXCLUSIVE WELCOME'
+                            : 'View all coupons',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.lightSurfaceDarkText,
+                        ),
+                      ),
+                      if (controller.isCouponApplied.value)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'View all coupons',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.lightSurfaceSubtitle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: AppColors.iconDark, size: 20),
+              ],
+            ),
+          ),
+        ));
+  }
+
+  Widget _buildBillSummary() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Bill Summary',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+              color: AppColors.lightSurfaceDarkText,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.only(top: 24,bottom: 16,left: 12,right: 12),
+          decoration: BoxDecoration(
+            color: AppColors.offWhite,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Obx(() => Column(
+
+                children: [
+                  _buildBillRow('Item Total', '£${controller.itemTotal.toStringAsFixed(2)}'),
+                  const SizedBox(height: 8),
+                  if (controller.isCouponApplied.value)
+                    _buildBillRow('Item Discount', '-£${controller.couponDiscount.value.toStringAsFixed(2)}', isDiscount: true),
+                  const SizedBox(height: 8),
+                  _buildBillRow('Delivery Fee', '£${controller.deliveryFee.value.toStringAsFixed(2)}'),
+                  const SizedBox(height: 8),
+                  _buildBillRow('Taxes & Charges', '£${controller.taxesAndCharges.value.toStringAsFixed(2)}'),
+                  const Divider(height: 32, color: AppColors.lightSurfaceBorder,thickness: 1,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'To Pay',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.lightSurfaceDarkText,
+                        ),
+                      ),
+                      Text(
+                        '£${controller.totalToPay.toStringAsFixed(2)}',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              )),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBillRow(String label, String value, {bool isDiscount = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.lightSurfaceCusinsSubtitle,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isDiscount ? AppColors.primary : AppColors.lightSurfaceDarkText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCancellationPolicy() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cancellation policy',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.lightSurfaceDarkText,
+              decoration: TextDecoration.underline,
+              decorationColor: AppColors.black,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Please double-check your orders and address details. Orders are not-refundable once placed.',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: AppColors.lightSurfaceSubtitle,
+              height: 16 / 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceOrderButton() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: AppButton(
+        label: 'Place Order',
+        onTap: () {
+          controller.clearCart();
+          Get.toNamed(AppRoutes.orderSuccess);
+        },
+      ),
     );
   }
 }

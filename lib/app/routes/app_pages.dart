@@ -10,6 +10,8 @@ import '../modules/auth/views/register_view.dart';
 import '../modules/auth/views/verification_pending_view.dart';
 import '../modules/cart/bindings/cart_binding.dart';
 import '../modules/cart/views/cart_view.dart';
+import '../modules/cart/views/coupons_view.dart';
+import '../modules/cart/views/order_success_view.dart';
 import '../modules/checkout/bindings/checkout_binding.dart';
 import '../modules/checkout/views/checkout_view.dart';
 import '../modules/dashboard/bindings/dashboard_binding.dart';
@@ -196,6 +198,16 @@ class AppPages {
       page: () => const RestaurantDetailView(),
       binding: RestaurantDetailBinding(),
       middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.coupons,
+      page: () => const CouponsView(),
+      binding: CartBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.orderSuccess,
+      page: () => const OrderSuccessView(),
     ),
   ];
 }

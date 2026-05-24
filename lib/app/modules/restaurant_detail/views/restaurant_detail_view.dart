@@ -1,6 +1,5 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
-import '../../../../generated/assets.dart';
 import '../controllers/restaurant_detail_controller.dart';
 import 'product_detail_bottom_sheet.dart';
 import 'store_info_bottom_sheet.dart';
@@ -12,23 +11,33 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 88), // 60 (overflow) + 28 (gap) = 88
-            _buildSearchBar(),
-            const SizedBox(height: 28),
-            _buildFilters(),
-            const SizedBox(height: 24),
-            _buildDishList(),
-            _buildViewAllButton(),
-            _buildRecommendedSection(),
-            const SizedBox(height: 40),
-          ],
-        ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: 88), // 60 (overflow) + 28 (gap) = 88
+                _buildSearchBar(),
+                const SizedBox(height: 28),
+                _buildFilters(),
+                const SizedBox(height: 24),
+                _buildDishList(),
+                _buildViewAllButton(),
+                _buildRecommendedSection(),
+                const SizedBox(height: 100), // Extra space for floating bar
+              ],
+            ),
+          ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CartFloatingBar(),
+          ),
+        ],
       ),
     );
   }
@@ -58,7 +67,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                     shape: BoxShape.circle,
                   ),
                   child: Assets.images.back.image(
-                      width: 16, height: 16, color: Colors.white),
+                      width: 16, height: 16, color: AppColors.white),
                 ),
               ),
               GestureDetector(
@@ -70,7 +79,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                      Icons.more_vert, color: Colors.white, size: 16),
+                      Icons.more_vert, color: AppColors.white, size: 16),
                 ),
               ),
             ],
@@ -88,7 +97,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color: Colors.black.withValues(alpha: 0.08),
                   blurRadius: 15,
                   offset: const Offset(0, 4),
                 ),
@@ -304,7 +313,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: Colors.black,
+              color: AppColors.lightSurfaceDarkText,
             ),
           ),
         ],
@@ -321,10 +330,10 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
         height: 28,
         padding: const EdgeInsets.only(left: 10, right: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
+          color: isSelected ? AppColors.primary : AppColors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-              color: isSelected ? Colors.transparent : AppColors.lightSurfaceBorder),
+              color: isSelected ? AppColors.transparent : AppColors.lightSurfaceBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -334,7 +343,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: Colors.black,
+                color: AppColors.lightSurfaceDarkText,
               ),
             ),
             if (isSelected) ...[
@@ -350,17 +359,19 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
   Widget _buildDishList() {
     final dishes = [
       {
+        'id': '1',
         'name': 'Margherita Ultimate Cheese Pizza',
         'price': '8.23',
         'rating': '4.8'
       },
       {
+        'id': '2',
         'name': 'Margherita Pizza Giant Slice',
         'price': '8.23',
         'rating': '4.0'
       },
-      {'name': 'Sweet Corn Pizza Regular', 'price': '8.23', 'rating': '4.8'},
-      {'name': 'Onions Thin Crust Pizza', 'price': '8.23', 'rating': '4.2'},
+      {'id': '3', 'name': 'Sweet Corn Pizza Regular', 'price': '8.23', 'rating': '4.8'},
+      {'id': '4', 'name': 'Onions Thin Crust Pizza', 'price': '8.23', 'rating': '4.2'},
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -403,9 +414,10 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
 
   Widget _buildRecommendedSection() {
     final recommended = [
-      {'name': 'Sweet Corn Pizza Regular', 'price': '8.00', 'rating': '4.5'},
-      {'name': 'Onions Thin Crust Pizza', 'price': '4.23', 'rating': '4.6'},
+      {'id': '5', 'name': 'Sweet Corn Pizza Regular', 'price': '8.00', 'rating': '4.5'},
+      {'id': '6', 'name': 'Onions Thin Crust Pizza', 'price': '4.23', 'rating': '4.6'},
       {
+        'id': '7',
         'name': 'Margherita Pizza Giant Slice',
         'price': '4.01',
         'rating': '4.5'

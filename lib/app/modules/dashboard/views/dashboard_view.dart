@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
@@ -70,40 +72,52 @@ class _BottomNav extends StatelessWidget {
             ],
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                label: 'Home',
-                index: 0,
-                currentIndex: currentIndex,
-                onTap: onTap,
+              const SizedBox(width: 24),
+              Expanded(
+                child: _NavItem(
+                  icon: Assets.images.homeUnselected,
+                  activeIcon: Assets.images.homeSelected,
+                  label: 'Home',
+                  index: 0,
+                  currentIndex: currentIndex,
+                  onTap: onTap,
+                ),
               ),
-              _NavItem(
-                icon: Icons.search_rounded,
-                activeIcon: Icons.search_rounded,
-                label: 'Search',
-                index: 1,
-                currentIndex: currentIndex,
-                onTap: onTap,
+              const SizedBox(width: 20),
+              Expanded(
+                child: _NavItem(
+                  icon: Assets.images.searchUnselected,
+                  activeIcon: Assets.images.searchSelected,
+                  label: 'Search',
+                  index: 1,
+                  currentIndex: currentIndex,
+                  onTap: onTap,
+                ),
               ),
-              _NavItem(
-                icon: Icons.shopping_cart_outlined,      // ← cart icon per Figma
-                activeIcon: Icons.shopping_cart_rounded,
-                label: 'History',
-                index: 2,
-                currentIndex: currentIndex,
-                onTap: onTap,
+              const SizedBox(width: 20),
+              Expanded(
+                child: _NavItem(
+                  icon: Assets.images.historyUnselected,
+                  activeIcon: Assets.images.historySelcted,
+                  label: 'History',
+                  index: 2,
+                  currentIndex: currentIndex,
+                  onTap: onTap,
+                ),
               ),
-              _NavItem(
-                icon: Icons.person_outline_rounded,
-                activeIcon: Icons.person_rounded,
-                label: 'Account',
-                index: 3,
-                currentIndex: currentIndex,
-                onTap: onTap,
+              const SizedBox(width: 20),
+              Expanded(
+                child: _NavItem(
+                  icon: Assets.images.profileUnselcetd,
+                  activeIcon: Assets.images.profileSelected,
+                  label: 'Account',
+                  index: 3,
+                  currentIndex: currentIndex,
+                  onTap: onTap,
+                ),
               ),
+              const SizedBox(width: 24),
             ],
           ),
         ),
@@ -113,8 +127,8 @@ class _BottomNav extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final IconData activeIcon;
+  final AssetGenImage icon;
+  final AssetGenImage activeIcon;
   final String label;
   final int index;
   final int currentIndex;
@@ -132,29 +146,28 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = currentIndex == index;
-    final color = isActive ? AppColors.primary : const Color(0xFF6B7A99);
+    final color = isActive ? AppColors.primary : AppColors.white;
 
     return GestureDetector(
       onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 72,
         height: double.infinity,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isActive ? activeIcon : icon,
+            (isActive ? activeIcon : icon).image(
+              width: 22,
+              height: 22,
               color: color,
-              size: 22,
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 6),
             Text(
               label,
-              style: AppTextStyles.caption.copyWith(
+              style: GoogleFonts.inter(
                 color: color,
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -163,3 +176,4 @@ class _NavItem extends StatelessWidget {
     );
   }
 }
+

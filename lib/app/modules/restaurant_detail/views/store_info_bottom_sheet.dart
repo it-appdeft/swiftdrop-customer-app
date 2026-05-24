@@ -4,7 +4,7 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 void showStoreInfoBottomSheet() {
   Get.bottomSheet(
     const StoreInfoContent(),
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparent,
     isScrollControlled: true,
   );
 }

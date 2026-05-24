@@ -35,7 +35,7 @@ class AppDimensions {
   static const double inputHeight = 44;
   static const double buttonHeight = 48;
   static const double buttonHeightLg = 56;
-  static const double bottomNavHeight = 64;
+  static const double bottomNavHeight = 78;
   static const double appBarHeight = 56;
   static const double otpBoxSize = 48;
 

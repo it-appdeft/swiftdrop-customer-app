@@ -6,7 +6,7 @@ SwiftDrop User App — the customer-facing companion to SwiftDrop Driver App. UK
 ---
 
 ## ABSOLUTE RULES — NEVER BREAK THESE
-- Architecture: **GetX MVC, feature-first modular**. Every module has `bindings/`, `controllers/`, `views/` folders.
+- Architecture: **GetX MVC, feature-first modular**. Every module has `bindings/`, `controllers/`, `views/` folders. Exception: `search/` is a lightweight tab module with no binding (controller registered by DashboardBinding).
 - State: **GetX only** (`Obx`, `GetxController`, `GetxService`). No Bloc, Provider, Riverpod, setState for business logic.
 - Routing: **Named routes only** via `Get.toNamed`, `Get.offAllNamed`. All routes registered in `AppPages`.
 - DI: **`Get.put` for controllers that own lifecycle (splash). `Get.lazyPut` for all others.**
@@ -81,6 +81,8 @@ lib/
 │   │   ├── home/                        ← browse, search, categories, restaurants
 │   │   ├── cart/
 │   │   ├── checkout/
+│   │   ├── restaurant_detail/           ← restaurant menu; views: restaurant_detail_view, product_detail_bottom_sheet, store_info_bottom_sheet
+│   │   ├── search/                      ← lightweight module: controllers/ + views/ only (no bindings/)
 │   │   ├── order_tracking/
 │   │   ├── order_history/
 │   │   ├── wallet/
@@ -122,10 +124,12 @@ lib/
 │       ├── app_otp_screen.dart
 │       ├── app_text_field.dart
 │       ├── connectivity_widget.dart
+│       ├── dish_card.dart               ← menu item card (name, price, rating, image)
 │       ├── empty_state_widget.dart
 │       ├── error_state_widget.dart
 │       ├── info_row.dart
 │       ├── pagination_list.dart
+│       ├── restaurant_card.dart         ← restaurant preview card (name, image, rating, offer)
 │       ├── section_header.dart
 │       ├── shimmer_widgets.dart
 │       └── status_badge.dart
@@ -146,6 +150,8 @@ lib/
 │       ├── earnings_repository.dart
 │       ├── notification_repository.dart
 │       └── profile_repository.dart
+├── generated/
+│   └── assets.dart                      ← generated asset path constants
 ├── export.dart                           ← barrel file, imported by main.dart
 └── main.dart
 ```
@@ -191,6 +197,7 @@ white       = Color(0xFFFFFFFF)
 offWhite    = Color(0xFFF6F8FA)
 buttonLabel = Color(0xFFFEFEFD)   ← used for button text (not pure white)
 
+<<<<<<< Updated upstream
 // Light-surface — used on auth screens (login, OTP, register — white background)
 lightSurfaceDarkText  = Color(0xFF0B243A)
 lightSurfaceText      = Color(0xFF071623)
@@ -204,6 +211,39 @@ lightSurfaceBorder    = Color(0xFFF2F2E9)
 lightSurfaceHint      = Color(0xFFADB5BD)
 lightOtpBoxBg         = Color(0xFFEDEEF1)   ← OTP box empty state
 lightOtpFocusBorder   = Color(0xFF198754)   ← OTP box focused/filled border
+=======
+// Light-surface — used on auth screens AND edit_profile (white background)
+lightSurfaceDarkText        = Color(0xFF0B243A)
+lightSurfaceText            = Color(0xFF071623)
+lightSurfaceVerified        = Color(0xFF10744B)
+lightInputText              = Color(0xFF0F191F)
+lightSurfaceHeading         = Color(0xFF3C4042)
+lightSurfaceLabel           = Color(0xFF595D70)
+lightSurfaceSubtitle        = Color(0xFF868AA5)
+lightSurfaceCusinsSubtitle  = Color(0xFF0B243A)
+lightSurfaceDisabled        = Color(0xFFE1E2E3)
+lightSurfaceBorder          = Color(0xFFF2F2E9)
+lightSurfaceHint            = Color(0xFFADB5BD)
+lightOtpBoxBg               = Color(0xFFEDEEF1)   ← OTP box empty state
+lightOtpFocusBorder         = Color(0xFF198754)   ← OTP box focused/filled border
+
+// Shared across home / search / restaurant-detail light surfaces
+lightSurfaceNavy = Color(0xFF0A2034)
+darkNavy         = Color(0xFF081929)
+navyMedium       = Color(0xFF3C5061)
+iconDark         = Color(0xFF292D32)
+shadowLight      = Color(0x14000000)
+
+// Promo banner backgrounds
+bannerPink   = Color(0xFFFFE2EA)
+bannerYellow = Color(0xFFFFD996)
+bannerOrange = Color(0xFFFFC865)
+
+// Component surfaces
+primarySurface = Color(0xFFF1FBF7)   ← light green tint surface (restaurant cards etc.)
+
+transparent = Colors.transparent
+>>>>>>> Stashed changes
 ```
 
 **Auth screens use a white/light surface design** (not dark theme). All `auth/` views set `backgroundColor: AppColors.white` and use `lightSurface*` colors. The dark `otpBox`/`otpBoxFocused` decorations in `AppDecorations` are reserved for post-auth screens.
@@ -269,7 +309,6 @@ otpResendTimer  = 60      // seconds
 snackbarDuration= 3       // seconds
 otpLength       = 4       // boxes
 phoneMinLength  = 11      // UK: 07xxx xxxxxx
-defaultOtp      = '9999'  // hardcoded until real API
 paginationLimit = 10
 mapDefaultZoom  = 15.0
 mapDriverZoom   = 17.0
@@ -349,6 +388,7 @@ Profile:
   /customer/profile             /customer/profile/delete/initiate
   /deletion-reasons
 
+<<<<<<< Updated upstream
 Orders:
   /user/orders/active           /user/orders/history          /user/orders (detail)
   /user/orders/place            /user/orders/cancel
@@ -366,6 +406,28 @@ Addresses:
 Restaurants & Discovery:
   /restaurants                  /restaurants (detail)         /categories
   /restaurants/search
+=======
+// Customer-specific (profile & deletion)
+/customer/profile                           /customer/profile/delete/initiate
+/deletion-reasons
+
+// Orders
+/user/orders/active   /user/orders/history   /user/orders
+/user/orders/place    /user/orders/cancel
+
+// Wallet & transactions
+/user/wallet/balance  /user/transactions
+/user/wallet/add-funds  /user/wallet/withdraw
+
+// Notifications
+/user/notifications   /user/notifications/read
+
+// Addresses
+/user/addresses       /user/addresses/add    /user/addresses/delete
+
+// Restaurants & categories
+/restaurants              /categories           /restaurants/search
+>>>>>>> Stashed changes
 ```
 
 ---
@@ -378,7 +440,7 @@ Splash (~5.6s animation) → Onboarding (first launch) → Login → OTP → Das
 
 **OTP logic (AuthController.verifyOtp):**
 ```dart
-if (_fullOtp != AppConstants.defaultOtp) {
+if (_fullOtp != '9999') {
   AppUtils.showError('Invalid OTP. Please enter the correct code.');
   return;
 }
@@ -431,6 +493,7 @@ Use `runAsync()` for all async operations in controllers.
 
 ### AppRoutes (static const strings)
 ```dart
+<<<<<<< Updated upstream
 splash                    = '/splash'
 onboarding                = '/onboarding'
 login                     = '/login'
@@ -457,12 +520,48 @@ verifyAccount             = '/edit-profile/verify-account'
 verifyAccountDeletion     = '/edit-profile/verify-account-deletion'
 deleteAccountReason       = '/edit-profile/delete-account'
 deleteAccountConfirmation = '/edit-profile/delete-account-confirmation'
+=======
+splash              = '/splash'
+onboarding          = '/onboarding'
+login               = '/login'
+otp                 = '/otp'
+register            = '/register'
+registerSteps       = '/register-steps'
+verificationPending = '/verification-pending'
+dashboard           = '/dashboard'
+restaurantDetail    = '/restaurant-detail'
+orderTracking       = '/order-tracking'
+orderHistory        = '/order-history'
+wallet              = '/wallet'
+notifications       = '/notifications'
+profile             = '/profile'
+settings            = '/settings'
+cart                = '/cart'
+checkout            = '/checkout'
+
+// edit_profile sub-routes (all require auth)
+editProfile              = '/edit-profile'
+changePhone              = '/edit-profile/change-phone'
+verifyExisting           = '/edit-profile/verify-existing'
+verifyNewPhone           = '/edit-profile/verify-new-phone'
+changeEmail              = '/edit-profile/change-email'
+verifyEmail              = '/edit-profile/verify-email'
+verifyAccount            = '/edit-profile/verify-account'
+verifyAccountDeletion    = '/edit-profile/verify-account-deletion'
+deleteAccountReason      = '/edit-profile/delete-account'
+deleteAccountConfirmation= '/edit-profile/delete-account-confirmation'
+>>>>>>> Stashed changes
 ```
 
 ### AppPages rules
 - `splash`: **no middleware**. SplashBinding MUST use `Get.put` (not lazyPut).
 - `onboarding`, `login`, `otp`, `register`, `registerSteps`, `verificationPending`: **no middleware**.
+<<<<<<< Updated upstream
 - `dashboard` and all post-auth routes (`orderTracking`, `orderHistory`, `wallet`, `notifications`, `profile`, `settings`, `cart`, `checkout`, `editProfile` and all its sub-routes): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
+=======
+- `dashboard` and all post-auth routes (`restaurantDetail`, `orderTracking`, `orderHistory`, `wallet`, `notifications`, `profile`, `settings`, `cart`, `checkout`): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
+- All `edit_profile` routes (`editProfile`, `changePhone`, `verifyExisting`, `verifyNewPhone`, `changeEmail`, `verifyEmail`, `verifyAccount`, `verifyAccountDeletion`, `deleteAccountReason`, `deleteAccountConfirmation`): `middlewares: [AuthMiddleware(), ConnectivityMiddleware()]`
+>>>>>>> Stashed changes
 - `ConnectivityMiddleware`: shows warning snackbar only, returns null (no hard redirect).
 - `AuthMiddleware`: redirects to `/login` if not authenticated.
 
@@ -529,6 +628,130 @@ UK data: London addresses (EC1V, EC1M, WC2A, E20, E14, WC2H postcodes), UK names
 
 ---
 
+<<<<<<< Updated upstream
+=======
+## SHARED WIDGETS (`lib/app/widgets/`)
+
+| Widget | Purpose |
+|--------|---------|
+| `AppButton` | Primary/outlined button with loading state, customizable colors/size |
+| `AppLoader` | Centered circular progress indicator (40px default) |
+| `AppInlineLoader` | Inline spinner for use inside badges or buttons |
+| `AppTextField` | Themed text input with validation, icon support, formatters |
+| `AppOtpBox` | Single OTP digit input box with focus/backspace handling |
+| `AppOtpScreen` | Full reusable OTP screen with resend countdown timer, configurable subtitle and button builders |
+| `ConnectivityWidget` | Shows red offline banner when not connected |
+| `DishCard` | Menu item card displaying dish name, price, rating, and image |
+| `EmptyStateWidget` | Centered icon + message + optional action button |
+| `ErrorStateWidget` | Error icon + message + retry button |
+| `InfoRow` | Label/value pair row with optional divider |
+| `PaginationList<T>` | ListView with infinite scroll load-more callback |
+| `RestaurantCard` | Restaurant preview card with name, image, rating, delivery time, and offer badge |
+| `SectionHeader` | Title row with optional action link |
+| `ShimmerBox` | Skeleton loader with shimmer animation |
+| `StatusBadge` | Colored pill for order status (pending/accepted/delivered/cancelled) |
+
+`AppOtpScreen` is a reusable screen used in both auth (login OTP) and edit_profile (verify phone/email OTP). It accepts builder callbacks for the subtitle and action button so each use-case can customize the copy without duplicating the layout.
+
+---
+
+## MODULE CONTROLLER STATE REFERENCE
+
+| Module | Key Rx Fields |
+|--------|--------------|
+| `AuthController` | `phoneNumber`, `isPhoneValid`, `countryCode`, `countryFlag`, `otpValues[]`, `resendTimer`, `canResend`, loading flags per OTP type |
+| `DashboardController` | `currentIndex` (bottom nav tab) |
+| `HomeController` | `searchQuery`, `categories[]`, `restaurants[]`, `filteredRestaurants[]` |
+| `RestaurantDetailController` | `restaurant` (Rx<Map>), `searchQuery`, `selectedFilterIndex`, `isVegSelected`, `isNonVegSelected`, `isRatingsSelected`, `isBestsellerSelected`; populated from `Get.arguments` |
+| `SearchTabController` | `queryController`, `searchQuery`, `recentSearches[]`, `selectedTabIndex` (0=Restaurants/1=Dishes), `activeFilters` (Set), `restaurantResults[]`, `dishResults[]`; methods: `toggleFilter`, `onSubmit`, `tapRecent`, `removeRecent`, `clearRecent`, `clearQuery` |
+| `CartController` | `items` (List<CartItem>), `deliveryFee`; methods: `addItem`, `removeItem`, `decrementItem`, `clearCart`, `proceedToCheckout` |
+| `CheckoutController` | `selectedPayment`, `deliveryAddress` |
+| `WalletController` | `balance`, `transactions[]`, `hasMore`, page counter; methods: `loadTransactions`, `loadMore`, `addFunds` |
+| `NotificationsController` | `notifications[]`, `unreadCount`; methods: `loadNotifications`, `markAsRead`, `markAllAsRead` |
+| `OrderHistoryController` | `activeOrders[]`, `historyOrders[]`, `hasMoreHistory`; methods: `loadOrders`, `loadMoreHistory` |
+| `OrderTrackingController` | `order` (Rx<OrderModel?>); loads via route param `orderId` |
+| `ProfileController` | `user` (Rx<UserModel?>), `isLoggingOut`; syncs with `AuthService.currentUser` |
+| `SettingsController` | `pushNotifications`, `orderUpdates`, `promotions` (RxBool); persisted to StorageService |
+| `EditProfileController` | See edit_profile section below |
+
+### CartItem (local class in CartController)
+```dart
+class CartItem {
+  final String id, name;
+  final double price;
+  int quantity;
+}
+```
+
+---
+
+## EDIT_PROFILE MODULE (`lib/app/modules/edit_profile/`)
+
+Complete flow for updating user profile, changing phone/email, and deleting account.
+
+### Views and enums
+```dart
+// Main editor — name, phone, email, avatar
+EditProfileView
+
+// Entry view for initiating phone or email change
+EditEntryView
+enum EditEntryFlow { phone, email }
+
+// OTP verification screen (reuses AppOtpScreen widget)
+EditOtpView
+enum EditOtpFlow { existing, newPhone, email, account, deleteAccount }
+
+// Account deletion screens
+DeleteAccountReasonView       // reason picker + optional feedback text
+DeleteAccountConfirmationView // final confirmation before delete
+```
+
+### EditProfileController Rx state
+```dart
+// Current user (synced from AuthService)
+Rx<UserModel?> currentUser
+
+// Name
+TextEditingController nameController
+RxBool isNameDirty
+
+// Avatar
+RxString selectedAvatarPath   // local file path after ImagePicker pick
+
+// Phone change flow
+RxString countryCode, newPhoneNumber
+RxBool isNewPhoneValid
+
+// Email change flow
+RxString newEmail
+RxBool isNewEmailValid
+
+// 3 independent OTP buckets (existing phone / new phone / email)
+// each has its own resend timer and canResend flag
+
+// Deletion flow
+RxString deletionTarget       // masked phone shown in deletion OTP screen
+RxList<DeletionReason> deletionReasons
+Rx<DeletionReason?> selectedReason
+TextEditingController deletionFeedbackController
+
+// Granular loading flags (one per async action, never share isLoading)
+RxBool isSavingName, isSavingAvatar, isSendingExistingOtp,
+       isSendingNewPhoneOtp, isSendingEmailOtp, isVerifyingOtp,
+       isDeletingAccount
+```
+
+### edit_profile flow summary
+1. **EditProfileView** — user edits name (saved inline), taps phone/email row to start change flow
+2. **Change phone**: `changePhone` → `verifyExisting` (OTP for current phone) → `verifyNewPhone` (OTP for new number)
+3. **Change email**: `changeEmail` → `verifyEmail` (OTP to new email address)
+4. **Delete account**: `verifyAccount` → `verifyAccountDeletion` (OTP) → `deleteAccountReason` → `deleteAccountConfirmation`
+5. Avatar change: `ImagePicker` opens camera/gallery; local path stored in `selectedAvatarPath`; upload on save
+
+---
+
+>>>>>>> Stashed changes
 ## .env FILE
 ```
 BASE_URL=https://api.swiftdrop.com
@@ -671,6 +894,12 @@ Every view that handles these must follow:
 | — | cart (items, quantities, checkout) |
 | — | checkout (address, payment, place order) |
 | — | restaurants/shops list |
+<<<<<<< Updated upstream
+=======
+| — | restaurant_detail (menu, filters, product bottom sheet, store info bottom sheet) |
+| — | search (restaurants + dishes tabs, recent searches, filters) |
+| — | edit_profile (name/phone/email change, account deletion) |
+>>>>>>> Stashed changes
 
 ---
 
