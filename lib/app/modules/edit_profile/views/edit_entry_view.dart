@@ -165,7 +165,7 @@ class EditEntryView extends GetView<EditProfileController> {
       context: context,
       showPhoneCode: true,
       onSelect: (Country country) {
-        controller.selectCountry(country.flagEmoji, '+${country.phoneCode}');
+        controller.selectCountry(country.flagEmoji, '+${country.phoneCode}', country.countryCode);
       },
       countryListTheme: CountryListThemeData(
         backgroundColor: AppColors.white,

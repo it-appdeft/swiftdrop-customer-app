@@ -1,10 +1,11 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import 'product_addons_sheet.dart';
 
 void showProductDetailBottomSheet(Map dish) {
   Get.bottomSheet(
     ProductDetailContent(dish: dish),
-    backgroundColor: Colors.transparent,
+    backgroundColor: AppColors.transparent,
     isScrollControlled: true,
   );
 }
@@ -90,7 +91,9 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
                           ),
                           child: _quantity == 0
                               ? GestureDetector(
-                                  onTap: () => setState(() => _quantity = 1),
+                                  onTap: () {
+                                    showProductAddonsSheet(widget.dish);
+                                  },
                                   behavior: HitTestBehavior.opaque,
                                   child: Center(
                                     child: Text(

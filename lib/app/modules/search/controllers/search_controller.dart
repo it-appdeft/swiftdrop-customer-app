@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:swiftdrop_customer_app/export.dart';
 
 class SearchTabController extends BaseController {
@@ -10,29 +11,35 @@ class SearchTabController extends BaseController {
     'Pret A Manger',
   ].obs;
 
-  final RxInt selectedTabIndex = 0.obs; // 0: Restaurants, 1: Dishes
+  final RxInt selectedTabIndex = 0.obs;
   final RxSet<String> activeFilters = <String>{}.obs;
 
-  // Mock data
   final RxList<Map<String, dynamic>> restaurantResults = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> dishResults = <Map<String, dynamic>>[].obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    queryController.addListener(_onQuery);
-  }
+  Timer? _debounceTimer;
 
-  void _onQuery() {
-    searchQuery.value = queryController.text.trim();
-    if (searchQuery.value.isNotEmpty) {
-      _performSearch();
+  // Called by the TextField's onChanged — no listener/Worker needed.
+  void onQueryChanged(String text) {
+    final trimmed = text.trim();
+    searchQuery.value = trimmed;
+    _debounceTimer?.cancel();
+    if (trimmed.isEmpty) {
+      restaurantResults.clear();
+      dishResults.clear();
+    } else {
+      _debounceTimer = Timer(const Duration(milliseconds: 300), _performSearch);
     }
   }
 
   void _performSearch() {
-    // Mocking search results
-    restaurantResults.value = [
+    if (searchQuery.value.isEmpty) {
+      restaurantResults.clear();
+      dishResults.clear();
+      return;
+    }
+
+    restaurantResults.assignAll([
       {
         'name': 'The Marble Grill',
         'image': 'assets/images/onbording1.png',
@@ -49,9 +56,9 @@ class SearchTabController extends BaseController {
         'distance': '5.9 mi',
         'offer': '20% OFF select items',
       },
-    ];
+    ]);
 
-    dishResults.value = [
+    dishResults.assignAll([
       {
         'name': 'The Marble Grill',
         'time': '20-30 min',
@@ -60,13 +67,13 @@ class SearchTabController extends BaseController {
           {
             'name': 'Margherita Ultimate Cheese Pizza',
             'price': '8.23',
-            'rating': 4.8,
+            'rating': '4.8',
             'image': 'assets/images/onbording3.png',
           },
           {
             'name': 'Pepperoni Feast',
             'price': '9.50',
-            'rating': 4.7,
+            'rating': '4.7',
             'image': 'assets/images/onbording1.png',
           },
         ],
@@ -79,12 +86,12 @@ class SearchTabController extends BaseController {
           {
             'name': 'Sweet Corn Pizza Regular',
             'price': '8.23',
-            'rating': 4.8,
+            'rating': '4.8',
             'image': 'assets/images/onbording2.png',
           },
         ],
       },
-    ];
+    ]);
   }
 
   void toggleFilter(String filter) {
@@ -107,17 +114,24 @@ class SearchTabController extends BaseController {
   void tapRecent(String q) {
     queryController.text = q;
     queryController.selection = TextSelection.collapsed(offset: q.length);
+    searchQuery.value = q;
+    _performSearch();
   }
 
   void removeRecent(String q) => recentSearches.remove(q);
   void clearRecent() => recentSearches.clear();
-  void clearQuery() => queryController.clear();
+
+  void clearQuery() {
+    queryController.clear();
+    searchQuery.value = '';
+    _debounceTimer?.cancel();
+    restaurantResults.clear();
+    dishResults.clear();
+  }
 
   @override
   void onClose() {
-    queryController
-      ..removeListener(_onQuery)
-      ..dispose();
+    _debounceTimer?.cancel();
     super.onClose();
   }
 }

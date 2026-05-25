@@ -1,5 +1,6 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../modules/restaurant_detail/views/product_addons_sheet.dart';
 
 class DishCard extends StatefulWidget {
   final Map<String, dynamic> dish;
@@ -56,7 +57,7 @@ class _DishCardState extends State<DishCard> {
             ),
             child: _quantity == 0
                 ? GestureDetector(
-                    onTap: () => setState(() => _quantity = 1),
+                    onTap: () => showProductAddonsSheet(widget.dish),
                     behavior: HitTestBehavior.opaque,
                     child: Center(
                       child: Text(

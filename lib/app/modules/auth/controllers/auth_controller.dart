@@ -11,6 +11,7 @@ class AuthController extends BaseController {
   final RxString phoneNumber = ''.obs;
   final RxBool isPhoneValid = false.obs;
   final RxString countryCode = '+44'.obs;
+  final RxString countryIso = 'GB'.obs;
   final RxString countryFlag = '🇬🇧'.obs;
 
   // --- Register fields ---
@@ -78,9 +79,10 @@ class AuthController extends BaseController {
     return '${countryCode.value}-$local';
   }
 
-  void selectCountry(String flag, String code) {
+  void selectCountry(String flag, String code, String iso) {
     countryFlag.value = flag;
     countryCode.value = code;
+    countryIso.value = iso;
 
     phoneController.clear();
 
@@ -158,11 +160,12 @@ class AuthController extends BaseController {
       AppUtils.showError('Please enter a valid mobile number.');
       return;
     }
-
+    https://i.diawi.com/Mi9Jsd
     await runAsync(() async {
       final result = await _repo.sendOtp(
         mobile: phoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         type: 'login',
         channel: 'phone',
       );
@@ -211,6 +214,7 @@ class AuthController extends BaseController {
       final result = await _repo.verifyOtp(
         mobile: phoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         code: _fullOtp,
         type: 'login',
         channel: 'phone',
@@ -244,6 +248,7 @@ class AuthController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: phoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         type: 'login',
         channel: 'phone',
       );
@@ -382,6 +387,7 @@ class AuthController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: regPhoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         type: 'signup',
         channel: 'phone',
       );
@@ -420,6 +426,7 @@ class AuthController extends BaseController {
       final result = await _repo.verifyOtp(
         mobile: regPhoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         code: code,
         type: 'signup',
         channel: 'phone',
@@ -450,6 +457,7 @@ class AuthController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: regPhoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         type: 'signup',
         channel: 'phone',
       );
@@ -530,6 +538,7 @@ class AuthController extends BaseController {
         name: name,
         mobile: regPhoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         email: emailController.text.trim(),
       );
 

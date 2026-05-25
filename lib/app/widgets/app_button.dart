@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../export.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_dimensions.dart';
 import '../themes/app_radius.dart';
@@ -45,7 +46,7 @@ class AppButton extends StatelessWidget {
                 side: BorderSide(color: bg),
                 foregroundColor: bg,
                 shape: RoundedRectangleBorder(
-                  borderRadius: borderRadius ?? AppRadius.lg,
+                  borderRadius: borderRadius ?? BorderRadius.circular(8.0),
                 ),
               ),
               child: _buildChild(bg),
@@ -58,7 +59,7 @@ class AppButton extends StatelessWidget {
                 disabledBackgroundColor: bg.withValues(alpha: 0.5),
                 disabledForegroundColor: fg.withValues(alpha: 0.8),
                 shape: RoundedRectangleBorder(
-                  borderRadius: borderRadius ?? AppRadius.lg,
+                  borderRadius: borderRadius ?? BorderRadius.circular(8.0),
                 ),
               ),
               child: _buildChild(fg),
@@ -84,11 +85,11 @@ class AppButton extends StatelessWidget {
         children: [
           prefixIcon!,
           const SizedBox(width: AppDimensions.gapSm),
-          Text(label, style: AppTextStyles.button.copyWith(color: color)),
+          Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: color)),
         ],
       );
     }
 
-    return Text(label, style: AppTextStyles.button.copyWith(color: color));
+    return Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: color));
   }
 }

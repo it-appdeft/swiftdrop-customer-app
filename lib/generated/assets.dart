@@ -13,16 +13,49 @@ class Assets {
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  final AssetGenImage mainIcon = const AssetGenImage(
+    'assets/images/MainIcon.png',
+  );
   final AssetGenImage nonVeg3x = const AssetGenImage(
     'assets/images/Non Veg@3x.png',
   );
   final AssetGenImage veg3x = const AssetGenImage('assets/images/Veg@3x.png');
+  final AssetGenImage addressSelected = const AssetGenImage(
+    'assets/images/addressSelected.png',
+  );
+  final AssetGenImage addressUnselected = const AssetGenImage(
+    'assets/images/addressUnselected.png',
+  );
   final AssetGenImage alertIcon = const AssetGenImage(
     'assets/images/alertIcon.png',
   );
   final AssetGenImage back = const AssetGenImage('assets/images/back.png');
+  final AssetGenImage cartMinus = const AssetGenImage(
+    'assets/images/cartMinus.png',
+  );
+  final AssetGenImage cartPlus = const AssetGenImage(
+    'assets/images/cartPlus.png',
+  );
+  final AssetGenImage checkButton = const AssetGenImage(
+    'assets/images/checkButton.png',
+  );
+  final AssetGenImage chooseOnMap = const AssetGenImage(
+    'assets/images/chooseOnMap.png',
+  );
+  final AssetGenImage cookingSelected = const AssetGenImage(
+    'assets/images/cookingSelected.png',
+  );
+  final AssetGenImage cookingUnselected = const AssetGenImage(
+    'assets/images/cookingUnselected.png',
+  );
+  final AssetGenImage couponIcon = const AssetGenImage(
+    'assets/images/couponIcon.png',
+  );
   final AssetGenImage crossIcon = const AssetGenImage(
     'assets/images/crossIcon.png',
+  );
+  final AssetGenImage currentLocation = const AssetGenImage(
+    'assets/images/currentLocation.png',
   );
   final AssetGenImage favourite = const AssetGenImage(
     'assets/images/favourite.png',
@@ -36,8 +69,21 @@ class $AssetsImagesGen {
   final AssetGenImage highestRated = const AssetGenImage(
     'assets/images/highestRated.png',
   );
+  final AssetGenImage historySelcted = const AssetGenImage(
+    'assets/images/historySelcted.png',
+  );
+  final AssetGenImage historyUnselected = const AssetGenImage(
+    'assets/images/historyUnselected.png',
+  );
+  final AssetGenImage home = const AssetGenImage('assets/images/home.png');
   final AssetGenImage homeSearchIcon = const AssetGenImage(
     'assets/images/homeSearchIcon.png',
+  );
+  final AssetGenImage homeSelected = const AssetGenImage(
+    'assets/images/homeSelected.png',
+  );
+  final AssetGenImage homeUnselected = const AssetGenImage(
+    'assets/images/homeUnselected.png',
   );
   final AssetGenImage info = const AssetGenImage('assets/images/info.png');
   final AssetGenImage locationIcon = const AssetGenImage(
@@ -58,7 +104,16 @@ class $AssetsImagesGen {
   final AssetGenImage onbording3 = const AssetGenImage(
     'assets/images/onbording3.png',
   );
+  final AssetGenImage otherLocation = const AssetGenImage(
+    'assets/images/otherLocation.png',
+  );
   final AssetGenImage plus = const AssetGenImage('assets/images/plus.png');
+  final AssetGenImage profileSelected = const AssetGenImage(
+    'assets/images/profileSelected.png',
+  );
+  final AssetGenImage profileUnselcetd = const AssetGenImage(
+    'assets/images/profileUnselcetd.png',
+  );
   final AssetGenImage ratingStar = const AssetGenImage(
     'assets/images/ratingStar.png',
   );
@@ -68,16 +123,32 @@ class $AssetsImagesGen {
   final AssetGenImage restaurantImage = const AssetGenImage(
     'assets/images/restaurantImage.png',
   );
+  final AssetGenImage rightArrow = const AssetGenImage(
+    'assets/images/rightArrow.png',
+  );
   final AssetGenImage rightIcon = const AssetGenImage(
     'assets/images/rightIcon.png',
+  );
+  final AssetGenImage rightViewCartArrow = const AssetGenImage(
+    'assets/images/rightViewCartArrow.png',
+  );
+  final AssetGenImage searchSelected = const AssetGenImage(
+    'assets/images/searchSelected.png',
+  );
+  final AssetGenImage searchUnselected = const AssetGenImage(
+    'assets/images/searchUnselected.png',
   );
   final AssetGenImage share = const AssetGenImage('assets/images/share.png');
   final AssetGenImage timeIcon = const AssetGenImage(
     'assets/images/timeIcon.png',
   );
+  final AssetGenImage unCheckButton = const AssetGenImage(
+    'assets/images/unCheckButton.png',
+  );
   final AssetGenImage vegIcon = const AssetGenImage(
     'assets/images/vegIcon.png',
   );
+  final AssetGenImage work = const AssetGenImage('assets/images/work.png');
 }
 
 class $AssetsIconsGen {
