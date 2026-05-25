@@ -1,6 +1,7 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../controllers/cart_controller.dart';
+import '../widgets/coupon_applied_dialog.dart';
 
 class CouponsView extends GetView<CartController> {
   const CouponsView({super.key});
@@ -12,12 +13,12 @@ class CouponsView extends GetView<CartController> {
       appBar: _buildAppBar(),
       body: Obx(() {
         final coupons = controller.coupons;
-        
+
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           children: [
             _buildPromoCodeInput(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Text(
               'More Offers',
               style: GoogleFonts.inter(
@@ -36,15 +37,12 @@ class CouponsView extends GetView<CartController> {
               )
             else
               ...coupons.asMap().entries.map((entry) {
-                final index = entry.key;
                 final coupon = entry.value;
                 return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: index == coupons.length - 1 ? 0 : 16,
-                  ),
+                  padding: const EdgeInsets.only(bottom: 16),
                   child: coupon.isExclusive
-                      ? _buildExclusiveCoupon(coupon)
-                      : _buildStandardCoupon(coupon),
+                      ? _buildExclusiveCoupon(context, coupon)
+                      : _buildStandardCoupon(context, coupon),
                 );
               }),
           ],
@@ -59,14 +57,15 @@ class CouponsView extends GetView<CartController> {
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.iconDark, size: 20),
+        icon: const Icon(Icons.arrow_back_ios_new,
+            color: AppColors.iconDark, size: 20),
         onPressed: () => Get.back(),
       ),
       title: Text(
         'Apply Coupons',
         style: GoogleFonts.inter(
           fontSize: 18,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: AppColors.lightSurfaceDarkText,
         ),
       ),
@@ -114,17 +113,16 @@ class CouponsView extends GetView<CartController> {
               foregroundColor: AppColors.white,
               elevation: 0,
               minimumSize: const Size(80, 36),
-              maximumSize: const Size(120, 36),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
             child: Text(
               'Apply',
               style: GoogleFonts.inter(
                 fontSize: 14,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -133,18 +131,23 @@ class CouponsView extends GetView<CartController> {
     );
   }
 
-  Widget _buildExclusiveCoupon(Coupon coupon) {
+  Widget _buildExclusiveCoupon(BuildContext context, Coupon coupon) {
     return Container(
       width: double.infinity,
-      height: 220,
       decoration: BoxDecoration(
         color: const Color(0xFFE53915),
         borderRadius: BorderRadius.circular(24),
+        image: DecorationImage(
+          image: Assets.images.onbording1.provider(),
+          fit: BoxFit.cover,
+          opacity: 0.15,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -172,54 +175,46 @@ class CouponsView extends GetView<CartController> {
             Text(
               coupon.offerAmount,
               style: GoogleFonts.inter(
-                fontSize: 40,
+                fontSize: 48,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
-                height: 1.1,
+                height: 1.0,
               ),
             ),
-            const Spacer(),
+            const SizedBox(height: 8),
+            Text(
+              coupon.description,
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        coupon.description,
-                        style: const TextStyle(
-                          fontFamily: 'Helvetica Neue',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Valid until 28 May 2026',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Valid until 28 May 2026',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white.withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () => _showCouponAppliedDialog(coupon),
+                  onPressed: () => CouponAppliedDialog.show(context, coupon, controller),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.white,
                     foregroundColor: const Color(0xFFE53915),
                     elevation: 0,
-                    minimumSize: const Size(100, 40),
+                    minimumSize: const Size(100, 44),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                     ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                   ),
                   child: Text(
                     'Apply Now',
@@ -237,17 +232,17 @@ class CouponsView extends GetView<CartController> {
     );
   }
 
-  Widget _buildStandardCoupon(Coupon coupon) {
+  Widget _buildStandardCoupon(BuildContext context, Coupon coupon) {
     return Container(
       width: double.infinity,
-      height: 220,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FB),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -301,9 +296,10 @@ class CouponsView extends GetView<CartController> {
               height: 1.4,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               if (coupon.validOn != null)
                 Text(
@@ -317,7 +313,8 @@ class CouponsView extends GetView<CartController> {
               else
                 const SizedBox.shrink(),
               GestureDetector(
-                onTap: () => _showCouponAppliedDialog(coupon),
+                onTap: () => CouponAppliedDialog.show(context, coupon, controller),
+                behavior: HitTestBehavior.opaque,
                 child: Text(
                   'Apply',
                   style: GoogleFonts.inter(
@@ -331,129 +328,6 @@ class CouponsView extends GetView<CartController> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showCouponAppliedDialog(Coupon coupon) {
-    Get.dialog(
-      Dialog(
-        backgroundColor: AppColors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.check, color: Colors.white, size: 32),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Coupon Applied!',
-                style: GoogleFonts.inter(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.lightSurfaceDarkText,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.stars, color: AppColors.primary, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      coupon.title,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FB),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'You saved £${controller.couponDiscount.value.toStringAsFixed(2)}',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${coupon.offerAmount} applied',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.lightSurfaceDarkText,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'The discount has been added to your cart. Enjoy your meal!',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.lightSurfaceSubtitle,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              AppButton(
-                label: 'Yah!',
-                onTap: () {
-                  controller.applyCoupon();
-                  Get.back();
-                  Get.back();
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: false,
     );
   }
 }

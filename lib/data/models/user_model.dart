@@ -7,6 +7,7 @@ class UserModel {
   final String? email;
   final String? avatar;
   final String? countryCode;
+  final String? countryIso;
   final String? type;
   final String? vehicleType;
   final String? vehicleNumber;
@@ -25,6 +26,7 @@ class UserModel {
     this.email,
     this.avatar,
     this.countryCode,
+    this.countryIso,
     this.type,
     this.vehicleType,
     this.vehicleNumber,
@@ -47,6 +49,7 @@ class UserModel {
       email: json['email'] as String?,
       avatar: _resolveAvatar(json['profile_photo'] ?? json['avatar']),
       countryCode: json['country_code'] as String?,
+      countryIso: json['country_iso'] as String?,
       type: json['type'] as String?,
       vehicleType: json['vehicleType'] as String?,
       vehicleNumber: json['vehicleNumber'] as String?,
@@ -82,6 +85,7 @@ class UserModel {
         'email': email,
         'avatar': avatar,
         'country_code': countryCode,
+        'country_iso': countryIso,
         'type': type,
         'vehicleType': vehicleType,
         'vehicleNumber': vehicleNumber,
@@ -99,6 +103,7 @@ class UserModel {
     String? email,
     String? avatar,
     String? countryCode,
+    String? countryIso,
     String? type,
     double? walletBalance,
     bool? isVerified,
@@ -111,6 +116,7 @@ class UserModel {
       email: email ?? this.email,
       avatar: avatar ?? this.avatar,
       countryCode: countryCode ?? this.countryCode,
+      countryIso: countryIso ?? this.countryIso,
       type: type ?? this.type,
       vehicleType: vehicleType,
       vehicleNumber: vehicleNumber,

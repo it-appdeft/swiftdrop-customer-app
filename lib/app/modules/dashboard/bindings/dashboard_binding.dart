@@ -3,6 +3,7 @@ import '../../../../data/repositories/earnings_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
 import '../../../../data/repositories/order_repository.dart';
 import '../../../../data/repositories/profile_repository.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../../home/bindings/home_binding.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../../order_history/controllers/order_history_controller.dart';
@@ -16,7 +17,10 @@ class DashboardBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<DashboardController>(() => DashboardController());
     HomeBinding().dependencies();
-    Get.lazyPut<SearchTabController>(() => SearchTabController(), fenix: true);
+    Get.delete<SearchTabController>(force: true);
+    Get.put<SearchTabController>(SearchTabController(), permanent: true);
+    Get.delete<CartController>(force: true);
+    Get.put<CartController>(CartController(), permanent: true);
     Get.lazyPut<OrderRepository>(() => OrderRepository());
     Get.lazyPut<EarningsRepository>(() => EarningsRepository());
     Get.lazyPut<NotificationRepository>(() => NotificationRepository());

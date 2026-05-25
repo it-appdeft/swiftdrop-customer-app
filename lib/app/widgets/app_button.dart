@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../export.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_dimensions.dart';
 import '../themes/app_radius.dart';
@@ -84,11 +85,11 @@ class AppButton extends StatelessWidget {
         children: [
           prefixIcon!,
           const SizedBox(width: AppDimensions.gapSm),
-          Text(label, style: AppTextStyles.button.copyWith(color: color)),
+          Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: color)),
         ],
       );
     }
 
-    return Text(label, style: AppTextStyles.button.copyWith(color: color));
+    return Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400, color: color));
   }
 }

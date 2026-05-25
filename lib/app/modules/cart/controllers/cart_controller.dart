@@ -57,32 +57,13 @@ class CartController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    _populateDummyData();
+    _populateCoupons();
     cookingRequestController.addListener(() {
       cookingRequestTemp.value = cookingRequestController.text;
     });
   }
 
-  void _populateDummyData() {
-    if (items.isEmpty) {
-      items.addAll([
-        CartItem(
-          id: '1',
-          name: 'Margherita Pizza Giant Slice',
-          addons: 'Paneer, Olives, Jalapenos, Red Paprika, Extra Cheese, Hot & Garlic Dip, Peri Peri Dip',
-          price: 8.23,
-          qty: 1,
-        ),
-        CartItem(
-          id: '2',
-          name: 'Sweet Corn Pizza Regular',
-          addons: 'Paneer, Olives, Jalapenos, Sweet Corns, Mozzarella Cheese, Jalapeno Dip',
-          price: 8.02,
-          qty: 1,
-        ),
-      ]);
-    }
-
+  void _populateCoupons() {
     coupons.clear();
     coupons.addAll([
       Coupon(

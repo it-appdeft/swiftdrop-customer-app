@@ -9,9 +9,12 @@ class AuthMiddleware extends GetMiddleware {
 
   @override
   RouteSettings? redirect(String? route) {
-    if (!AuthService.to.isAuthenticated) {
-      return const RouteSettings(name: AppRoutes.login);
-    }
+    // if (!AuthService.to.isAuthenticated) {
+    //   return const RouteSettings(name: AppRoutes.login);
+    // }
+
+
+
     return null;
   }
 }

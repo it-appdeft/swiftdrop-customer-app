@@ -60,49 +60,56 @@ class CartView extends GetView<CartController> {
         color: AppColors.offWhite,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Assets.images.locationIcon.image(width: 24, height: 24),
-
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Delivery to',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.lightSurfaceSubtitle,
-                  ),
-                ),
-                Text(
-                  '221B Baker St, London, UK',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.lightSurfaceDarkText,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Align(
+              alignment: Alignment.topCenter,
+              child: Assets.images.locationIcon.image(width: 24, height: 24),
             ),
-          ),
-          GestureDetector(
-            onTap: () {},
-            child: Text(
-              'Change',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Delivery to',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.lightSurfaceSubtitle,
+                    ),
+                  ),
+                  Text(
+                    '221B Baker St, London, UK',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.lightSurfaceDarkText,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            Align(
+              alignment: Alignment.center,
+              child: GestureDetector(
+                onTap: () {},
+                child: Text(
+                  'Change',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -133,6 +140,7 @@ class CartView extends GetView<CartController> {
           child: Column(
             children: [
               Obx(() => ListView.separated(
+                    padding: EdgeInsets.zero,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: controller.items.length,
@@ -143,7 +151,7 @@ class CartView extends GetView<CartController> {
                     ),
                     itemBuilder: (context, index) => _buildCartItem(controller.items[index]),
                   )),
-              const SizedBox(height: 2),
+              const SizedBox(height: 16),
               _buildAddAndCookingButtons(),
               Obx(() => _buildCookingRequestArea()),
             ],
@@ -189,7 +197,7 @@ class CartView extends GetView<CartController> {
                     children: [
                       Flexible(
                         child: Text(
-                          item.addons!,
+                          'Paneer, Olives, Jalapenos, Red Paprika, Extra Cheese, Hot & Garlic Dip, Peri Peri Dip',
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
@@ -199,7 +207,7 @@ class CartView extends GetView<CartController> {
                           overflow: item.isExpanded.value ? null : TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                     // const SizedBox(width: 4),
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Transform.rotate(
@@ -279,97 +287,93 @@ class CartView extends GetView<CartController> {
   }
 
   Widget _buildAddAndCookingButtons() {
-    return Obx(() => Row(
-          children: [
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                width: 112,
-                height: 39,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.lightSurfaceBorder),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.add, color: AppColors.lightSurfaceSubtitle, size: 16),
-                    const SizedBox(width: 3),
-                    Flexible(
-                      child: Text(
-                        'Add Items',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.lightSurfaceDarkText,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+    return Obx(() {
+      final isExpanded = controller.isCookingRequestExpanded.value;
+      final isSaved = controller.isCookingRequestSaved.value;
+      final isSelected = isExpanded || isSaved;
+      final showCross = isSaved && !isExpanded;
+      final cookingWidth = showCross ? 190.0 : 166.0;
+
+      return Row(
+        children: [
+          GestureDetector(
+            onTap: () {},
+            child: Container(
+              width: 112,
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.lightSurfaceBorder),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.add, color: AppColors.lightSurfaceSubtitle, size: 20),
+                  const SizedBox(width: 3),
+                  Text(
+                    'Add Items',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.lightSurfaceDarkText,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: controller.toggleCookingRequest,
-              child: Container(
-                width: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value) ? 190 : 160,
-                height: 39,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                decoration: BoxDecoration(
-                  color: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value)
-                      ? AppColors.primary
-                      : AppColors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value)
-                      ? null
-                      : Border.all(color: AppColors.lightSurfaceBorder),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.edit_outlined,
-                      color: Colors.white,
-                      size: 16,
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: controller.toggleCookingRequest,
+            child: Container(
+              width: cookingWidth,
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : AppColors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: isSelected ? null : Border.all(color: AppColors.lightSurfaceBorder),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  (isSelected ? Assets.images.cookingSelected : Assets.images.cookingUnselected)
+                      .image(
+                    width: 20,
+                    height: 20,
+                    color: isSelected ? AppColors.white : AppColors.lightSurfaceDarkText,
+                  ),
+                  const SizedBox(width: 3),
+                  Flexible(
+                    child: Text(
+                      'Cooking Requests',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: isSelected ? AppColors.white : AppColors.lightSurfaceDarkText,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  if (showCross) ...[
                     const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        'Cooking Requests',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value)
-                              ? AppColors.white
-                              : AppColors.lightSurfaceDarkText,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                    GestureDetector(
+                      onTap: () {
+                        controller.clearCookingRequest();
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: const Icon(Icons.close, color: AppColors.white, size: 20),
                     ),
-                    if (controller.isCookingRequestExpanded.value || controller.isCookingRequestSaved.value) ...[
-                      const SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () {
-                          controller.clearCookingRequest();
-                        },
-                        behavior: HitTestBehavior.opaque,
-                        child: const Icon(
-                          Icons.close,
-                          color: AppColors.white,
-                          size: 18,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
             ),
-          ],
-        ));
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildCookingRequestArea() {
@@ -383,7 +387,7 @@ class CartView extends GetView<CartController> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+              padding: const EdgeInsets.fromLTRB(12, 16, 12, 4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -442,10 +446,10 @@ class CartView extends GetView<CartController> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.offWhite, // Light grey for disclaimer
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: const BoxDecoration(
+                color: AppColors.lightOtpBoxBg, // #EDEEF1 for disclaimer
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
               ),
               child: Text(
                 'The restaurant will do its best to accommodate your request. However, refunds cannot be issued for unmet special requests.',
@@ -461,7 +465,7 @@ class CartView extends GetView<CartController> {
       );
     } else if (controller.isCookingRequestSaved.value) {
       return Container(
-        margin: const EdgeInsets.only(top: 16),
+        margin: const EdgeInsets.only(top: 16,left:4),
         child: Row(
           children: [
             Expanded(
@@ -476,7 +480,11 @@ class CartView extends GetView<CartController> {
             ),
             GestureDetector(
               onTap: controller.editCookingRequest,
-              child: const Icon(Icons.edit_outlined, color: AppColors.iconDark, size: 18),
+              child: Assets.images.cookingUnselected.image(
+                width: 18,
+                height: 18,
+                color: AppColors.iconDark,
+              ),
             ),
           ],
         ),
@@ -488,7 +496,7 @@ class CartView extends GetView<CartController> {
   Widget _buildCouponSection() {
     return Obx(() => Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 20),
           decoration: BoxDecoration(
             color: AppColors.offWhite,
             borderRadius: BorderRadius.circular(12),
@@ -497,8 +505,9 @@ class CartView extends GetView<CartController> {
             onTap: () => Get.toNamed(AppRoutes.coupons),
             behavior: HitTestBehavior.opaque,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Assets.images.offers.image(width: 20, height: 20),
+                Assets.images.couponIcon.image(width: 20, height: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -530,7 +539,7 @@ class CartView extends GetView<CartController> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.iconDark, size: 20),
+                Assets.images.rightArrow.image(width: 24, height: 24),
               ],
             ),
           ),
@@ -564,9 +573,9 @@ class CartView extends GetView<CartController> {
 
                 children: [
                   _buildBillRow('Item Total', '£${controller.itemTotal.toStringAsFixed(2)}'),
-                  const SizedBox(height: 8),
-                  if (controller.isCouponApplied.value)
-                    _buildBillRow('Item Discount', '-£${controller.couponDiscount.value.toStringAsFixed(2)}', isDiscount: true),
+
+                  // if (controller.isCouponApplied.value)
+                  //   _buildBillRow('Item Discount', '-£${controller.couponDiscount.value.toStringAsFixed(2)}', isDiscount: true),
                   const SizedBox(height: 8),
                   _buildBillRow('Delivery Fee', '£${controller.deliveryFee.value.toStringAsFixed(2)}'),
                   const SizedBox(height: 8),
@@ -660,23 +669,27 @@ class CartView extends GetView<CartController> {
 
   Widget _buildPlaceOrderButton() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: AppButton(
-        label: 'Place Order',
-        onTap: () {
-          controller.clearCart();
-          Get.toNamed(AppRoutes.orderSuccess);
-        },
+      color: AppColors.white,
+      padding: EdgeInsets.only(bottom: MediaQuery.of(Get.context!).padding.bottom),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: AppButton(
+          label: 'Place Order',
+          onTap: () {
+            controller.clearCart();
+            Get.toNamed(AppRoutes.orderSuccess);
+          },
+        ),
       ),
     );
   }

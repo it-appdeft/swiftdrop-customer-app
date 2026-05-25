@@ -1,6 +1,9 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 
+import '../../cart/controllers/cart_controller.dart';
+import '../controllers/restaurant_detail_controller.dart';
+
 void showProductAddonsSheet(Map dish) {
   Get.bottomSheet(
     ProductAddonsContent(dish: dish),
@@ -357,14 +360,25 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
           Expanded(
             child: GestureDetector(
               onTap: () {
-                // Close the addons sheet
+                final addonsList = [..._selectedToppings, ..._selectedCheeseDips];
+
+                final cartController = Get.find<CartController>();
+                cartController.items.add(CartItem(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: widget.dish['name'] as String? ?? 'Item',
+                  addons: addonsList.isNotEmpty ? addonsList.join(', ') : null,
+                  price: _currentPrice,
+                  qty: _quantity,
+                ));
+
+                if (Get.isRegistered<RestaurantDetailController>()) {
+                  Get.find<RestaurantDetailController>().showCartFloatingBar.value = true;
+                }
+
                 Get.back();
-                // Close the product detail sheet if it's still open
                 if (Get.isBottomSheetOpen ?? false) {
                   Get.back();
                 }
-                // Go to cart
-                Get.toNamed(AppRoutes.cart);
               },
               child: Container(
                 height: 48,

@@ -8,6 +8,7 @@ class RestaurantDetailController extends BaseController {
   final RxBool isNonVegSelected = false.obs;
   final RxBool isRatingsSelected = false.obs;
   final RxBool isBestsellerSelected = false.obs;
+  final RxBool showCartFloatingBar = false.obs;
 
   @override
   void onInit() {

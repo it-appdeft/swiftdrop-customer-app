@@ -11,49 +11,64 @@ class SearchView extends GetView<SearchTabController> {
     return Scaffold(
       backgroundColor: AppColors.buttonLabel,
       body: SafeArea(
-        child: Obx(() {
-          final showResults = controller.searchQuery.value.isNotEmpty;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!showResults) ...[
-                const SizedBox(height: 11),
-                _SearchRow(),
-                const SizedBox(height: 24),
-                _RecentHeader(),
-                const SizedBox(height: 16),
-                _RecentChipsRow(),
-              ] else ...[
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFEFEFD),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.shadowLight,
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // _SearchRow is a direct, static child of this Column — never
+            // inside any Obx — so its TextField element is never touched
+            // by reactive rebuilds, keeping focus and keystrokes intact.
+            const SizedBox(height: 11),
+            _SearchRow(),
+            // Tabs row: appears with shadow only in results mode.
+            Obx(() {
+              if (controller.searchQuery.value.isEmpty) return const SizedBox.shrink();
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFEFEFD),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadowLight,
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    _ResultTabs(),
+                  ],
+                ),
+              );
+            }),
+            // Body: recent searches or filter chips + results list.
+            Expanded(
+              child: Obx(() {
+                if (controller.searchQuery.value.isEmpty) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 11),
-                      _SearchRow(),
-                      const SizedBox(height: 20),
-                      _ResultTabs(),
+                      const SizedBox(height: 24),
+                      _RecentHeader(),
+                      const SizedBox(height: 16),
+                      _RecentChipsRow(),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _FilterRow(),
-                const SizedBox(height: 16),
-                Expanded(child: _SearchResultsList()),
-              ],
-            ],
-          );
-        }),
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    _FilterRow(),
+                    const SizedBox(height: 16),
+                    Expanded(child: _SearchResultsList()),
+                  ],
+                );
+              }),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -92,6 +107,7 @@ class _SearchRow extends GetView<SearchTabController> {
                   Expanded(
                     child: TextField(
                       controller: controller.queryController,
+                      onChanged: controller.onQueryChanged,
                       onSubmitted: controller.onSubmit,
                       textInputAction: TextInputAction.search,
                       cursorColor: AppColors.iconDark,

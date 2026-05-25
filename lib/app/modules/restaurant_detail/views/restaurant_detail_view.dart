@@ -26,17 +26,19 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                 const SizedBox(height: 24),
                 _buildDishList(),
                 _buildViewAllButton(),
-                _buildRecommendedSection(),
-                const SizedBox(height: 100), // Extra space for floating bar
+                // _buildRecommendedSection(),
+                Obx(() => SizedBox(height: controller.showCartFloatingBar.value ? 160 : 40)),
               ],
             ),
           ),
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: CartFloatingBar(),
-          ),
+          Obx(() => controller.showCartFloatingBar.value
+              ? const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: CartFloatingBar(),
+                )
+              : const SizedBox.shrink()),
         ],
       ),
     );
@@ -347,7 +349,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               ),
             ),
             if (isSelected) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: 2),
               Assets.images.crossIcon.image(width: 16, height: 16),
             ],
           ],
@@ -401,7 +403,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
         ),
         alignment: Alignment.center,
         child: Text(
-          'View all results',
+          'View more',
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w500,

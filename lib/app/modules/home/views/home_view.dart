@@ -49,28 +49,31 @@ class HomeView extends GetView<HomeController> {
 
 // ─── Location Bar ─────────────────────────────────────────────────────────────
 
-class _LocationBar extends StatelessWidget {
+class _LocationBar extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Row(
-        children: [
-          Assets.images.locationIcon.image(width: 24, height: 24),
-          const SizedBox(width: 8),
-          Text(
-            'West Coker, Yelovil, UK',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: AppColors.lightSurfaceNavy,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(width: 4),
-          Assets.images.locationdropIcon.image(width: 24, height: 24),
-        ],
+      child: InkWell(
+        onTap: () => Get.toNamed(AppRoutes.address),
+        child: Row(
+          children: [
+            Assets.images.locationIcon.image(width: 24, height: 24),
+            const SizedBox(width: 8),
+            Obx(() => Text(
+                  controller.currentAddress.value,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceNavy,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )),
+            const SizedBox(width: 4),
+            Assets.images.locationdropIcon.image(width: 24, height: 24),
+          ],
+        ),
       ),
     );
   }

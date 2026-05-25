@@ -47,7 +47,10 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).padding.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    // On iOS devices with a home indicator (bottomPadding > 0), we use the default system padding.
+    // On Android or devices without a home indicator, we add a gap to prevent it from sticking to the edge.
+    final finalBottomPadding = bottomPadding > 0 ? bottomPadding : AppDimensions.gapMd;
 
     return Container(
       color: Colors.transparent,
@@ -56,7 +59,7 @@ class _BottomNav extends StatelessWidget {
           AppDimensions.paddingMd,
           AppDimensions.gapSm,
           AppDimensions.paddingMd,
-          bottom + AppDimensions.gapMd,
+          finalBottomPadding,
         ),
         child: Container(
           height: AppDimensions.bottomNavHeight,

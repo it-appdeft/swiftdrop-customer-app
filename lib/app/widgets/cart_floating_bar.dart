@@ -37,7 +37,7 @@ class CartFloatingBar extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -56,7 +56,7 @@ class CartFloatingBar extends StatelessWidget {
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -76,16 +76,16 @@ class CartFloatingBar extends StatelessWidget {
                       Text(
                         'View Cart',
                         style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
+                          fontSize: 12, // Pxs Size
+                          fontWeight: FontWeight.w400, // Regular
                           color: AppColors.primary,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(
-                        Icons.chevron_right,
-                        color: AppColors.primary,
-                        size: 18,
+                      const SizedBox(width: 2),
+                       Assets.images.rightViewCartArrow.image(
+                        width: 16,
+                        height: 16,
+                        fit: BoxFit.cover,
                       ),
                     ],
                   ),

@@ -17,6 +17,7 @@ class AppColors {
   static const Color navyMuted200 = Color(0xFF85929D);
   static const Color navyMuted300 = Color(0xFF6D7C89);
   static const Color navyMuted400 = Color(0xFF546675);
+  static const Color navyMuted500 = Color(0xFF59677C);
   static const Color navyMuted600 = Color(0xFF233A4E);
 
   static const Color background = darkBackground;
@@ -32,6 +33,7 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
   static const Color offWhite = Color(0xFFF6F8FA);
+  static const Color greyButton = Color(0xFF8E99A7);
   static const Color buttonLabel = Color(0xFFFEFEFD);
 
   // Light surface — used on white/off-white cards (login, OTP, register)

@@ -14,6 +14,7 @@ class AuthRepository {
     String? email,
     String? mobile,
     String? countryCode,
+    String? countryIso,
     required String type,
     required String channel,
   }) async {
@@ -27,6 +28,7 @@ class AuthRepository {
           if (email != null) 'email': email,
           if (mobile != null) 'mobile': mobile,
           if (countryCode != null) 'country_code': countryCode,
+          if (countryIso != null) 'country_iso': countryIso,
         }),
         options: Options(contentType: 'multipart/form-data'),
       );
@@ -53,6 +55,7 @@ class AuthRepository {
     String? email,
     String? mobile,
     String? countryCode,
+    String? countryIso,
     required String code,
     required String type,
     required String channel,
@@ -67,6 +70,7 @@ class AuthRepository {
           if (email != null) 'email': email,
           if (mobile != null) 'mobile': mobile,
           if (countryCode != null) 'country_code': countryCode,
+          if (countryIso != null) 'country_iso': countryIso,
           'code': code,
         }),
         options: Options(contentType: 'multipart/form-data'),
@@ -109,6 +113,7 @@ class AuthRepository {
     required String name,
     required String mobile,
     required String countryCode,
+    String? countryIso,
     String? email,
   }) async {
     try {
@@ -118,6 +123,7 @@ class AuthRepository {
           'name': name,
           'mobile': mobile,
           'country_code': countryCode,
+          if (countryIso != null) 'country_iso': countryIso,
           if (email != null && email.isNotEmpty) 'email': email,
         }),
         options: Options(contentType: 'multipart/form-data'),

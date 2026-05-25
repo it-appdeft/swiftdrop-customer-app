@@ -20,6 +20,7 @@ class EditProfileController extends BaseController {
   final newEmailController = TextEditingController();
 
   final RxString countryCode = '+44'.obs;
+  final RxString countryIso = 'GB'.obs;
   final RxString countryFlag = '🇬🇧'.obs;
 
   final RxString newPhoneNumber = ''.obs;
@@ -186,9 +187,10 @@ class EditProfileController extends BaseController {
 
   // --- Country picker ---
 
-  void selectCountry(String flag, String code) {
+  void selectCountry(String flag, String code, String iso) {
     countryFlag.value = flag;
     countryCode.value = code;
+    countryIso.value = iso;
     newPhoneController.clear();
   }
 
@@ -525,6 +527,7 @@ class EditProfileController extends BaseController {
     return _repo.sendOtp(
       mobile: user.phone,
       countryCode: user.countryCode ?? countryCode.value,
+      countryIso: user.countryIso ?? countryIso.value,
       type: 'verify_current_phone',
       channel: 'phone',
     );
@@ -596,6 +599,7 @@ class EditProfileController extends BaseController {
         result = await _repo.verifyOtp(
           mobile: user?.phone,
           countryCode: user?.countryCode ?? countryCode.value,
+          countryIso: user?.countryIso ?? countryIso.value,
           code: code,
           type: 'verify_current_phone',
           channel: 'phone',
@@ -636,6 +640,7 @@ class EditProfileController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: newPhoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         type: 'update_phone',
         channel: 'phone',
       );
@@ -673,6 +678,7 @@ class EditProfileController extends BaseController {
       final result = await _repo.sendOtp(
         mobile: newPhoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         type: 'update_phone',
         channel: 'phone',
       );
@@ -710,6 +716,7 @@ class EditProfileController extends BaseController {
       final result = await _repo.verifyOtp(
         mobile: newPhoneController.text,
         countryCode: countryCode.value,
+        countryIso: countryIso.value,
         code: code,
         type: 'update_phone',
         channel: 'phone',
@@ -885,6 +892,7 @@ class EditProfileController extends BaseController {
       final result = await _repo.verifyOtp(
         mobile: currentUser.value?.phone,
         countryCode: currentUser.value?.countryCode ?? countryCode.value,
+        countryIso: currentUser.value?.countryIso ?? countryIso.value,
         code: code,
         type: 'verify_current_phone',
         channel: 'phone',

@@ -28,6 +28,10 @@ abstract class AppRoutes {
   static const String deleteAccountConfirmation =
       '/edit-profile/delete-account-confirmation';
   static const String restaurantDetail = '/restaurant-detail';
+  static const String address = '/address';
+  static const String deliveryAddress = '/delivery-address';
+  static const String mapPicker = '/map-picker';
+  static const String addressDetails = '/address-details';
   static const String coupons = '/coupons';
   static const String orderSuccess = '/order-success';
 }
