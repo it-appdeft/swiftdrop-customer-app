@@ -25,14 +25,18 @@ class ProfileView extends GetView<ProfileController> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingMd),
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingMd,
+          AppDimensions.paddingMd,
+          AppDimensions.paddingMd,
+          150, // Bottom padding to account for floating bottom nav
+        ),
         child: Column(
           children: [
             const SizedBox(height: AppDimensions.gapSm),
             _ProfileCard(),
             const SizedBox(height: AppDimensions.gapLg),
             _MenuList(),
-            const SizedBox(height: AppDimensions.sp32),
           ],
         ),
       ),

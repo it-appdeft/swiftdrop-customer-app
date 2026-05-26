@@ -13,7 +13,7 @@ class MapPickerView extends GetView<AddressController> {
         children: [
           // Dummy Map Image
           Positioned.fill(
-            child: Assets.images.onbording1.image(fit: BoxFit.cover),
+            child: Assets.images.mapImage.image(fit: BoxFit.cover),
           ),
           
           // Center Marker Placeholder
@@ -131,7 +131,7 @@ class MapPickerView extends GetView<AddressController> {
             width: double.infinity,
             decoration: const BoxDecoration(
               color: AppColors.offWhite,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             ),
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 12),

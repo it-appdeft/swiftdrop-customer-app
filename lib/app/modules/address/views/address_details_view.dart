@@ -88,8 +88,11 @@ class AddressDetailsView extends GetView<AddressController> {
             child: AppButton(
               label: 'Save Address',
               onTap: () {
-                // Handle save logic
-                Get.offAllNamed(AppRoutes.dashboard);
+                if (Navigator.canPop(context)) {
+                  Get.until((route) => route.settings.name == AppRoutes.dashboard);
+                } else {
+                  Get.offAllNamed(AppRoutes.dashboard);
+                }
               },
               backgroundColor: AppColors.primary,
               borderRadius: BorderRadius.circular(12),

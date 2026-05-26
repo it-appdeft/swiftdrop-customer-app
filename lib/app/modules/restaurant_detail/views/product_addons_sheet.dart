@@ -4,17 +4,17 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../controllers/restaurant_detail_controller.dart';
 
-void showProductAddonsSheet(Map dish) {
+void showProductAddonsSheet(Map item) {
   Get.bottomSheet(
-    ProductAddonsContent(dish: dish),
+    ProductAddonsContent(item: item),
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
   );
 }
 
 class ProductAddonsContent extends StatefulWidget {
-  final Map dish;
-  const ProductAddonsContent({super.key, required this.dish});
+  final Map item;
+  const ProductAddonsContent({super.key, required this.item});
 
   @override
   State<ProductAddonsContent> createState() => _ProductAddonsContentState();
@@ -365,7 +365,7 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                 final cartController = Get.find<CartController>();
                 cartController.items.add(CartItem(
                   id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: widget.dish['name'] as String? ?? 'Item',
+                  name: widget.item['name'] as String? ?? 'Item',
                   addons: addonsList.isNotEmpty ? addonsList.join(', ') : null,
                   price: _currentPrice,
                   qty: _quantity,

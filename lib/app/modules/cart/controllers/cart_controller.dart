@@ -134,8 +134,13 @@ class CartController extends BaseController {
   }
 
   void saveCookingRequest() {
-    cookingRequest.value = cookingRequestController.text;
-    isCookingRequestSaved.value = cookingRequest.value.isNotEmpty;
+    final text = cookingRequestController.text.trim();
+    if (text.isEmpty) {
+      AppUtils.showError('Please enter valid cooking requests or cancel.');
+      return;
+    }
+    cookingRequest.value = text;
+    isCookingRequestSaved.value = true;
     isCookingRequestExpanded.value = false;
   }
 

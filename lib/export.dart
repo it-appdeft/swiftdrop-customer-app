@@ -30,6 +30,7 @@ export 'app/routes/app_pages.dart';
 
 export 'app/services/auth_service.dart';
 export 'app/services/connectivity_service.dart';
+export 'app/services/location_service.dart';
 export 'app/services/notification_service.dart';
 export 'app/services/storage_service.dart';
 
@@ -54,7 +55,7 @@ export 'app/widgets/empty_state_widget.dart';
 export 'app/widgets/error_state_widget.dart';
 export 'app/widgets/info_row.dart';
 export 'app/widgets/pagination_list.dart';
-export 'app/widgets/dish_card.dart';
+export 'app/widgets/item_card.dart';
 export 'app/widgets/restaurant_card.dart';
 export 'app/widgets/section_header.dart';
 export 'app/widgets/shimmer_widgets.dart';

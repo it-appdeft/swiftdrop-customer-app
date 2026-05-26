@@ -24,7 +24,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                 const SizedBox(height: 28),
                 _buildFilters(),
                 const SizedBox(height: 24),
-                _buildDishList(),
+                _buildItemList(),
                 _buildViewAllButton(),
                 // _buildRecommendedSection(),
                 Obx(() => SizedBox(height: controller.showCartFloatingBar.value ? 160 : 40)),
@@ -358,8 +358,8 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
     );
   }
 
-  Widget _buildDishList() {
-    final dishes = [
+  Widget _buildItemList() {
+    final items = [
       {
         'id': '1',
         'name': 'Margherita Ultimate Cheese Pizza',
@@ -378,13 +378,13 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
-        children: dishes
-            .map((dish) =>
-            DishCard(
-              dish: dish,
+        children: items
+            .map((item) =>
+            ItemCard(
+              item: item,
               isHorizontal: false,
               showFavorite: true,
-              onTap: () => showProductDetailBottomSheet(dish),
+              onTap: () => showProductDetailBottomSheet(item),
             ))
             .toList(),
       ),
@@ -443,12 +443,12 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: recommended
-                .map((dish) =>
-                DishCard(
-                  dish: dish,
+                .map((item) =>
+                ItemCard(
+                  item: item,
                   isHorizontal: false,
                   showFavorite: true,
-                  onTap: () => showProductDetailBottomSheet(dish),
+                  onTap: () => showProductDetailBottomSheet(item),
                 ))
                 .toList(),
           ),

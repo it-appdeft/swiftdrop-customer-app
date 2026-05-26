@@ -2,17 +2,17 @@ import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import 'product_addons_sheet.dart';
 
-void showProductDetailBottomSheet(Map dish) {
+void showProductDetailBottomSheet(Map item) {
   Get.bottomSheet(
-    ProductDetailContent(dish: dish),
+    ProductDetailContent(item: item),
     backgroundColor: AppColors.transparent,
     isScrollControlled: true,
   );
 }
 
 class ProductDetailContent extends StatefulWidget {
-  final Map dish;
-  const ProductDetailContent({super.key, required this.dish});
+  final Map item;
+  const ProductDetailContent({super.key, required this.item});
 
   @override
   State<ProductDetailContent> createState() => _ProductDetailContentState();
@@ -69,7 +69,7 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.dish['name'] ?? '',
+                            widget.item['name'] ?? '',
                             style: const TextStyle(
                               fontFamily: 'Helvetica Neue',
                               fontSize: 24, // H5 Size
@@ -92,7 +92,7 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
                           child: _quantity == 0
                               ? GestureDetector(
                                   onTap: () {
-                                    showProductAddonsSheet(widget.dish);
+                                    showProductAddonsSheet(widget.item);
                                   },
                                   behavior: HitTestBehavior.opaque,
                                   child: Center(
@@ -143,7 +143,7 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '£${widget.dish['price']}',
+                      '£${widget.item['price']}',
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,

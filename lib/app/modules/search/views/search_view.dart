@@ -122,7 +122,7 @@ class _SearchRow extends GetView<SearchTabController> {
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         enabledBorder: InputBorder.none,
-                        hintText: 'Search restaurant or dishes',
+                        hintText: 'Search restaurant or items',
                         hintStyle: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -170,18 +170,20 @@ class _RecentHeader extends GetView<SearchTabController> {
               color: AppColors.navyMedium,
             ),
           ),
-          GestureDetector(
-            onTap: controller.clearRecent,
-            behavior: HitTestBehavior.opaque,
-            child: Text(
-              'Clear',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.error,
-              ),
-            ),
-          ),
+          Obx(() => controller.recentSearches.isNotEmpty
+              ? GestureDetector(
+                  onTap: controller.clearRecent,
+                  behavior: HitTestBehavior.opaque,
+                  child: Text(
+                    'Clear',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.error,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink()),
         ],
       ),
     );
@@ -192,6 +194,22 @@ class _RecentChipsRow extends GetView<SearchTabController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      if (controller.recentSearches.isEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'No recent search yet',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppColors.lightSurfaceSubtitle,
+              ),
+            ),
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Wrap(
@@ -258,7 +276,7 @@ class _ResultTabs extends GetView<SearchTabController> {
             ),
             const SizedBox(width: 16),
             _TabItem(
-              label: 'Dishes',
+              label: 'Items',
               isSelected: controller.selectedTabIndex.value == 1,
               onTap: () => controller.selectedTabIndex.value = 1,
             ),
@@ -380,7 +398,7 @@ class _SearchResultsList extends GetView<SearchTabController> {
     return Obx(() {
       if (controller.selectedTabIndex.value == 0) {
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
           itemCount: controller.restaurantResults.length,
           itemBuilder: (context, index) {
             return RestaurantCard(restaurant: controller.restaurantResults[index]);
@@ -388,10 +406,10 @@ class _SearchResultsList extends GetView<SearchTabController> {
         );
       } else {
         return ListView.builder(
-          padding: EdgeInsets.zero,
-          itemCount: controller.dishResults.length,
+          padding: const EdgeInsets.only(bottom: 150),
+          itemCount: controller.itemResults.length,
           itemBuilder: (context, index) {
-            return RestaurantWithDishes(data: controller.dishResults[index]);
+            return RestaurantWithItems(data: controller.itemResults[index]);
           },
         );
       }

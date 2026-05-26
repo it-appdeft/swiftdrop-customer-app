@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import '../constants/app_constants.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_dimensions.dart';
 import '../themes/app_text_styles.dart';
+import '../widgets/app_button.dart';
 
 class AppUtils {
   AppUtils._();
@@ -121,5 +123,63 @@ class AppUtils {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${(diff.inDays / 7).floor()}w ago';
+  }
+
+  static void showLocationPermissionDialog() {
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppColors.white,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.settings_suggest_outlined, size: 64, color: AppColors.primary),
+              const SizedBox(height: 24),
+              const Text(
+                'Permission Required',
+                style: TextStyle(
+                  fontFamily: 'Helvetica Neue',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.black,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Location permission is permanently denied. Please enable it in your device settings to use your current location.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.pSmall.copyWith(
+                  color: AppColors.lightSurfaceSubtitle,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+              AppButton(
+                label: 'Open Settings',
+                onTap: () {
+                  Get.back();
+                  Geolocator.openAppSettings();
+                },
+                backgroundColor: AppColors.primary,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text(
+                  'Cancel',
+                  style: AppTextStyles.pSmallMedium.copyWith(
+                    color: AppColors.lightSurfaceSubtitle,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

@@ -93,6 +93,9 @@ class $AssetsImagesGen {
     'assets/images/locationdropIcon.png',
   );
   final AssetGenImage login = const AssetGenImage('assets/images/login.png');
+  final AssetGenImage mapImage = const AssetGenImage(
+    'assets/images/mapImage.png',
+  );
   final AssetGenImage minus = const AssetGenImage('assets/images/minus.png');
   final AssetGenImage offers = const AssetGenImage('assets/images/offers.png');
   final AssetGenImage onbording1 = const AssetGenImage(

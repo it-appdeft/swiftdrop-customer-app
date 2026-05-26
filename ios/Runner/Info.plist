@@ -34,9 +34,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>SwiftDrop needs camera access so you can take a profile photo.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Allow location</string>
+	<string>App explanation for always: SwiftDrop needs you location to help you find nearby places you'll love</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Allow location permission</string>
+	<string>App explanation for always: SwiftDrop needs you location to help you find nearby places you'll love</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>SwiftDrop needs photo library access so you can choose a profile photo.</string>
 	<key>UIApplicationSceneManifest</key>

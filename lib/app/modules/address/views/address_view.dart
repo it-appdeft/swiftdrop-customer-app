@@ -1,3 +1,4 @@
+import 'package:geolocator/geolocator.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../controllers/address_controller.dart';
@@ -21,7 +22,7 @@ class AddressView extends GetView<AddressController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildActionButtons(),
+                    _buildActionButtons(context),
                     const SizedBox(height: AppDimensions.gapXl),
                     Text(
                       'Saved Addresses',
@@ -31,7 +32,7 @@ class AddressView extends GetView<AddressController> {
                       ),
                     ),
                     const SizedBox(height: AppDimensions.gapLg),
-                    _buildAddressList(),
+                    _buildAddressList(context),
                   ],
                 ),
               ),
@@ -43,20 +44,24 @@ class AddressView extends GetView<AddressController> {
   }
 
   Widget _buildSearchRow() {
+    final canPop = Get.key.currentState?.canPop() ?? false;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => Get.back(),
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: Assets.images.back.image(width: 24, height: 24),
+          if (canPop)
+            GestureDetector(
+              onTap: () => Get.back(),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Assets.images.back.image(width: 24, height: 24),
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
           Expanded(
             child: Container(
               height: 52,
@@ -103,13 +108,32 @@ class AddressView extends GetView<AddressController> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(BuildContext context) {
     return Row(
       children: [
         Expanded(
           child: _buildActionButton(
             icon: Icons.my_location,
             label: 'Use Current Location',
+            onTap: () async {
+              final canGoBack = Navigator.canPop(context);
+              LocationPermission permission = await Geolocator.checkPermission();
+              if (permission == LocationPermission.denied) {
+                permission = await Geolocator.requestPermission();
+              }
+              if (permission == LocationPermission.deniedForever) {
+                AppUtils.showLocationPermissionDialog();
+                return;
+              }
+              if (permission == LocationPermission.whileInUse ||
+                  permission == LocationPermission.always) {
+                if (canGoBack) {
+                  Get.until((route) => route.settings.name == AppRoutes.dashboard);
+                } else {
+                  Get.offAllNamed(AppRoutes.dashboard);
+                }
+              }
+            },
           ),
         ),
         const SizedBox(width: AppDimensions.gapMd),
@@ -117,38 +141,43 @@ class AddressView extends GetView<AddressController> {
           child: _buildActionButton(
             icon: Icons.add_circle_outline,
             label: 'Add New Address',
+            onTap: () => Get.toNamed(AppRoutes.deliveryAddress),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActionButton({required IconData icon, required String label}) {
-    return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      decoration: BoxDecoration(
-        color: AppColors.offWhite,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: AppColors.primary, size: 24),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.pSmallMedium.copyWith(
-                color: AppColors.lightSurfaceDarkText,
+  Widget _buildActionButton({required IconData icon, required String label, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      child: Container(
+        height: 72,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.offWhite,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.pSmallMedium.copyWith(
+                  color: AppColors.lightSurfaceDarkText,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAddressList() {
+  Widget _buildAddressList(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.offWhite,
@@ -164,7 +193,7 @@ class AddressView extends GetView<AddressController> {
               final address = entry.value;
               return Column(
                 children: [
-                  _buildAddressTile(address),
+                  _buildAddressTile(context, address),
                   if (index < addresses.length - 1 || !controller.showAll.value)
                     const Divider(
                       height: 1.5,
@@ -194,9 +223,16 @@ class AddressView extends GetView<AddressController> {
     );
   }
 
-  Widget _buildAddressTile(AddressModel address) {
+  Widget _buildAddressTile(BuildContext context, AddressModel address) {
     return InkWell(
-      onTap: () => Get.toNamed(AppRoutes.mapPicker),
+      onTap: () {
+        controller.selectAddress(address.id);
+        if (Navigator.canPop(context)) {
+          Get.until((route) => route.settings.name == AppRoutes.dashboard);
+        } else {
+          Get.offAllNamed(AppRoutes.dashboard);
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingLg,
@@ -206,7 +242,14 @@ class AddressView extends GetView<AddressController> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GestureDetector(
-              onTap: () => controller.selectAddress(address.id),
+              onTap: () {
+                controller.selectAddress(address.id);
+                if (Navigator.canPop(context)) {
+                  Get.until((route) => route.settings.name == AppRoutes.dashboard);
+                } else {
+                  Get.offAllNamed(AppRoutes.dashboard);
+                }
+              },
               child: SizedBox(
                 height: 20,
                 width: 20,

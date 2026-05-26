@@ -8,21 +8,19 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine if user can go back. If permission was denied, they are redirected
-    // here with Get.offAllNamed, so Navigator.canPop will be false.
-    final canGoBack = Navigator.canPop(context);
+    final bool isForced = Get.arguments is Map && (Get.arguments as Map)['forceRedirect'] == true;
 
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: canGoBack
-            ? IconButton(
+        leading: isForced
+            ? null
+            : IconButton(
                 icon: const Icon(Icons.arrow_back_ios, color: AppColors.black, size: 20),
                 onPressed: () => Get.back(),
-              )
-            : null,
+              ),
         title: Text(
           'Delivery Address',
           style: GoogleFonts.inter(
@@ -49,7 +47,7 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
           Expanded(
             child: Obx(() {
               if (controller.query.value.isEmpty) {
-                return _buildInitialState();
+                return _buildInitialState(context);
               } else {
                 return _buildSuggestionsList();
               }
@@ -130,7 +128,7 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
     );
   }
 
-  Widget _buildInitialState() {
+  Widget _buildInitialState(BuildContext context) {
     return InkWell(
       onTap: () async {
         LocationPermission permission = await Geolocator.checkPermission();
@@ -140,12 +138,16 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
         }
 
         if (permission == LocationPermission.deniedForever) {
-          _showSettingsDialog();
+          AppUtils.showLocationPermissionDialog();
           return;
         }
 
         if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-          Get.offAllNamed(AppRoutes.dashboard);
+          if (Navigator.canPop(context)) {
+            Get.until((route) => route.settings.name == AppRoutes.dashboard);
+          } else {
+            Get.offAllNamed(AppRoutes.dashboard);
+          }
         }
       },
       child: Padding(
@@ -177,64 +179,6 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  void _showSettingsDialog() {
-    Get.dialog(
-      Dialog(
-        backgroundColor: AppColors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.settings_suggest_outlined, size: 64, color: AppColors.primary),
-              const SizedBox(height: 24),
-              const Text(
-                'Permission Required',
-                style: TextStyle(
-                  fontFamily: 'Helvetica Neue',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.black,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Location permission is permanently denied. Please enable it in your device settings to use your current location.',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.pSmall.copyWith(
-                  color: AppColors.lightSurfaceSubtitle,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 32),
-              AppButton(
-                label: 'Open Settings',
-                onTap: () {
-                  Get.back();
-                  Geolocator.openAppSettings();
-                },
-                backgroundColor: AppColors.primary,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Get.back(),
-                child: Text(
-                  'Cancel',
-                  style: AppTextStyles.pSmallMedium.copyWith(
-                    color: AppColors.lightSurfaceSubtitle,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

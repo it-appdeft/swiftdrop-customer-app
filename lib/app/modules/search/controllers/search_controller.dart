@@ -15,7 +15,7 @@ class SearchTabController extends BaseController {
   final RxSet<String> activeFilters = <String>{}.obs;
 
   final RxList<Map<String, dynamic>> restaurantResults = <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> dishResults = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> itemResults = <Map<String, dynamic>>[].obs;
 
   Timer? _debounceTimer;
 
@@ -26,7 +26,7 @@ class SearchTabController extends BaseController {
     _debounceTimer?.cancel();
     if (trimmed.isEmpty) {
       restaurantResults.clear();
-      dishResults.clear();
+      itemResults.clear();
     } else {
       _debounceTimer = Timer(const Duration(milliseconds: 300), _performSearch);
     }
@@ -35,7 +35,7 @@ class SearchTabController extends BaseController {
   void _performSearch() {
     if (searchQuery.value.isEmpty) {
       restaurantResults.clear();
-      dishResults.clear();
+      itemResults.clear();
       return;
     }
 
@@ -58,12 +58,12 @@ class SearchTabController extends BaseController {
       },
     ]);
 
-    dishResults.assignAll([
+    itemResults.assignAll([
       {
         'name': 'The Marble Grill',
         'time': '20-30 min',
         'distance': '4.9 mi',
-        'dishes': [
+        'items': [
           {
             'name': 'Margherita Ultimate Cheese Pizza',
             'price': '8.23',
@@ -82,7 +82,7 @@ class SearchTabController extends BaseController {
         'name': 'My World Pizza',
         'time': '20-30 min',
         'distance': '5.9 mi',
-        'dishes': [
+        'items': [
           {
             'name': 'Sweet Corn Pizza Regular',
             'price': '8.23',
@@ -126,7 +126,7 @@ class SearchTabController extends BaseController {
     searchQuery.value = '';
     _debounceTimer?.cancel();
     restaurantResults.clear();
-    dishResults.clear();
+    itemResults.clear();
   }
 
   @override

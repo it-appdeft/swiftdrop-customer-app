@@ -577,7 +577,7 @@ class _AllRestaurantsList extends GetView<HomeController> {
       final list = controller.filteredRestaurants;
       if (controller.isLoading.value && list.isEmpty) {
         return SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
               (_, __) => Padding(
@@ -612,7 +612,7 @@ class _AllRestaurantsList extends GetView<HomeController> {
             ];
 
       return SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
             (_, i) => RestaurantCard(restaurant: displayList[i]),

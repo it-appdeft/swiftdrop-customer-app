@@ -2,24 +2,24 @@ import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../modules/restaurant_detail/views/product_addons_sheet.dart';
 
-class DishCard extends StatefulWidget {
-  final Map<String, dynamic> dish;
+class ItemCard extends StatefulWidget {
+  final Map<String, dynamic> item;
   final bool showFavorite;
   final bool isHorizontal;
   final VoidCallback? onTap;
-  const DishCard({
+  const ItemCard({
     super.key,
-    required this.dish,
+    required this.item,
     this.showFavorite = false,
     this.isHorizontal = true,
     this.onTap,
   });
 
   @override
-  State<DishCard> createState() => _DishCardState();
+  State<ItemCard> createState() => _ItemCardState();
 }
 
-class _DishCardState extends State<DishCard> {
+class _ItemCardState extends State<ItemCard> {
   bool _isFavourited = false;
   int _quantity = 0;
 
@@ -32,7 +32,7 @@ class _DishCardState extends State<DishCard> {
   }
 
   AssetGenImage get _vegIcon =>
-      widget.dish['isVeg'] == false ? Assets.images.nonVeg3x : Assets.images.vegIcon;
+      widget.item['isVeg'] == false ? Assets.images.nonVeg3x : Assets.images.vegIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +41,7 @@ class _DishCardState extends State<DishCard> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(widget.isHorizontal ? 10 : 12),
-          child: _buildImage(widget.dish['image']),
+          child: _buildImage(widget.item['image']),
         ),
         Positioned(
           bottom: -14,
@@ -57,7 +57,7 @@ class _DishCardState extends State<DishCard> {
             ),
             child: _quantity == 0
                 ? GestureDetector(
-                    onTap: () => showProductAddonsSheet(widget.dish),
+                    onTap: () => showProductAddonsSheet(widget.item),
                     behavior: HitTestBehavior.opaque,
                     child: Center(
                       child: Text(
@@ -130,7 +130,7 @@ class _DishCardState extends State<DishCard> {
         ),
         const SizedBox(height: 4),
         Text(
-          widget.dish['name'] ?? '',
+          widget.item['name'] ?? '',
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -142,7 +142,7 @@ class _DishCardState extends State<DishCard> {
         ),
         const SizedBox(height: 4),
         Text(
-          '£${widget.dish['price']}',
+          '£${widget.item['price']}',
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w600,
@@ -164,7 +164,7 @@ class _DishCardState extends State<DishCard> {
               Assets.images.ratingStar.image(width: 12, height: 12),
               const SizedBox(width: 2),
               Text(
-                '${widget.dish['rating']}',
+                '${widget.item['rating']}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -203,9 +203,9 @@ class _DishCardState extends State<DishCard> {
   }
 }
 
-class RestaurantWithDishes extends StatelessWidget {
+class RestaurantWithItems extends StatelessWidget {
   final Map<String, dynamic> data;
-  const RestaurantWithDishes({super.key, required this.data});
+  const RestaurantWithItems({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -274,10 +274,10 @@ class RestaurantWithDishes extends StatelessWidget {
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 36),
-                itemCount: (data['dishes'] as List?)?.length ?? 0,
+                itemCount: (data['items'] as List?)?.length ?? 0,
                 itemBuilder: (context, index) {
-                  final dish = data['dishes'][index];
-                  return DishCard(dish: dish);
+                  final item = data['items'][index];
+                  return ItemCard(item: item);
                 },
               ),
             ),

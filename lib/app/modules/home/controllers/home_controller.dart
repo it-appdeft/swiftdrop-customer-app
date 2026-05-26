@@ -19,40 +19,20 @@ class HomeController extends BaseController {
     super.onInit();
     bannerPageController = PageController(initialPage: 1);
     bannerPageController.addListener(_onBannerPage);
-    _checkLocationPermission();
+    _getCurrentLocation();
     _loadData();
   }
 
-  Future<void> _checkLocationPermission() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      Get.offAllNamed(AppRoutes.deliveryAddress);
-      return;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        Get.offAllNamed(AppRoutes.deliveryAddress);
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      Get.offAllNamed(AppRoutes.deliveryAddress);
-      return;
-    }
-
-    // Permission granted, get current position
+  Future<void> _getCurrentLocation() async {
     try {
-      Position position = await Geolocator.getCurrentPosition();
-      // In a real app, you'd use geocoding here to get the address string.
-      // For now, we'll set a placeholder or use dummy data.
-      currentAddress.value = 'West Coker, Yelovil, UK'; 
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+        Position position = await Geolocator.getCurrentPosition();
+        currentAddress.value = 'West Coker, Yelovil, UK'; 
+      }
     } catch (e) {
       AppLogger.e('Error getting location: $e');
     }

@@ -47,10 +47,16 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-    // On iOS devices with a home indicator (bottomPadding > 0), we use the default system padding.
-    // On Android or devices without a home indicator, we add a gap to prevent it from sticking to the edge.
-    final finalBottomPadding = bottomPadding > 0 ? bottomPadding : AppDimensions.gapMd;
+    final bottomPadding = MediaQuery.of(context).padding.bottom ;
+    
+    // Calculate padding: for iOS (where bottomPadding > 0), we reduce it by 20px
+    // to bring it down as requested. For Android (where it's "perfect"), we keep it as is.
+    double finalBottomPadding;
+    if (GetPlatform.isIOS && bottomPadding > 0) {
+      finalBottomPadding = (bottomPadding - 8).clamp(0.0, double.infinity);
+    } else {
+      finalBottomPadding = bottomPadding > 0 ? bottomPadding + 12 : AppDimensions.gapMd;
+    }
 
     return Container(
       color: Colors.transparent,

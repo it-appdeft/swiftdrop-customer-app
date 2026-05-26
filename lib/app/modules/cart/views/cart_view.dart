@@ -418,17 +418,20 @@ class CartView extends GetView<CartController> {
                       maxLines: 3,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: controller.saveCookingRequest,
-                    child: Text(
-                      'Save',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
+                  Obx(() {
+                    final canSave = controller.cookingRequestTemp.value.trim().isNotEmpty;
+                    return GestureDetector(
+                      onTap: canSave ? controller.saveCookingRequest : null,
+                      child: Text(
+                        'Save',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: canSave ? AppColors.primary : AppColors.lightSurfaceDisabled,
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
                 ],
               ),
             ),

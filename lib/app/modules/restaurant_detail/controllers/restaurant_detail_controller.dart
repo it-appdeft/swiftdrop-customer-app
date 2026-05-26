@@ -24,7 +24,7 @@ class RestaurantDetailController extends BaseController {
         'reviews': '200K+',
         'time': '25-35',
         'category': 'Steakhouse • Premium Pizza',
-        'dishes': [
+        'items': [
           {
             'name': 'Margherita Ultimate Cheese Pizza',
             'price': '8.23',
