@@ -97,6 +97,9 @@ class $AssetsImagesGen {
     'assets/images/mapImage.png',
   );
   final AssetGenImage minus = const AssetGenImage('assets/images/minus.png');
+  final AssetGenImage nonVegToggle = const AssetGenImage(
+    'assets/images/nonVegToggle.png',
+  );
   final AssetGenImage offers = const AssetGenImage('assets/images/offers.png');
   final AssetGenImage onbording1 = const AssetGenImage(
     'assets/images/onbording1.png',
@@ -150,6 +153,9 @@ class $AssetsImagesGen {
   );
   final AssetGenImage vegIcon = const AssetGenImage(
     'assets/images/vegIcon.png',
+  );
+  final AssetGenImage vegToggle = const AssetGenImage(
+    'assets/images/vegToggle.png',
   );
   final AssetGenImage work = const AssetGenImage('assets/images/work.png');
 }

@@ -48,7 +48,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Assets.images.onbording3.image(
+        Assets.images.restaurantImage.image(
           width: double.infinity,
           height: 330,
           fit: BoxFit.cover,
@@ -263,63 +263,31 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
       scrollDirection: Axis.horizontal,
       physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Obx(() =>
-          Row(
+      child: Obx(() => Row(
             children: [
-              _buildCircleFilter(
-                'Veg',
-                Assets.images.veg3x,
-                controller.isVegSelected.value,
+              _FoodToggle(
+                isSelected: controller.isVegSelected.value,
+                activeTrackColor: AppColors.lightSurfaceVerified,
+                icon: Assets.images.vegToggle,
+                label: 'Veg',
                 onTap: () => controller.isVegSelected.toggle(),
               ),
               const SizedBox(width: 12),
-              _buildCircleFilter(
-                'Non-Veg',
-                Assets.images.nonVeg3x,
-                controller.isNonVegSelected.value,
+              _FoodToggle(
+                isSelected: controller.isNonVegSelected.value,
+                activeTrackColor: AppColors.error,
+                icon: Assets.images.nonVegToggle,
+                label: 'Non-Veg',
                 onTap: () => controller.isNonVegSelected.toggle(),
               ),
               const SizedBox(width: 12),
-              _buildPillFilter(
-                  'Ratings 4.0+', controller.isRatingsSelected.value,
+              _buildPillFilter('Ratings 4.0+', controller.isRatingsSelected.value,
                   onTap: () => controller.isRatingsSelected.toggle()),
               const SizedBox(width: 8),
-              _buildPillFilter(
-                  'Bestseller', controller.isBestsellerSelected.value,
+              _buildPillFilter('Bestseller', controller.isBestsellerSelected.value,
                   onTap: () => controller.isBestsellerSelected.toggle()),
             ],
           )),
-    );
-  }
-
-  Widget _buildCircleFilter(String label, AssetGenImage icon, bool isSelected,
-      {required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Row(
-        children: [
-          isSelected
-              ? icon.image(width: 18, height: 18)
-              : Container(
-            width: 18,
-            height: 18,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.lightSurfaceSubtitle),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: AppColors.lightSurfaceDarkText,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -518,6 +486,74 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
             style: const TextStyle(
               fontFamily: 'Helvetica Neue',
               fontSize: 16,
+              fontWeight: FontWeight.w400,
+              color: AppColors.lightSurfaceDarkText,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Food Toggle (Veg / Non-Veg) ─────────────────────────────────────────────
+
+class _FoodToggle extends StatelessWidget {
+  final bool isSelected;
+  final Color activeTrackColor;
+  final AssetGenImage icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _FoodToggle({
+    required this.isSelected,
+    required this.activeTrackColor,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 36,
+            height: 18,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  width: 36,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? activeTrackColor
+                        : AppColors.lightSurfaceDisabled,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                AnimatedAlign(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  alignment:
+                      isSelected ? Alignment.centerRight : Alignment.centerLeft,
+                  child: icon.image(width: 18, height: 18),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
               fontWeight: FontWeight.w400,
               color: AppColors.lightSurfaceDarkText,
             ),
