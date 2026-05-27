@@ -29,4 +29,14 @@ class HomeRepository {
       return ApiResponse<SearchResultModel>(success: false, message: '', data: null);
     }
   }
+
+  Future<ApiResponse<SearchResultModel>> getRecent() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.customerSearch);
+      final model = SearchResultModel.fromJson(response.data['data'] as Map<String, dynamic>);
+      return ApiResponse<SearchResultModel>(success: true, message: '', data: model);
+    } catch (_) {
+      return ApiResponse<SearchResultModel>(success: false, message: '', data: null);
+    }
+  }
 }

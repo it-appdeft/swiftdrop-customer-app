@@ -1,6 +1,7 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../modules/cart/controllers/cart_controller.dart';
+import '../modules/restaurant_detail/controllers/restaurant_detail_controller.dart';
 
 class CartFloatingBar extends StatelessWidget {
   const CartFloatingBar({super.key});
@@ -8,10 +9,15 @@ class CartFloatingBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<CartController>();
-    
+
     return Obx(() {
       if (controller.items.isEmpty) return const SizedBox.shrink();
-      
+
+      final restaurantName = controller.cartRestaurantName.value.isNotEmpty
+          ? controller.cartRestaurantName.value
+          : 'Your Restaurant';
+      final itemCount = controller.cartItemCount.value;
+
       return SafeArea(
         child: Container(
           margin: const EdgeInsets.all(16),
@@ -31,7 +37,10 @@ class CartFloatingBar extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: Assets.images.restaurantImage.image(
+                child: AppImage(
+                  path: controller.cartRestaurantLogo.value.isNotEmpty
+                      ? controller.cartRestaurantLogo.value
+                      : null,
                   width: 48,
                   height: 48,
                   fit: BoxFit.cover,
@@ -44,15 +53,17 @@ class CartFloatingBar extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'The Marble Grill',
+                      restaurantName,
                       style: GoogleFonts.inter(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '${controller.items.length} items',
+                      '$itemCount ${itemCount == 1 ? 'item' : 'items'}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
@@ -65,7 +76,8 @@ class CartFloatingBar extends StatelessWidget {
               GestureDetector(
                 onTap: () => Get.toNamed(AppRoutes.cart),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -76,19 +88,35 @@ class CartFloatingBar extends StatelessWidget {
                       Text(
                         'View Cart',
                         style: GoogleFonts.inter(
-                          fontSize: 12, // Pxs Size
-                          fontWeight: FontWeight.w400, // Regular
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
                           color: AppColors.primary,
                         ),
                       ),
                       const SizedBox(width: 2),
-                       Assets.images.rightViewCartArrow.image(
+                      Assets.images.rightViewCartArrow.image(
                         width: 16,
                         height: 16,
                         fit: BoxFit.cover,
                       ),
                     ],
                   ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () async {
+                  await controller.clearCartApi();
+                  try {
+                    Get.find<RestaurantDetailController>()
+                        .showCartFloatingBar
+                        .value = false;
+                  } catch (_) {}
+                },
+                child: const Icon(
+                  Icons.close,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
             ],

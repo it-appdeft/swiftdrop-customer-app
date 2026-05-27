@@ -97,6 +97,12 @@ class $AssetsImagesGen {
     'assets/images/mapImage.png',
   );
   final AssetGenImage minus = const AssetGenImage('assets/images/minus.png');
+  final AssetGenImage noImageFound = const AssetGenImage(
+    'assets/images/noImageFound.png',
+  );
+  final AssetGenImage noResultofSearch = const AssetGenImage(
+    'assets/images/noResultofSearch.png',
+  );
   final AssetGenImage nonVegToggle = const AssetGenImage(
     'assets/images/nonVegToggle.png',
   );

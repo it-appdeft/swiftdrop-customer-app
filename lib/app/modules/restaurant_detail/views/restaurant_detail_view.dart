@@ -45,172 +45,165 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Assets.images.restaurantImage.image(
-          width: double.infinity,
-          height: 330,
-          fit: BoxFit.cover,
-        ),
-        Positioned(
-          top: 48,
-          left: 16,
-          right: 16,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GestureDetector(
-                onTap: () => Get.back(),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Assets.images.back.image(
-                      width: 16, height: 16, color: AppColors.white),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _showMoreOptions(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                      Icons.more_vert, color: AppColors.white, size: 16),
-                ),
-              ),
-            ],
+    return Obx(() {
+      final info = controller.detail.value?.restaurant;
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          AppImage(
+            path: info?.coverUrl,
+            width: double.infinity,
+            height: 330,
+            fit: BoxFit.cover,
           ),
-        ),
-        Positioned(
-          bottom: -74,
-          left: 16,
-          right: 16,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-            // 20px from bottom label
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 15,
-                  offset: const Offset(0, 4),
+          Positioned(
+            top: 48,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Assets.images.back.image(
+                        width: 16, height: 16, color: AppColors.white),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => _showMoreOptions(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                        Icons.more_vert, color: AppColors.white, size: 16),
+                  ),
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'The Marble Grill',
-                        style: GoogleFonts.inter(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.lightSurfaceDarkText,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.offWhite,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Assets.images.ratingStar.image(width: 14, height: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            '4.8',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.lightSurfaceDarkText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Steakhouse • Premium Pizza',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: AppColors.lightSurfaceSubtitle,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '(200K+)',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: AppColors.lightSurfaceSubtitle,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Assets.images.timeIcon.image(width: 16, height: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text.rich(
-                        TextSpan(
-                          text: '25-35',
+          ),
+          Positioned(
+            bottom: -74,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          info?.name ?? '',
                           style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.lightSurfaceDarkText,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.offWhite,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
                           children: [
-                            TextSpan(
-                              text: ' Delivery Time',
+                            Assets.images.ratingStar.image(width: 14, height: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              info?.rating.toStringAsFixed(1) ?? '0.0',
                               style: GoogleFonts.inter(
                                 fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.lightSurfaceSubtitle,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.lightSurfaceDarkText,
                               ),
                             ),
                           ],
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          info?.cuisines ?? '',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: AppColors.lightSurfaceSubtitle,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '(${info?.totalReviews ?? 0})',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: AppColors.lightSurfaceSubtitle,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if ((info?.fullAddress ?? info?.city ?? '').isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Assets.images.locationIcon.image(width: 16, height: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            info?.fullAddress ?? info?.city ?? '',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.lightSurfaceSubtitle,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    });
   }
 
   Widget _buildSearchBar() {
@@ -230,6 +223,12 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
             //const SizedBox(width: 12),
             Expanded(
               child: TextField(
+                controller: controller.searchController,
+                onChanged: (v) => controller.searchQuery.value = v.trim(),
+                onSubmitted: (v) {
+                  controller.searchQuery.value = v.trim();
+                  controller.searchNow();
+                },
                 textInputAction: TextInputAction.search,
                 cursorColor: AppColors.iconDark,
                 style: GoogleFonts.inter(
@@ -243,7 +242,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                   border: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   enabledBorder: InputBorder.none,
-                  hintText: 'Search for pizza',
+                  hintText: 'Search for items',
                   hintStyle: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
@@ -327,36 +326,37 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
   }
 
   Widget _buildItemList() {
-    final items = [
-      {
-        'id': '1',
-        'name': 'Margherita Ultimate Cheese Pizza',
-        'price': '8.23',
-        'rating': '4.8'
-      },
-      {
-        'id': '2',
-        'name': 'Margherita Pizza Giant Slice',
-        'price': '8.23',
-        'rating': '4.0'
-      },
-      {'id': '3', 'name': 'Sweet Corn Pizza Regular', 'price': '8.23', 'rating': '4.8'},
-      {'id': '4', 'name': 'Onions Thin Crust Pizza', 'price': '8.23', 'rating': '4.2'},
-    ];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: items
-            .map((item) =>
-            ItemCard(
-              item: item,
-              isHorizontal: false,
-              showFavorite: true,
-              onTap: () => showProductDetailBottomSheet(item),
-            ))
-            .toList(),
-      ),
-    );
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            children: List.generate(
+              3,
+              (_) => const Padding(
+                padding: EdgeInsets.only(bottom: 24),
+                child: ShimmerBox(width: double.infinity, height: 160, borderRadius: 12),
+              ),
+            ),
+          ),
+        );
+      }
+      final items = controller.detail.value?.menu ?? [];
+      if (items.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          children: items
+              .map((item) => ItemCard(
+                    item: item.toMap(),
+                    isHorizontal: false,
+                    showFavorite: true,
+                    onTap: () => showProductDetailBottomSheet(item.toMap()),
+                  ))
+              .toList(),
+        ),
+      );
+    });
   }
 
   Widget _buildViewAllButton() {

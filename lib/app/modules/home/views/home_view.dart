@@ -124,14 +124,18 @@ class _CategoriesSection extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final items = controller.foodItems;
-      if (items.isEmpty) return const SizedBox(height: 100);
+      if (items.isEmpty) return const SizedBox(height: 108);
       return SizedBox(
-        height: 100,
+        height: 108,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: items.length,
-          itemBuilder: (_, i) => _CategoryItem(item: items[i]),
+          itemBuilder: (_, i) => Obx(() => _CategoryItem(
+                item: items[i],
+                isSelected: controller.selectedCategoryIndex.value == i,
+                onTap: () => controller.selectCategory(i),
+              )),
         ),
       );
     });
@@ -140,35 +144,47 @@ class _CategoriesSection extends GetView<HomeController> {
 
 class _CategoryItem extends StatelessWidget {
   final FoodItemModel item;
-  const _CategoryItem({required this.item});
+  final bool isSelected;
+  final VoidCallback onTap;
+  const _CategoryItem({required this.item, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 75,
-      margin: const EdgeInsets.only(right: 14),
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
-            clipBehavior: Clip.antiAlias,
-            child: _buildImage(item.imageUrl),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            item.name,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.lightSurfaceSubtitle,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 75,
+        margin: const EdgeInsets.only(right: 14),
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
+              clipBehavior: Clip.antiAlias,
+              child: _buildImage(item.imageUrl),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              item.name,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.lightSurfaceSubtitle,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            Container(
+              height: 3,
+              width: 72,
+              color: isSelected ? const Color(0xFF198754) : AppColors.transparent,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -224,7 +240,8 @@ class _TopPickCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: restaurant.toMap()),
+      onTap: () => Get.toNamed(AppRoutes.restaurantDetail,
+            arguments: {'id': restaurant.id, 'q': ''}),
       child: Container(
         width: 220,
         margin: const EdgeInsets.only(right: 16),

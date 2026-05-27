@@ -34,8 +34,11 @@ class ApiEndpoints {
   static const String addAddress = '/user/addresses/add';
   static const String deleteAddress = '/user/addresses/delete';
 
+  static const String customerCart = '/customer/cart';
+  static String customerCartItem(int id) => '/customer/cart/items/$id';
   static const String customerDashboard = '/customer/dashboard';
   static const String customerSearch = '/customer/search';
+  static String customerRestaurantDetail(int id) => '/customer/restaurants/$id';
   static const String restaurants = '/restaurants';
   static const String restaurantDetail = '/restaurants';
   static const String categories = '/categories';

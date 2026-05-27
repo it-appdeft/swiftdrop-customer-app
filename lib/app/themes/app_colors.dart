@@ -65,6 +65,7 @@ class AppColors {
 
   // Component surfaces
   static const Color primarySurface    = Color(0xFFF1FBF7);
+  static const Color noDataSubtitle    = Color(0xFF7C839B);
 
   static const Color transparent = Colors.transparent;
 }

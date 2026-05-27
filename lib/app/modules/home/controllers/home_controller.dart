@@ -8,6 +8,12 @@ class HomeController extends BaseController {
   final RxList<RestaurantModel> restaurants = <RestaurantModel>[].obs;
   final RxString currentAddress = 'Select Location'.obs;
   final RxInt currentBannerPage = 0.obs;
+  final RxInt selectedCategoryIndex = (-1).obs;
+
+  void selectCategory(int index) {
+    selectedCategoryIndex.value =
+        selectedCategoryIndex.value == index ? -1 : index;
+  }
   late final PageController bannerPageController;
 
   List<RestaurantModel> get topPicks => restaurants.take(5).toList();

@@ -1,5 +1,7 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../modules/cart/controllers/cart_controller.dart';
+import '../modules/restaurant_detail/views/product_detail_bottom_sheet.dart';
 import '../modules/restaurant_detail/views/product_addons_sheet.dart';
 
 class ItemCard extends StatefulWidget {
@@ -21,7 +23,22 @@ class ItemCard extends StatefulWidget {
 
 class _ItemCardState extends State<ItemCard> {
   bool _isFavourited = false;
-  int _quantity = 0;
+  CartController? _cart;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      _cart = Get.find<CartController>();
+    } catch (_) {}
+  }
+
+  int get _itemId => (widget.item['id'] as int?) ?? 0;
+
+  bool get _hasModifiers {
+    final groups = widget.item['modifier_groups'] as List?;
+    return groups != null && groups.isNotEmpty;
+  }
 
   Widget _buildImage(String? imageUrl) {
     return AppImage(
@@ -33,10 +50,87 @@ class _ItemCardState extends State<ItemCard> {
   }
 
   AssetGenImage get _vegIcon =>
-      widget.item['isVeg'] == false ? Assets.images.nonVeg3x : Assets.images.vegIcon;
+      widget.item['isVeg'] == false ? Assets.images.nonVegToggle : Assets.images.vegIcon;
+
+  Widget _buildCounter(CartController cart, int qty) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () => cart.removeFromCartApi(_itemId),
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Assets.images.minus.image(width: 24, height: 24),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$qty',
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: 8),
+        GestureDetector(
+          onTap: () {
+            if (_hasModifiers) {
+              final mods = _cart?.getModifiersForItem(_itemId);
+              showProductAddonsSheet(widget.item, existingModifiers: mods);
+            } else {
+              cart.incrementCartItem(_itemId);
+            }
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Assets.images.plus.image(width: 24, height: 24),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddButton() {
+    return GestureDetector(
+      onTap: () => showProductDetailBottomSheet(widget.item),
+      behavior: HitTestBehavior.opaque,
+      child: Center(
+        child: Text(
+          'ADD',
+          style: GoogleFonts.inter(
+            fontSize: widget.isHorizontal ? 16 : 14,
+            fontWeight: widget.isHorizontal ? FontWeight.w500 : FontWeight.w600,
+            color: AppColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final cart = _cart;
+
+    final addOrCounter = Container(
+      height: widget.isHorizontal ? 36 : 32,
+      width: 112,
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+      ),
+      child: cart == null
+          ? _buildAddButton()
+          : Obx(() {
+              final qty = cart.quantities[_itemId] ?? 0;
+              return qty == 0 ? _buildAddButton() : _buildCounter(cart, qty);
+            }),
+    );
+
     final imageStack = Stack(
       clipBehavior: Clip.none,
       children: [
@@ -48,63 +142,7 @@ class _ItemCardState extends State<ItemCard> {
           bottom: -14,
           left: widget.isHorizontal ? 10 : 20,
           right: widget.isHorizontal ? 10 : 20,
-          child: Container(
-            height: widget.isHorizontal ? 36 : 32,
-            width: 112,
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.primary.withOpacity(0.5)),
-            ),
-            child: _quantity == 0
-                ? GestureDetector(
-                    onTap: () => showProductAddonsSheet(widget.item),
-                    behavior: HitTestBehavior.opaque,
-                    child: Center(
-                      child: Text(
-                        'ADD',
-                        style: GoogleFonts.inter(
-                          fontSize: widget.isHorizontal ? 16 : 14,
-                          fontWeight: widget.isHorizontal ? FontWeight.w500 : FontWeight.w600,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  )
-                : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: () => setState(() => _quantity > 1 ? _quantity-- : _quantity = 0),
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: Assets.images.minus.image(width: 24, height: 24),
-                        ),
-                      ),
-                      SizedBox(width:8),
-                      Text(
-                        '$_quantity',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      SizedBox(width: 8),
-                      GestureDetector(
-                        onTap: () => setState(() => _quantity++),
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: Assets.images.plus.image(width: 24, height: 24),
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
+          child: addOrCounter,
         ),
       ],
     );
@@ -115,11 +153,7 @@ class _ItemCardState extends State<ItemCard> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-
-            _vegIcon.image(
-              width: 16,
-              height: 16,
-            ),
+            _vegIcon.image(width: 16, height: 16),
             if (!widget.isHorizontal && widget.showFavorite)
               GestureDetector(
                 onTap: () => setState(() => _isFavourited = !_isFavourited),
@@ -206,12 +240,16 @@ class _ItemCardState extends State<ItemCard> {
 
 class RestaurantWithItems extends StatelessWidget {
   final Map<String, dynamic> data;
-  const RestaurantWithItems({super.key, required this.data});
+  final String? searchQuery;
+  const RestaurantWithItems({super.key, required this.data, this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: data),
+      onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: {
+            'id': data['id'],
+            'q': searchQuery ?? '',
+          }),
       behavior: HitTestBehavior.opaque,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),

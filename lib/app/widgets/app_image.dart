@@ -1,4 +1,5 @@
 import 'package:swiftdrop_customer_app/export.dart';
+import 'package:swiftdrop_customer_app/generated/assets.dart';
 
 class AppImage extends StatelessWidget {
   final String? path;
@@ -46,13 +47,10 @@ class AppImage extends StatelessWidget {
   Widget _placeholder(BoxConstraints? constraints) {
     final w = width ?? constraints?.maxWidth ?? double.infinity;
     final h = height ?? constraints?.maxHeight ?? double.infinity;
-    return Container(
+    return SizedBox(
       width: w,
       height: h,
-      color: const Color(0xFFEEEEEE),
-      child: const Center(
-        child: Icon(Icons.image_outlined, color: Color(0xFFBDBDBD), size: 32),
-      ),
+      child: Assets.images.noImageFound.image(fit: BoxFit.cover),
     );
   }
 

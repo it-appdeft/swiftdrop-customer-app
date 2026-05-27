@@ -176,6 +176,193 @@ class ShimmerList extends StatelessWidget {
   }
 }
 
+/// Skeleton matching the RestaurantCard layout (image + name + meta row).
+class ShimmerRestaurantSearchCard extends StatelessWidget {
+  const ShimmerRestaurantSearchCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: _ShimmerColors.base,
+      highlightColor: _ShimmerColors.highlight,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 210,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: _ShimmerColors.base,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: _ShimmerColors.base,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: _ShimmerColors.base,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              height: 14,
+              width: 160,
+              decoration: BoxDecoration(
+                color: _ShimmerColors.base,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Skeleton matching the RestaurantWithItems layout (header + horizontal item cards).
+class ShimmerItemGroupCard extends StatelessWidget {
+  const ShimmerItemGroupCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: _ShimmerColors.base,
+      highlightColor: _ShimmerColors.highlight,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        color: _ShimmerColors.highlight,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(32, 12, 28, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          height: 18,
+                          width: 140,
+                          decoration: BoxDecoration(
+                            color: _ShimmerColors.base,
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          height: 12,
+                          width: 100,
+                          decoration: BoxDecoration(
+                            color: _ShimmerColors.base,
+                            borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: _ShimmerColors.base,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 174,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 36),
+                itemCount: 3,
+                itemBuilder: (_, __) => Container(
+                  width: 330,
+                  height: 160,
+                  margin: const EdgeInsets.only(right: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _ShimmerColors.highlight,
+                    borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 128,
+                        height: 119,
+                        decoration: BoxDecoration(
+                          color: _ShimmerColors.base,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: _ShimmerColors.base,
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: _ShimmerColors.base,
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 14,
+                              width: 60,
+                              decoration: BoxDecoration(
+                                color: _ShimmerColors.base,
+                                borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ShimmerCard extends StatelessWidget {
   final double height;
   final double borderRadius;

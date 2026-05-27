@@ -4,9 +4,9 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../controllers/restaurant_detail_controller.dart';
 
-void showProductAddonsSheet(Map item) {
+void showProductAddonsSheet(Map item, {List<CartApiModifier>? existingModifiers}) {
   Get.bottomSheet(
-    ProductAddonsContent(item: item),
+    ProductAddonsContent(item: item, existingModifiers: existingModifiers),
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
   );
@@ -14,7 +14,8 @@ void showProductAddonsSheet(Map item) {
 
 class ProductAddonsContent extends StatefulWidget {
   final Map item;
-  const ProductAddonsContent({super.key, required this.item});
+  final List<CartApiModifier>? existingModifiers;
+  const ProductAddonsContent({super.key, required this.item, this.existingModifiers});
 
   @override
   State<ProductAddonsContent> createState() => _ProductAddonsContentState();
@@ -22,55 +23,84 @@ class ProductAddonsContent extends StatefulWidget {
 
 class _ProductAddonsContentState extends State<ProductAddonsContent> {
   int _quantity = 1;
-  String _selectedSize = 'Regular (serves 1,17 Cm)';
-  final Set<String> _selectedToppings = {};
-  final Set<String> _selectedCheeseDips = {};
+  bool _isAddingToCart = false;
+  final Map<int, int?> _singleSelections = {};
+  final Map<int, Set<int>> _multiSelections = {};
 
-  final List<Map<String, dynamic>> _sizes = [
-    {'name': 'Regular (serves 1,17 Cm)', 'price': 8.23},
-    {'name': 'Medium (serves 2,25 Cm)', 'price': 10.02},
-    {'name': 'Large (serves 4,33 Cm)', 'price': 15.00},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _initQuantity();
+    _initSelections();
+  }
 
-  final List<Map<String, dynamic>> _toppings = [
-    {'name': 'Paneer', 'price': 1.00},
-    {'name': 'Onions', 'price': 2.00},
-    {'name': 'Olives', 'price': 1.00},
-    {'name': 'Jalapenos', 'price': 2.00},
-    {'name': 'Red Paprika', 'price': 1.00},
-    {'name': 'Pineapples', 'price': 2.00},
-    {'name': 'Sweet Corns', 'price': 2.00},
-  ];
+  void _initQuantity() {
+    if (widget.existingModifiers == null) return;
+    try {
+      final cart = Get.find<CartController>();
+      final itemId = (widget.item['id'] as int?) ?? 0;
+      final qty = cart.quantities[itemId] ?? 1;
+      if (qty > 0) _quantity = qty;
+    } catch (_) {}
+  }
 
-  final List<Map<String, dynamic>> _cheeseDips = [
-    {'name': 'Extra Cheese', 'price': 1.00},
-    {'name': 'Cheese Dip', 'price': 2.00},
-    {'name': 'Jalapeno Dip', 'price': 1.00},
-    {'name': 'Hot & Garlic Dip', 'price': 2.00},
-    {'name': 'Peri Peri Dip', 'price': 1.00},
-    {'name': 'Mozzarella', 'price': 2.00},
-  ];
+  void _initSelections() {
+    final existing = widget.existingModifiers ?? [];
+    for (final group in _groups) {
+      if (group.selectionType == 'single') {
+        CartApiModifier? match;
+        for (final m in existing) {
+          if (m.groupId == group.id) { match = m; break; }
+        }
+        if (match != null) {
+          _singleSelections[group.id] = match.optionId;
+        } else if (group.isRequired && group.options.isNotEmpty) {
+          _singleSelections[group.id] = group.options[0].id;
+        }
+      } else {
+        final selectedIds = <int>{};
+        for (final m in existing) {
+          if (m.groupId == group.id) selectedIds.add(m.optionId);
+        }
+        if (selectedIds.isNotEmpty) {
+          _multiSelections[group.id] = selectedIds;
+        }
+      }
+    }
+  }
+
+  List<ModifierGroupModel> get _groups =>
+      (widget.item['modifier_groups'] as List?)
+          ?.whereType<ModifierGroupModel>()
+          .toList() ??
+      [];
+
+  double get _basePrice =>
+      double.tryParse(widget.item['price']?.toString() ?? '0') ?? 0;
 
   double get _currentPrice {
-    double total = 0;
-    final size = _sizes.firstWhere((s) => s['name'] == _selectedSize, orElse: () => _sizes[0]);
-    total += size['price'];
-
-    for (var t in _toppings) {
-      if (_selectedToppings.contains(t['name'])) {
-        total += t['price'];
+    double delta = 0;
+    for (final group in _groups) {
+      if (group.selectionType == 'single') {
+        final selectedId = _singleSelections[group.id];
+        if (selectedId != null) {
+          final idx = group.options.indexWhere((o) => o.id == selectedId);
+          if (idx != -1) delta += group.options[idx].priceDelta;
+        }
+      } else {
+        final selected = _multiSelections[group.id] ?? {};
+        for (final optId in selected) {
+          final idx = group.options.indexWhere((o) => o.id == optId);
+          if (idx != -1) delta += group.options[idx].priceDelta;
+        }
       }
     }
-    for (var c in _cheeseDips) {
-      if (_selectedCheeseDips.contains(c['name'])) {
-        total += c['price'];
-      }
-    }
-    return total;
+    return _basePrice + delta;
   }
 
   @override
   Widget build(BuildContext context) {
+    final groups = _groups;
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.white,
@@ -92,44 +122,8 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                   const SizedBox(height: 16),
                   _buildProductInfo(),
                   const SizedBox(height: 24),
-                  _buildAddonSection(
-                    title: 'Size',
-                    items: _sizes,
-                    isSingleSelection: true,
-                    selectedItem: _selectedSize,
-                    onTap: (name) => setState(() => _selectedSize = name),
-                    showDivider: false,
-                  ),
-                  _buildAddonSection(
-                    title: 'Toppings-Veg (Regular)',
-                    items: _toppings,
-                    isSingleSelection: false,
-                    selectedItems: _selectedToppings,
-                    onTap: (name) {
-                      setState(() {
-                        if (_selectedToppings.contains(name)) {
-                          _selectedToppings.remove(name);
-                        } else {
-                          _selectedToppings.add(name);
-                        }
-                      });
-                    },
-                  ),
-                  _buildAddonSection(
-                    title: 'Cheese & Dip',
-                    items: _cheeseDips,
-                    isSingleSelection: false,
-                    selectedItems: _selectedCheeseDips,
-                    onTap: (name) {
-                      setState(() {
-                        if (_selectedCheeseDips.contains(name)) {
-                          _selectedCheeseDips.remove(name);
-                        } else {
-                          _selectedCheeseDips.add(name);
-                        }
-                      });
-                    },
-                  ),
+                  ...groups.asMap().entries.map((entry) =>
+                      _buildGroupSection(entry.value, showDivider: entry.key > 0)),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -157,7 +151,8 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
   Widget _buildProductImage() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Assets.images.onbording1.image(
+      child: AppImage(
+        path: widget.item['image'] as String?,
         width: double.infinity,
         height: 208,
         fit: BoxFit.cover,
@@ -166,49 +161,46 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
   }
 
   Widget _buildProductInfo() {
+    final description = widget.item['description'] as String? ?? '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Margherita Pizza Giant Slice',
-          style: TextStyle(
+        Text(
+          widget.item['name'] as String? ?? '',
+          style: const TextStyle(
             fontFamily: 'Helvetica Neue',
             fontSize: 24,
             fontWeight: FontWeight.w500,
             color: AppColors.lightSurfaceDarkText,
           ),
         ),
-        const SizedBox(height: 4),
-        const Text(
-          'Onion, Marinated paneer cubes topped with extra cheese and tandoori sauce',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF868AA5),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF868AA5),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 
-  Widget _buildAddonSection({
-    required String title,
-    required List<Map<String, dynamic>> items,
-    required bool isSingleSelection,
-    String? selectedItem,
-    Set<String>? selectedItems,
-    required Function(String) onTap,
-    bool showDivider = true,
-  }) {
+  Widget _buildGroupSection(ModifierGroupModel group,
+      {required bool showDivider}) {
+    final isSingle = group.selectionType == 'single';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (showDivider)
           const Divider(color: Color(0xFFF2F2E9), thickness: 1, height: 48),
         Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 4),
           child: Text(
-            title,
+            group.name,
             style: GoogleFonts.inter(
               fontSize: 18,
               fontWeight: FontWeight.w500,
@@ -216,22 +208,38 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
             ),
           ),
         ),
-        ...items.map((item) {
-          final isItemSelected = isSingleSelection
-              ? selectedItem == item['name']
-              : selectedItems!.contains(item['name']);
-
+        const SizedBox(height: 12),
+        ...group.options.map((opt) {
+          final isSelected = isSingle
+              ? _singleSelections[group.id] == opt.id
+              : (_multiSelections[group.id] ?? {}).contains(opt.id);
+          final priceLabel = opt.priceDelta == 0
+              ? ''
+              : opt.priceDelta > 0
+                  ? '+£${opt.priceDelta.toStringAsFixed(2)}'
+                  : '-£${opt.priceDelta.abs().toStringAsFixed(2)}';
           return _buildSelectionItem(
-            title: item['name'],
-            price: isSingleSelection
-                ? '£${item['price'].toStringAsFixed(2)}'
-                : '+£${item['price'].toStringAsFixed(2)}',
-            isSelected: isItemSelected,
-            isSingleSelection: isSingleSelection,
-            onTap: () => onTap(item['name']),
+            title: opt.name,
+            price: priceLabel,
+            isSelected: isSelected,
+            isSingleSelection: isSingle,
+            onTap: () {
+              setState(() {
+                if (isSingle) {
+                  _singleSelections[group.id] = opt.id;
+                } else {
+                  final set =
+                      _multiSelections.putIfAbsent(group.id, () => {});
+                  if (set.contains(opt.id)) {
+                    set.remove(opt.id);
+                  } else {
+                    set.add(opt.id);
+                  }
+                }
+              });
+            },
           );
         }),
-        if (!showDivider) const SizedBox(height: 0),
       ],
     );
   }
@@ -262,15 +270,17 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                 ),
               ),
             ),
-            Text(
-              price,
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF595D70),
+            if (price.isNotEmpty) ...[
+              Text(
+                price,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF595D70),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             if (isSingleSelection)
               _buildRadioButton(isSelected)
             else
@@ -311,7 +321,8 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
 
   Widget _buildBottomBar() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 16),
+      padding: EdgeInsets.fromLTRB(
+          16, 16, 16, MediaQuery.of(context).padding.bottom + 16),
       decoration: BoxDecoration(
         color: AppColors.white,
         boxShadow: [
@@ -359,27 +370,39 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
           const SizedBox(width: 16),
           Expanded(
             child: GestureDetector(
-              onTap: () {
-                final addonsList = [..._selectedToppings, ..._selectedCheeseDips];
+              onTap: _isAddingToCart
+                  ? null
+                  : () async {
+                      setState(() => _isAddingToCart = true);
 
-                final cartController = Get.find<CartController>();
-                cartController.items.add(CartItem(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  name: widget.item['name'] as String? ?? 'Item',
-                  addons: addonsList.isNotEmpty ? addonsList.join(', ') : null,
-                  price: _currentPrice,
-                  qty: _quantity,
-                ));
+                      final menuItemId = (widget.item['id'] as int?) ?? 0;
+                      final selectedOptionIds = <int>[];
+                      for (final group in _groups) {
+                        if (group.selectionType == 'single') {
+                          final selectedId = _singleSelections[group.id];
+                          if (selectedId != null)
+                            selectedOptionIds.add(selectedId);
+                        } else {
+                          selectedOptionIds
+                              .addAll(_multiSelections[group.id] ?? {});
+                        }
+                      }
 
-                if (Get.isRegistered<RestaurantDetailController>()) {
-                  Get.find<RestaurantDetailController>().showCartFloatingBar.value = true;
-                }
+                      try {
+                        await Get.find<CartController>()
+                            .addToCartApi(menuItemId, selectedOptionIds, _quantity);
+                      } catch (_) {}
 
-                Get.back();
-                if (Get.isBottomSheetOpen ?? false) {
-                  Get.back();
-                }
-              },
+                      try {
+                        Get.find<RestaurantDetailController>()
+                            .showCartFloatingBar
+                            .value = true;
+                      } catch (_) {}
+
+                      if (mounted) setState(() => _isAddingToCart = false);
+                      Get.back();
+                      if (Get.isBottomSheetOpen ?? false) Get.back();
+                    },
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
@@ -387,14 +410,23 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 alignment: Alignment.center,
-                child: Text(
-                  'Add Item £${(_currentPrice * _quantity).toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14, // PS Size
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
+                child: _isAddingToCart
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'Add Item £${(_currentPrice * _quantity).toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
               ),
             ),
           ),

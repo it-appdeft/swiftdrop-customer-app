@@ -3,7 +3,8 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 
 class RestaurantCard extends StatefulWidget {
   final Map<String, dynamic> restaurant;
-  const RestaurantCard({super.key, required this.restaurant});
+  final String? searchQuery;
+  const RestaurantCard({super.key, required this.restaurant, this.searchQuery});
 
   @override
   State<RestaurantCard> createState() => _RestaurantCardState();
@@ -24,7 +25,10 @@ class _RestaurantCardState extends State<RestaurantCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: widget.restaurant),
+      onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: {
+            'id': widget.restaurant['id'],
+            'q': widget.searchQuery ?? '',
+          }),
       behavior: HitTestBehavior.opaque,
       child: Container(
         margin: const EdgeInsets.only(bottom: 24),

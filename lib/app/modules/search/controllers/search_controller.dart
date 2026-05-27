@@ -19,6 +19,19 @@ class SearchTabController extends BaseController {
   Timer? _debounceTimer;
   String _lastSearchedQuery = '';
 
+  @override
+  void onInit() {
+    super.onInit();
+    loadRecent();
+  }
+
+  Future<void> loadRecent() async {
+    final result = await _repo.getRecent();
+    if (result.success && result.data != null && result.data!.recent.isNotEmpty) {
+      recentSearches.assignAll(result.data!.recent.map((r) => r.keyword).toList());
+    }
+  }
+
   void onQueryChanged(String text) {
     final trimmed = text.trim();
     searchQuery.value = trimmed;

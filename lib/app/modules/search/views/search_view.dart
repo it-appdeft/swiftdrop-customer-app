@@ -52,16 +52,30 @@ class SearchView extends GetView<SearchTabController> {
                       const SizedBox(height: 24),
                       _RecentHeader(),
                       const SizedBox(height: 16),
-                      _RecentChipsRow(),
+                      Expanded(child: _RecentChipsRow()),
                     ],
                   );
                 }
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 16),
-                    _FilterRow(),
-                    const SizedBox(height: 16),
+                    Obx(() {
+                      final isRestaurants = controller.selectedTabIndex.value == 0;
+                      final hasResults = isRestaurants
+                          ? controller.restaurantResults.isNotEmpty
+                          : controller.itemResults.isNotEmpty;
+                      if (!hasResults && !controller.isSearching.value) {
+                        return const SizedBox.shrink();
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          _FilterRow(),
+                          const SizedBox(height: 16),
+                        ],
+                      );
+                    }),
                     Expanded(child: _SearchResultsList()),
                   ],
                 );
@@ -397,7 +411,9 @@ class _SearchResultsList extends GetView<SearchTabController> {
   Widget build(BuildContext context) {
     return Obx(() {
       if (controller.isSearching.value) {
-        return const Center(child: AppLoader());
+        return controller.selectedTabIndex.value == 0
+            ? const _ShimmerRestaurantList()
+            : const _ShimmerItemGroupList();
       }
 
       final isRestaurantsTab = controller.selectedTabIndex.value == 0;
@@ -406,8 +422,11 @@ class _SearchResultsList extends GetView<SearchTabController> {
           : controller.itemResults.isEmpty;
 
       if (isEmpty) {
-        return EmptyStateWidget(
-          message: isRestaurantsTab ? 'No restaurants found' : 'No items found',
+        return NoDataWidget(
+          image: Assets.images.noResultofSearch.image(width: 96, height: 96),
+          subtitle: isRestaurantsTab
+              ? AppStrings.noResultRestaurantsSubtitle
+              : AppStrings.noResultItemsSubtitle,
         );
       }
 
@@ -415,15 +434,46 @@ class _SearchResultsList extends GetView<SearchTabController> {
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
           itemCount: controller.restaurantResults.length,
-          itemBuilder: (_, i) => RestaurantCard(restaurant: controller.restaurantResults[i]),
+          itemBuilder: (_, i) => RestaurantCard(
+                restaurant: controller.restaurantResults[i],
+                searchQuery: controller.searchQuery.value,
+              ),
         );
       }
 
       return ListView.builder(
         padding: const EdgeInsets.only(bottom: 150),
         itemCount: controller.itemResults.length,
-        itemBuilder: (_, i) => RestaurantWithItems(data: controller.itemResults[i]),
+        itemBuilder: (_, i) => RestaurantWithItems(
+              data: controller.itemResults[i],
+              searchQuery: controller.searchQuery.value,
+            ),
       );
     });
+  }
+}
+
+class _ShimmerRestaurantList extends StatelessWidget {
+  const _ShimmerRestaurantList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      itemCount: 3,
+      itemBuilder: (_, __) => const ShimmerRestaurantSearchCard(),
+    );
+  }
+}
+
+class _ShimmerItemGroupList extends StatelessWidget {
+  const _ShimmerItemGroupList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: 2,
+      itemBuilder: (_, __) => const ShimmerItemGroupCard(),
+    );
   }
 }

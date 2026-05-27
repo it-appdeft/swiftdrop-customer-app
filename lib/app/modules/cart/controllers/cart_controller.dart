@@ -38,10 +38,19 @@ class Coupon {
 }
 
 class CartController extends BaseController {
+  final _repo = CartRepository();
+
   final items = <CartItem>[].obs;
   final coupons = <Coupon>[].obs;
   final RxDouble deliveryFee = 2.20.obs;
   final RxDouble taxesAndCharges = 1.20.obs;
+
+  // API-sourced cart state
+  final quantities = <int, int>{}.obs; // menuItemId → quantity
+  final cartApiItems = <CartApiItem>[].obs;
+  final RxString cartRestaurantName = ''.obs;
+  final RxString cartRestaurantLogo = ''.obs;
+  final RxInt cartItemCount = 0.obs;
 
   // Cooking Request states
   final RxString cookingRequest = ''.obs;
@@ -61,6 +70,7 @@ class CartController extends BaseController {
     cookingRequestController.addListener(() {
       cookingRequestTemp.value = cookingRequestController.text;
     });
+    fetchCart();
   }
 
   void _populateCoupons() {
@@ -89,9 +99,69 @@ class CartController extends BaseController {
     ]);
   }
 
+  Future<void> fetchCart() async {
+    final result = await _repo.getCart();
+    if (result.success && result.data != null) {
+      final cart = result.data!;
+      final newQty = <int, int>{};
+      final newItems = <CartItem>[];
+      for (final item in cart.items) {
+        newQty[item.menuItemId] = (newQty[item.menuItemId] ?? 0) + item.quantity;
+        final addonsStr = item.modifiers.isNotEmpty
+            ? item.modifiers.map((m) => m.optionName).join(', ')
+            : null;
+        newItems.add(CartItem(
+          id: item.id.toString(),
+          name: item.name,
+          addons: addonsStr,
+          price: item.unitPrice,
+          qty: item.quantity,
+          image: item.imageUrl,
+        ));
+      }
+      quantities.value = newQty;
+      items.value = newItems;
+      cartApiItems.value = cart.items;
+      cartRestaurantName.value = cart.restaurantName ?? '';
+      cartRestaurantLogo.value = cart.restaurantLogoUrl ?? '';
+      cartItemCount.value = cart.itemCount;
+    }
+  }
+
+  void _syncItemCount() {
+    cartItemCount.value = quantities.values.fold(0, (sum, q) => sum + q);
+  }
+
+  Future<void> addToCartApi(
+      int menuItemId, List<int> options, int quantity) async {
+    quantities[menuItemId] = (quantities[menuItemId] ?? 0) + quantity;
+    _syncItemCount();
+
+    final result = await _repo.addToCart(
+        menuItemId: menuItemId, options: options, quantity: quantity);
+    if (result.success) {
+      await fetchCart();
+    } else {
+      final reverted = (quantities[menuItemId] ?? quantity) - quantity;
+      if (reverted <= 0) {
+        quantities.remove(menuItemId);
+      } else {
+        quantities[menuItemId] = reverted;
+      }
+      _syncItemCount();
+    }
+  }
+
+  List<CartApiModifier> getModifiersForItem(int menuItemId) {
+    for (final item in cartApiItems) {
+      if (item.menuItemId == menuItemId) return item.modifiers;
+    }
+    return [];
+  }
+
   double get itemTotal =>
       items.fold(0, (sum, item) => sum + item.price * item.quantity.value);
-  
+
   double get totalToPay {
     double total = itemTotal + deliveryFee.value + taxesAndCharges.value;
     if (isCouponApplied.value) {
@@ -105,13 +175,7 @@ class CartController extends BaseController {
     if (existing != null) {
       existing.quantity.value++;
     } else {
-      // For demo purposes, add a new item if not found
-      items.add(CartItem(
-        id: id,
-        name: 'New Pizza Item',
-        price: 8.23,
-        qty: 1,
-      ));
+      items.add(CartItem(id: id, name: 'New Item', price: 0, qty: 1));
     }
   }
 
@@ -157,15 +221,77 @@ class CartController extends BaseController {
     isCookingRequestSaved.value = false;
   }
 
-  void applyCoupon() {
-    isCouponApplied.value = true;
+  Future<void> incrementCartItem(int menuItemId) async {
+    int? cartItemId;
+    int currentQty = 0;
+    for (final item in cartApiItems) {
+      if (item.menuItemId == menuItemId) {
+        cartItemId = item.id;
+        currentQty = item.quantity;
+        break;
+      }
+    }
+    if (cartItemId == null) return;
+
+    quantities[menuItemId] = (quantities[menuItemId] ?? 0) + 1;
+    _syncItemCount();
+
+    final result =
+        await _repo.updateCartItemQuantity(cartItemId, currentQty + 1);
+    if (result.success) {
+      await fetchCart();
+    } else {
+      final reverted = (quantities[menuItemId] ?? 1) - 1;
+      if (reverted <= 0) {
+        quantities.remove(menuItemId);
+      } else {
+        quantities[menuItemId] = reverted;
+      }
+      _syncItemCount();
+    }
   }
 
-  void removeCoupon() {
-    isCouponApplied.value = false;
+  Future<void> removeFromCartApi(int menuItemId) async {
+    int? cartItemId;
+    for (final item in cartApiItems) {
+      if (item.menuItemId == menuItemId) {
+        cartItemId = item.id;
+        break;
+      }
+    }
+    if (cartItemId == null) return;
+
+    final prevQty = quantities[menuItemId] ?? 0;
+    if (prevQty <= 1) {
+      quantities.remove(menuItemId);
+      items.removeWhere((i) => i.id == cartItemId.toString());
+    } else {
+      quantities[menuItemId] = prevQty - 1;
+    }
+    _syncItemCount();
+
+    final result = await _repo.removeCartItem(cartItemId);
+    if (result.success) {
+      await fetchCart();
+    } else {
+      quantities[menuItemId] = prevQty;
+      _syncItemCount();
+      if (prevQty <= 1) await fetchCart();
+    }
   }
 
+  Future<void> clearCartApi() async {
+    await _repo.clearCart();
+    quantities.clear();
+    items.clear();
+    cartApiItems.clear();
+    cartItemCount.value = 0;
+    cartRestaurantName.value = '';
+    cartRestaurantLogo.value = '';
+  }
+
+  void applyCoupon() => isCouponApplied.value = true;
+  void removeCoupon() => isCouponApplied.value = false;
   void clearCart() => items.clear();
-
   void proceedToPlaceOrder() => Get.toNamed(AppRoutes.checkout);
 }
