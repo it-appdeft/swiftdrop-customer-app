@@ -396,23 +396,34 @@ class _SearchResultsList extends GetView<SearchTabController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.selectedTabIndex.value == 0) {
+      if (controller.isSearching.value) {
+        return const Center(child: AppLoader());
+      }
+
+      final isRestaurantsTab = controller.selectedTabIndex.value == 0;
+      final isEmpty = isRestaurantsTab
+          ? controller.restaurantResults.isEmpty
+          : controller.itemResults.isEmpty;
+
+      if (isEmpty) {
+        return EmptyStateWidget(
+          message: isRestaurantsTab ? 'No restaurants found' : 'No items found',
+        );
+      }
+
+      if (isRestaurantsTab) {
         return ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
           itemCount: controller.restaurantResults.length,
-          itemBuilder: (context, index) {
-            return RestaurantCard(restaurant: controller.restaurantResults[index]);
-          },
-        );
-      } else {
-        return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 150),
-          itemCount: controller.itemResults.length,
-          itemBuilder: (context, index) {
-            return RestaurantWithItems(data: controller.itemResults[index]);
-          },
+          itemBuilder: (_, i) => RestaurantCard(restaurant: controller.restaurantResults[i]),
         );
       }
+
+      return ListView.builder(
+        padding: const EdgeInsets.only(bottom: 150),
+        itemCount: controller.itemResults.length,
+        itemBuilder: (_, i) => RestaurantWithItems(data: controller.itemResults[i]),
+      );
     });
   }
 }

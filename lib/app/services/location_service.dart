@@ -1,31 +1,8 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 
-class LocationService extends GetxService with WidgetsBindingObserver {
+class LocationService extends GetxService {
   static LocationService get to => Get.find();
-
-  @override
-  void onInit() {
-    super.onInit();
-    WidgetsBinding.instance.addObserver(this);
-    // Use a short delay to allow the app to initialize before first check
-    Future.delayed(const Duration(seconds: 1), checkLocationPermission);
-  }
-
-  @override
-  void onClose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.onClose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    AppLogger.d('LocationService - AppLifecycleState: $state');
-    if (state == AppLifecycleState.resumed) {
-      // Increased delay to allow the OS to update permission status internally
-      Future.delayed(const Duration(milliseconds: 500), checkLocationPermission);
-    }
-  }
 
   Future<void> checkLocationPermission() async {
     final currentRoute = Get.currentRoute;
@@ -45,13 +22,11 @@ class LocationService extends GetxService with WidgetsBindingObserver {
     }
 
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       LocationPermission permission = await Geolocator.checkPermission();
 
-      AppLogger.d('Location Status - Enabled: $serviceEnabled, Permission: $permission');
+      AppLogger.d('LocationService - Permission: $permission');
 
-      if (!serviceEnabled || 
-          permission == LocationPermission.denied || 
+      if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         _redirectToDelivery();
       }

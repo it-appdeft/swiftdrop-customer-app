@@ -12,8 +12,9 @@ class RestaurantCard extends StatefulWidget {
 class _RestaurantCardState extends State<RestaurantCard> {
   bool _isFavourited = false;
 
-  Widget _buildImage(String? imageUrl) {
-    return Assets.images.restaurantImage.image(
+  Widget _buildImage(String? path) {
+    return AppImage(
+      path: path,
       height: 210,
       width: double.infinity,
       fit: BoxFit.cover,
@@ -34,7 +35,10 @@ class _RestaurantCardState extends State<RestaurantCard> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: _buildImage(widget.restaurant['image']),
+                  child: _buildImage(
+                    widget.restaurant['coverUrl'] as String? ??
+                        widget.restaurant['image'] as String?,
+                  ),
                 ),
                 Positioned(
                   top: 12,

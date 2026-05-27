@@ -1,3 +1,4 @@
+import '../models/dashboard_model.dart';
 import '../models/notification_model.dart';
 import '../models/order_model.dart';
 import '../models/transaction_model.dart';

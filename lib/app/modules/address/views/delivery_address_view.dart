@@ -129,58 +129,63 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
   }
 
   Widget _buildInitialState(BuildContext context) {
-    return InkWell(
-      onTap: () async {
-        LocationPermission permission = await Geolocator.checkPermission();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () async {
+            LocationPermission permission = await Geolocator.checkPermission();
 
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
+            if (permission == LocationPermission.denied) {
+              permission = await Geolocator.requestPermission();
+            }
 
-        if (permission == LocationPermission.deniedForever) {
-          AppUtils.showLocationPermissionDialog();
-          return;
-        }
+            if (permission == LocationPermission.deniedForever) {
+              AppUtils.showLocationPermissionDialog();
+              return;
+            }
 
-        if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-          if (Navigator.canPop(context)) {
-            Get.until((route) => route.settings.name == AppRoutes.dashboard);
-          } else {
-            Get.offAllNamed(AppRoutes.dashboard);
-          }
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Assets.images.currentLocation.image(width: 24, height: 24),
-            const SizedBox(width: 8),
-            Column(
+            if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+              if (Navigator.canPop(context)) {
+                Get.until((route) => route.settings.name == AppRoutes.dashboard);
+              } else {
+                Get.offAllNamed(AppRoutes.dashboard);
+              }
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Current location',
-                  style: AppTextStyles.pMedium.copyWith(
-                    color: AppColors.lightSurfaceDarkText,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Allow location permissions',
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.lightSurfaceSubtitle,
-                  ),
+                Assets.images.currentLocation.image(width: 24, height: 24),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current location',
+                      style: AppTextStyles.pMedium.copyWith(
+                        color: AppColors.lightSurfaceDarkText,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Allow location permissions',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.lightSurfaceSubtitle,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 

@@ -1,41 +1,23 @@
-import 'package:geolocator/geolocator.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 
 class HomeController extends BaseController {
   final HomeRepository _repo;
   HomeController(this._repo);
 
-  final RxList<Map<String, dynamic>> categories = <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> restaurants = <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> filteredRestaurants = <Map<String, dynamic>>[].obs;
-
-  final RxInt currentBannerPage = 1.obs;
+  final RxList<FoodItemModel> foodItems = <FoodItemModel>[].obs;
+  final RxList<RestaurantModel> restaurants = <RestaurantModel>[].obs;
+  final RxString currentAddress = 'Select Location'.obs;
+  final RxInt currentBannerPage = 0.obs;
   late final PageController bannerPageController;
 
-  final RxString currentAddress = 'Select Location'.obs;
+  List<RestaurantModel> get topPicks => restaurants.take(5).toList();
 
   @override
   void onInit() {
     super.onInit();
-    bannerPageController = PageController(initialPage: 1);
+    bannerPageController = PageController();
     bannerPageController.addListener(_onBannerPage);
-    _getCurrentLocation();
-    _loadData();
-  }
-
-  Future<void> _getCurrentLocation() async {
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-        Position position = await Geolocator.getCurrentPosition();
-        currentAddress.value = 'West Coker, Yelovil, UK'; 
-      }
-    } catch (e) {
-      AppLogger.e('Error getting location: $e');
-    }
+    _loadDashboard();
   }
 
   void _onBannerPage() {
@@ -44,19 +26,22 @@ class HomeController extends BaseController {
     }
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadDashboard() async {
     await runAsync(() async {
-      final catResult = await _repo.getCategories();
-      if (catResult.success && catResult.data != null) {
-        categories.value = catResult.data!;
-      }
-      final restResult = await _repo.getFeaturedRestaurants();
-      if (restResult.success && restResult.data != null) {
-        restaurants.value = restResult.data!;
-        filteredRestaurants.value = restResult.data!;
+      final result = await _repo.getDashboard();
+      if (result.success && result.data != null) {
+        final data = result.data!;
+        foodItems.value = data.foodItems;
+        restaurants.value = data.restaurants;
+        if (data.address != null) {
+          final addr = data.address!;
+          currentAddress.value = '${addr.addressLine1}, ${addr.city}';
+        }
       }
     });
   }
+
+  Future<void> refresh() => _loadDashboard();
 
   @override
   void onClose() {

@@ -46,6 +46,7 @@ export 'app/middleware/auth_middleware.dart';
 export 'app/middleware/connectivity_middleware.dart';
 
 export 'app/widgets/app_button.dart';
+export 'app/widgets/app_image.dart';
 export 'app/widgets/app_loader.dart';
 export 'app/widgets/app_otp_box.dart';
 export 'app/widgets/app_otp_screen.dart';
@@ -63,6 +64,7 @@ export 'app/widgets/status_badge.dart';
 export 'app/widgets/cart_floating_bar.dart';
 
 export 'data/models/address_model.dart';
+export 'data/models/dashboard_model.dart';
 export 'data/models/api_response.dart';
 export 'data/models/deletion_reason.dart';
 export 'data/models/notification_model.dart';

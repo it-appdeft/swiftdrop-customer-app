@@ -22,8 +22,7 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
             SliverToBoxAdapter(child: _TopPicksSection()),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
+           // const SliverToBoxAdapter(child: SizedBox(height: 12)),
             SliverToBoxAdapter(child: _PromoBannerSection()),
             SliverToBoxAdapter(
               child: Padding(
@@ -117,37 +116,30 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-// ─── Categories ───────────────────────────────────────────────────────────────
+// ─── Categories (Food Items) ───────────────────────────────────────────────────
 
-class _CategoriesSection extends StatelessWidget {
-  static const _items = [
-    {'name': 'Pizza',    'image': 'assets/images/onbording1.png'},
-    {'name': 'Momo',     'image': 'assets/images/onbording2.png'},
-    {'name': 'Drinks',   'image': 'assets/images/onbording3.png'},
-    {'name': 'Sandwich', 'image': 'assets/images/onbording1.png'},
-  ];
-
+class _CategoriesSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _items.length,
-        itemBuilder: (_, i) => _CategoryItem(
-          name: _items[i]['name']!,
-          imageUrl: _items[i]['image']!,
+    return Obx(() {
+      final items = controller.foodItems;
+      if (items.isEmpty) return const SizedBox(height: 100);
+      return SizedBox(
+        height: 100,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: items.length,
+          itemBuilder: (_, i) => _CategoryItem(item: items[i]),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
 class _CategoryItem extends StatelessWidget {
-  final String name;
-  final String imageUrl;
-  const _CategoryItem({required this.name, required this.imageUrl});
+  final FoodItemModel item;
+  const _CategoryItem({required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -161,11 +153,11 @@ class _CategoryItem extends StatelessWidget {
             height: 64,
             decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
             clipBehavior: Clip.antiAlias,
-            child: _buildImage(imageUrl),
+            child: _buildImage(item.imageUrl),
           ),
           const SizedBox(height: 8),
           Text(
-            name,
+            item.name,
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w500,
@@ -180,180 +172,27 @@ class _CategoryItem extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(String url) {
-    if (url.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: url,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => const ShimmerCircle(size: 64),
-      );
-    } else {
-      return Image.asset(url, fit: BoxFit.cover);
-    }
+  Widget _buildImage(String? path) {
+    return AppImage(path: path, fit: BoxFit.cover);
   }
 }
 
-// ─── Top Pick's ───────────────────────────────────────────────────────────────
+// ─── Top Picks ────────────────────────────────────────────────────────────────
 
-class _TopPicksSection extends StatelessWidget {
-  static const _picks = [
-    {
-      'name': "McDonald's",
-      'image': 'assets/images/onbording1.png',
-      'rating': '4.5',
-      'reviews': '120',
-      'time': '20-30 min',
-    },
-    {
-      'name': 'Handmade B..',
-      'image': 'assets/images/onbording2.png',
-      'rating': '4.8',
-      'reviews': '210',
-      'time': '25-35 min',
-    },
-  ];
-
+class _TopPicksSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-          child: SectionHeader(
-            title: "Top Pick's",
-            actionLabel: 'See All',
-            onAction: () {},
-            style: const TextStyle(
-              fontFamily: 'Helvetica Neue',
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-              color: AppColors.lightSurfaceDarkText,
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 200,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _picks.length,
-            itemBuilder: (_, i) => _TopPickCard(data: _picks[i]),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TopPickCard extends StatelessWidget {
-  final Map<String, dynamic> data;
-  const _TopPickCard({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 220,
-      margin: const EdgeInsets.only(right: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: _buildImage(data['image']),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  data['name'],
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: AppColors.lightSurfaceDarkText,
-            ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Row(
-                children: [
-                  Assets.images.ratingStar.image(width: 16, height: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${data['rating']} (${data['reviews']})',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.lightSurfaceSubtitle,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Assets.images.timeIcon.image(width: 15, height: 15),
-              const SizedBox(width: 5),
-              Expanded(
-                child: Text(
-                  data['time'],
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.lightSurfaceSubtitle,
-                    height: 16 / 12, // 16px line height
-                    letterSpacing: 0,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImage(String url) {
-    return Assets.images.restaurantImage.image(
-      height: 130,
-      width: 220,
-      fit: BoxFit.cover,
-    );
-  }
-}
-
-// ─── Discover Cuisines ────────────────────────────────────────────────────────
-
-class _DiscoverCuisinesSection extends StatelessWidget {
-  static const _cuisines = [
-    {'name': 'Italian', 'image': 'assets/images/onbording1.png'},
-    {'name': 'Asian',   'image': 'assets/images/onbording2.png'},
-    {'name': 'Mexican', 'image': 'assets/images/onbording3.png'},
-    {'name': 'Chinese', 'image': 'assets/images/onbording1.png'},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 214,
-      color: AppColors.offWhite,
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
+    return Obx(() {
+      final picks = controller.topPicks;
+      if (picks.isEmpty) return const SizedBox.shrink();
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
             child: SectionHeader(
-              title: 'Discover Cuisines',
+              title: "Top Pick's",
+              onAction: () {},
               style: const TextStyle(
                 fontFamily: 'Helvetica Neue',
                 fontSize: 24,
@@ -363,69 +202,101 @@ class _DiscoverCuisinesSection extends StatelessWidget {
             ),
           ),
           SizedBox(
-            height: 120,
+            height: 188,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _cuisines.length,
-              itemBuilder: (_, i) => _CuisineItem(
-                name: _cuisines[i]['name']!,
-                imageUrl: _cuisines[i]['image']!,
-              ),
+              itemCount: picks.length,
+              itemBuilder: (_, i) => _TopPickCard(restaurant: picks[i]),
             ),
           ),
         ],
-      ),
-    );
+      );
+    });
   }
 }
 
-class _CuisineItem extends StatelessWidget {
-  final String name;
-  final String imageUrl;
-  const _CuisineItem({required this.name, required this.imageUrl});
+class _TopPickCard extends StatelessWidget {
+  final RestaurantModel restaurant;
+  const _TopPickCard({required this.restaurant});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 88,
-      margin: const EdgeInsets.only(right: 14),
-      child: Column(
-        children: [
-          Container(
-            width: 88,
-            height: 88,
-            decoration: const BoxDecoration(color: AppColors.offWhite, shape: BoxShape.circle),
-            clipBehavior: Clip.antiAlias,
-            child: _buildImage(imageUrl),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            name,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: AppColors.lightSurfaceCusinsSubtitle,
+    return GestureDetector(
+      onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: restaurant.toMap()),
+      child: Container(
+        width: 220,
+        margin: const EdgeInsets.only(right: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: _buildImage(restaurant.coverUrl),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    restaurant.name,
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.lightSurfaceDarkText,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  children: [
+                    Assets.images.ratingStar.image(width: 16, height: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${restaurant.rating} (${restaurant.totalReviews})',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.lightSurfaceSubtitle,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Assets.images.timeIcon.image(width: 15, height: 15),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    '${restaurant.distanceMiles.toStringAsFixed(1)} mi',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.lightSurfaceSubtitle,
+                      height: 16 / 12,
+                      letterSpacing: 0,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildImage(String url) {
-    if (url.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: url,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => const ShimmerCircle(size: 88),
-      );
-    } else {
-      return Image.asset(url, fit: BoxFit.cover);
-    }
+  Widget _buildImage(String? path) {
+    return AppImage(path: path, width: 220, height: 130, fit: BoxFit.cover);
   }
 }
 
@@ -497,7 +368,6 @@ class _BannerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-     // borderRadius: BorderRadius.circular(0),
       child: Container(
         height: 174,
         color: data['bg'] as Color,
@@ -511,7 +381,7 @@ class _BannerCard extends StatelessWidget {
                 height: 240,
                 decoration: const BoxDecoration(shape: BoxShape.circle),
                 clipBehavior: Clip.antiAlias,
-                child: _buildImage(data['image']),
+                child: Image.asset(data['image'] as String, fit: BoxFit.cover),
               ),
             ),
             Positioned(
@@ -554,18 +424,6 @@ class _BannerCard extends StatelessWidget {
       ),
     );
   }
-
-  Widget _buildImage(String url) {
-    if (url.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: url,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => const ShimmerCircle(size: 240),
-      );
-    } else {
-      return Image.asset(url, fit: BoxFit.cover);
-    }
-  }
 }
 
 // ─── All Restaurants ──────────────────────────────────────────────────────────
@@ -574,8 +432,7 @@ class _AllRestaurantsList extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final list = controller.filteredRestaurants;
-      if (controller.isLoading.value && list.isEmpty) {
+      if (controller.isLoading.value && controller.restaurants.isEmpty) {
         return SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverList(
@@ -590,33 +447,20 @@ class _AllRestaurantsList extends GetView<HomeController> {
         );
       }
 
-      final List displayList = list.isNotEmpty
-          ? list
-          : [
-              {
-                'name': 'The Marble Grill',
-                'image': 'assets/images/onbording1.png',
-                'rating': 4.5,
-                'time': '20-30 min',
-                'distance': '4.9 mi',
-                'offer': '60% OFF select items',
-              },
-              {
-                'name': 'Grand Chinese',
-                'image': 'assets/images/onbording2.png',
-                'rating': 4.6,
-                'time': '20-30 min',
-                'distance': '4.9 mi',
-                'offer': 'Buy 1 Get 1 Free',
-              },
-            ];
+      final list = controller.restaurants;
+
+      if (list.isEmpty) {
+        return const SliverToBoxAdapter(
+          child: EmptyStateWidget(message: 'No restaurants available'),
+        );
+      }
 
       return SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (_, i) => RestaurantCard(restaurant: displayList[i]),
-            childCount: displayList.length,
+            (_, i) => RestaurantCard(restaurant: list[i].toMap()),
+            childCount: list.length,
           ),
         ),
       );

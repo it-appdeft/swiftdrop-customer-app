@@ -34,6 +34,8 @@ class ApiEndpoints {
   static const String addAddress = '/user/addresses/add';
   static const String deleteAddress = '/user/addresses/delete';
 
+  static const String customerDashboard = '/customer/dashboard';
+  static const String customerSearch = '/customer/search';
   static const String restaurants = '/restaurants';
   static const String restaurantDetail = '/restaurants';
   static const String categories = '/categories';

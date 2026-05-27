@@ -1,37 +1,32 @@
 import 'package:dio/dio.dart';
 import '../../app/network/api_endpoints.dart';
 import '../../app/network/dio_client.dart';
-import '../local/app_data.dart';
 import '../models/api_response.dart';
+import '../models/dashboard_model.dart';
 
 class HomeRepository {
   final Dio _dio = DioClient.instance;
 
-  Future<ApiResponse<List<Map<String, dynamic>>>> getCategories() async {
+  Future<ApiResponse<DashboardModel>> getDashboard() async {
     try {
-      final response = await _dio.get(ApiEndpoints.categories);
-      final list = (response.data['data'] as List).cast<Map<String, dynamic>>();
-      return ApiResponse<List<Map<String, dynamic>>>(success: true, message: '', data: list);
+      final response = await _dio.get(ApiEndpoints.customerDashboard);
+      final model = DashboardModel.fromJson(response.data['data'] as Map<String, dynamic>);
+      return ApiResponse<DashboardModel>(success: true, message: '', data: model);
     } catch (_) {
-      return ApiResponse<List<Map<String, dynamic>>>(
-        success: true,
-        message: '',
-        data: AppData.categories,
-      );
+      return ApiResponse<DashboardModel>(success: false, message: '', data: null);
     }
   }
 
-  Future<ApiResponse<List<Map<String, dynamic>>>> getFeaturedRestaurants() async {
+  Future<ApiResponse<SearchResultModel>> search(String q) async {
     try {
-      final response = await _dio.get(ApiEndpoints.restaurants);
-      final list = (response.data['data'] as List).cast<Map<String, dynamic>>();
-      return ApiResponse<List<Map<String, dynamic>>>(success: true, message: '', data: list);
-    } catch (_) {
-      return ApiResponse<List<Map<String, dynamic>>>(
-        success: true,
-        message: '',
-        data: AppData.featuredRestaurants,
+      final response = await _dio.get(
+        ApiEndpoints.customerSearch,
+        queryParameters: {'q': q},
       );
+      final model = SearchResultModel.fromJson(response.data['data'] as Map<String, dynamic>);
+      return ApiResponse<SearchResultModel>(success: true, message: '', data: model);
+    } catch (_) {
+      return ApiResponse<SearchResultModel>(success: false, message: '', data: null);
     }
   }
 }

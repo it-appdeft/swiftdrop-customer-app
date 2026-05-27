@@ -24,7 +24,8 @@ class _ItemCardState extends State<ItemCard> {
   int _quantity = 0;
 
   Widget _buildImage(String? imageUrl) {
-    return Assets.images.onbording1.image(
+    return AppImage(
+      path: imageUrl,
       width: widget.isHorizontal ? 128 : 154,
       height: widget.isHorizontal ? 119 : 144,
       fit: BoxFit.cover,
