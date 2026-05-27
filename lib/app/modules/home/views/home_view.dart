@@ -22,7 +22,8 @@ class HomeView extends GetView<HomeController> {
               ),
             ),
             SliverToBoxAdapter(child: _TopPicksSection()),
-           // const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            //const SliverToBoxAdapter(child: SizedBox(height: 12)),
+           // SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
             SliverToBoxAdapter(child: _PromoBannerSection()),
             SliverToBoxAdapter(
               child: Padding(
@@ -329,7 +330,7 @@ class _PromoBannerSection extends GetView<HomeController> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: SizedBox(
             height: 174,
             child: PageView.builder(
