@@ -7,6 +7,16 @@ class AddressDetailsView extends GetView<AddressController> {
 
   @override
   Widget build(BuildContext context) {
+    final args = Get.arguments is Map ? Get.arguments as Map : {};
+    final addressLine1 = args['address_line_1'] as String? ?? '';
+    final city = args['city'] as String? ?? '';
+    final county = args['county'] as String? ?? '';
+    final postcode = args['postcode'] as String? ?? '';
+    final lat = (args['lat'] as num?)?.toDouble() ?? 0.0;
+    final lng = (args['lng'] as num?)?.toDouble() ?? 0.0;
+
+    controller.prefillPostcodeIfAdding(postcode);
+
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -85,19 +95,22 @@ class AddressDetailsView extends GetView<AddressController> {
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(30, 10, 30, 20 + MediaQuery.of(context).padding.bottom),
-            child: AppButton(
+            child: Obx(() => AppButton(
               label: 'Save Address',
-              onTap: () {
-                if (Navigator.canPop(context)) {
-                  Get.until((route) => route.settings.name == AppRoutes.dashboard);
-                } else {
-                  Get.offAllNamed(AppRoutes.dashboard);
-                }
-              },
+              onTap: controller.isSaving.value
+                  ? null
+                  : () => controller.saveAddress(
+                        addressLine1: addressLine1,
+                        city: city,
+                        county: county,
+                        lat: lat,
+                        lng: lng,
+                      ),
+              isLoading: controller.isSaving.value,
               backgroundColor: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
               height: 56,
-            ),
+            )),
           ),
         ],
       ),

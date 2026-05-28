@@ -9,12 +9,14 @@ class ItemCard extends StatefulWidget {
   final bool showFavorite;
   final bool isHorizontal;
   final VoidCallback? onTap;
+  final VoidCallback? onFavoriteTap;
   const ItemCard({
     super.key,
     required this.item,
     this.showFavorite = false,
     this.isHorizontal = true,
     this.onTap,
+    this.onFavoriteTap,
   });
 
   @override
@@ -28,9 +30,18 @@ class _ItemCardState extends State<ItemCard> {
   @override
   void initState() {
     super.initState();
+    _isFavourited = widget.item['isFavorited'] as bool? ?? false;
     try {
       _cart = Get.find<CartController>();
     } catch (_) {}
+  }
+
+  @override
+  void didUpdateWidget(ItemCard old) {
+    super.didUpdateWidget(old);
+    if (old.item['isFavorited'] != widget.item['isFavorited']) {
+      _isFavourited = widget.item['isFavorited'] as bool? ?? false;
+    }
   }
 
   int get _itemId => (widget.item['id'] as int?) ?? 0;
@@ -156,7 +167,10 @@ class _ItemCardState extends State<ItemCard> {
             _vegIcon.image(width: 16, height: 16),
             if (!widget.isHorizontal && widget.showFavorite)
               GestureDetector(
-                onTap: () => setState(() => _isFavourited = !_isFavourited),
+                onTap: () {
+                  setState(() => _isFavourited = !_isFavourited);
+                  widget.onFavoriteTap?.call();
+                },
                 behavior: HitTestBehavior.opaque,
                 child: (_isFavourited ? Assets.images.favouriteAdded : Assets.images.favourite)
                     .image(width: 20, height: 20),

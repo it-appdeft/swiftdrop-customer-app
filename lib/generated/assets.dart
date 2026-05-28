@@ -13,6 +13,9 @@ class Assets {
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  final AssetGenImage emptyHome = const AssetGenImage(
+    'assets/images/EmptyHome.png',
+  );
   final AssetGenImage mainIcon = const AssetGenImage(
     'assets/images/MainIcon.png',
   );
@@ -97,6 +100,9 @@ class $AssetsImagesGen {
     'assets/images/mapImage.png',
   );
   final AssetGenImage minus = const AssetGenImage('assets/images/minus.png');
+  final AssetGenImage noAddress = const AssetGenImage(
+    'assets/images/noAddress.png',
+  );
   final AssetGenImage noImageFound = const AssetGenImage(
     'assets/images/noImageFound.png',
   );

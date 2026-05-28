@@ -4,6 +4,7 @@ import '../middleware/auth_middleware.dart';
 import '../middleware/connectivity_middleware.dart';
 import '../modules/address/bindings/address_binding.dart';
 import '../modules/address/bindings/delivery_address_binding.dart';
+import '../modules/address/bindings/map_picker_binding.dart';
 import '../modules/address/views/address_view.dart';
 import '../modules/address/views/map_picker_view.dart';
 import '../modules/address/views/address_details_view.dart';
@@ -220,7 +221,7 @@ class AppPages {
     GetPage(
       name: AppRoutes.mapPicker,
       page: () => const MapPickerView(),
-      binding: AddressBinding(),
+      binding: MapPickerBinding(),
       middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
     ),
     GetPage(

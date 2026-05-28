@@ -49,6 +49,7 @@ export 'app/middleware/connectivity_middleware.dart';
 export 'app/widgets/app_button.dart';
 export 'app/widgets/app_image.dart';
 export 'app/widgets/app_loader.dart';
+export 'app/widgets/app_overlay_loader.dart';
 export 'app/widgets/app_otp_box.dart';
 export 'app/widgets/app_otp_screen.dart';
 export 'app/widgets/app_text_field.dart';
@@ -79,8 +80,10 @@ export 'data/models/user_model.dart';
 export 'data/local/app_data.dart';
 
 export 'app/modules/search/controllers/search_controller.dart';
+export 'app/modules/address/controllers/map_picker_controller.dart';
 export 'app/modules/search/views/search_view.dart';
 
+export 'data/repositories/address_repository.dart';
 export 'data/repositories/auth_repository.dart';
 export 'data/repositories/cart_repository.dart';
 export 'data/repositories/earnings_repository.dart';
@@ -88,4 +91,5 @@ export 'data/repositories/home_repository.dart';
 export 'data/repositories/notification_repository.dart';
 export 'data/repositories/order_repository.dart';
 export 'data/repositories/profile_repository.dart';
+export 'data/repositories/favorites_repository.dart';
 export 'data/repositories/restaurant_detail_repository.dart';

@@ -33,12 +33,18 @@ class ApiEndpoints {
   static const String savedAddresses = '/user/addresses';
   static const String addAddress = '/user/addresses/add';
   static const String deleteAddress = '/user/addresses/delete';
+  static const String customerAddresses = '/customer/addresses';
+  static String customerAddressDelete(String id) => '/customer/addresses/$id';
+  static String customerAddressSelect(String id) => '/customer/addresses/$id/select';
+  static String customerAddressUpdate(String id) => '/customer/addresses/$id';
 
   static const String customerCart = '/customer/cart';
   static String customerCartItem(int id) => '/customer/cart/items/$id';
   static const String customerDashboard = '/customer/dashboard';
   static const String customerSearch = '/customer/search';
   static String customerRestaurantDetail(int id) => '/customer/restaurants/$id';
+  static String favoriteRestaurant(int id) => '/customer/favorites/restaurants/$id';
+  static String favoriteMenuItem(int id) => '/customer/favorites/menu-items/$id';
   static const String restaurants = '/restaurants';
   static const String restaurantDetail = '/restaurants';
   static const String categories = '/categories';

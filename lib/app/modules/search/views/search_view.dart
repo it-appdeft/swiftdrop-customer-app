@@ -59,23 +59,14 @@ class SearchView extends GetView<SearchTabController> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Obx(() {
-                      final isRestaurants = controller.selectedTabIndex.value == 0;
-                      final hasResults = isRestaurants
-                          ? controller.restaurantResults.isNotEmpty
-                          : controller.itemResults.isNotEmpty;
-                      if (!hasResults && !controller.isSearching.value) {
-                        return const SizedBox.shrink();
-                      }
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 16),
-                          _FilterRow(),
-                          const SizedBox(height: 16),
-                        ],
-                      );
-                    }),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        _FilterRow(),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                     Expanded(child: _SearchResultsList()),
                   ],
                 );
@@ -208,12 +199,15 @@ class _RecentChipsRow extends GetView<SearchTabController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      if (controller.isLoadingRecent.value) {
+        return const _ShimmerRecentChips();
+      }
       if (controller.recentSearches.isEmpty) {
         return Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'No recent search yet',
+              'No saved searches',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14,
@@ -461,7 +455,56 @@ class _ShimmerRestaurantList extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       itemCount: 3,
-      itemBuilder: (_, __) => const ShimmerRestaurantSearchCard(),
+      itemBuilder: (_, __) => AppShimmer(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                height: 210,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppShimmer.baseColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 18,
+                      decoration: BoxDecoration(
+                        color: AppShimmer.baseColor,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppShimmer.baseColor,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 14,
+                width: 160,
+                decoration: BoxDecoration(
+                  color: AppShimmer.baseColor,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -473,7 +516,141 @@ class _ShimmerItemGroupList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: 2,
-      itemBuilder: (_, __) => const ShimmerItemGroupCard(),
+      itemBuilder: (_, __) => AppShimmer(
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          color: AppShimmer.highlightColor,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 12, 28, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 18,
+                            width: 140,
+                            decoration: BoxDecoration(
+                              color: AppShimmer.baseColor,
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            height: 12,
+                            width: 100,
+                            decoration: BoxDecoration(
+                              color: AppShimmer.baseColor,
+                              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: AppShimmer.baseColor,
+                        borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 174,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 36),
+                  itemCount: 3,
+                  itemBuilder: (_, __) => Container(
+                    width: 330,
+                    height: 160,
+                    margin: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppShimmer.highlightColor,
+                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 128,
+                          height: 119,
+                          decoration: BoxDecoration(
+                            color: AppShimmer.baseColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: AppShimmer.baseColor,
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: AppShimmer.baseColor,
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                height: 14,
+                                width: 60,
+                                decoration: BoxDecoration(
+                                  color: AppShimmer.baseColor,
+                                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShimmerRecentChips extends StatelessWidget {
+  const _ShimmerRecentChips();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: List.generate(
+          4,
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: ShimmerBox(width: double.infinity, height: 41, borderRadius: 8),
+          ),
+        ),
+      ),
     );
   }
 }

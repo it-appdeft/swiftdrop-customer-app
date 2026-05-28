@@ -12,6 +12,7 @@ class HomeView extends GetView<HomeController> {
       backgroundColor: AppColors.buttonLabel,
       body: SafeArea(
         child: CustomScrollView(
+          controller: controller.scrollController,
           slivers: [
             SliverToBoxAdapter(child: _LocationBar()),
             SliverToBoxAdapter(child: _SearchBar()),
@@ -26,18 +27,23 @@ class HomeView extends GetView<HomeController> {
            // SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
             SliverToBoxAdapter(child: _PromoBannerSection()),
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: SectionHeader(
-                  title: 'All Restaurants',
-                  style: const TextStyle(
-                    fontFamily: 'Helvetica Neue',
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.lightSurfaceDarkText,
+              child: Obx(() {
+                if (!controller.isLoading.value && controller.restaurants.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: SectionHeader(
+                    title: 'All Restaurants',
+                    style: const TextStyle(
+                      fontFamily: 'Helvetica Neue',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.lightSurfaceDarkText,
+                    ),
                   ),
-                ),
-              ),
+                );
+              }),
             ),
             _AllRestaurantsList(),
           ],
@@ -57,20 +63,24 @@ class _LocationBar extends GetView<HomeController> {
       child: InkWell(
         onTap: () => Get.toNamed(AppRoutes.address),
         child: Row(
+
           children: [
             Assets.images.locationIcon.image(width: 24, height: 24),
             const SizedBox(width: 8),
-            Obx(() => Text(
-                  controller.currentAddress.value,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.lightSurfaceNavy,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                )),
-            const SizedBox(width: 4),
+            SizedBox(
+              width: 260,
+              child: Obx(() => Text(
+                    controller.currentAddress.value,
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.lightSurfaceNavy,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )),
+            ),
+            //const SizedBox(width: 4),
             Assets.images.locationdropIcon.image(width: 24, height: 24),
           ],
         ),
@@ -134,7 +144,7 @@ class _CategoriesSection extends GetView<HomeController> {
           itemBuilder: (_, i) => Obx(() => _CategoryItem(
                 item: items[i],
                 isSelected: controller.selectedCategoryIndex.value == i,
-                onTap: () => controller.selectCategory(i),
+                onTap: () => controller.selectCategory(i, items[i].id),
               )),
         ),
       );
@@ -344,6 +354,15 @@ class _PromoBannerSection extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext context) {
+    return Obx(() {
+      if (!controller.isLoading.value && controller.restaurants.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return _buildBanners();
+    });
+  }
+
+  Widget _buildBanners() {
     return Column(
       children: [
         Padding(
@@ -455,7 +474,7 @@ class _AllRestaurantsList extends GetView<HomeController> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
-              (_, __) => Padding(
+              (_, i) => Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: ShimmerBox(width: double.infinity, height: 276, borderRadius: 16),
               ),
@@ -468,20 +487,77 @@ class _AllRestaurantsList extends GetView<HomeController> {
       final list = controller.restaurants;
 
       if (list.isEmpty) {
-        return const SliverToBoxAdapter(
-          child: EmptyStateWidget(message: 'No restaurants available'),
-        );
+        return const SliverToBoxAdapter(child: _EmptyHomeState());
       }
+
+      final showLoader = controller.isLoadingMore.value || controller.hasMoreRestaurants.value;
 
       return SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         sliver: SliverList(
           delegate: SliverChildBuilderDelegate(
-            (_, i) => RestaurantCard(restaurant: list[i].toMap()),
-            childCount: list.length,
+            (_, i) {
+              if (i == list.length) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: controller.isLoadingMore.value
+                      ? const AppLoader()
+                      : const SizedBox.shrink(),
+                );
+              }
+              return RestaurantCard(restaurant: list[i].toMap());
+            },
+            childCount: list.length + (showLoader ? 1 : 0),
           ),
         ),
       );
     });
+  }
+}
+
+// ─── Empty Home State ─────────────────────────────────────────────────────────
+
+class _EmptyHomeState extends StatelessWidget {
+  const _EmptyHomeState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 40, 32, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Assets.images.emptyHome.image(width: 96, height: 96),
+          const SizedBox(height: 16),
+          Text(
+            'We\'re Still Growing',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.lightSurfaceDarkText,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No restaurant available in this area yet. We\'re working hard to bring your favorite flavor to you doorstep.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              color: AppColors.lightSurfaceSubtitle,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          AppButton(
+            label: 'Try a Different Location',
+            onTap: () => Get.toNamed(AppRoutes.address),
+            backgroundColor: AppColors.primary,
+            borderRadius: BorderRadius.circular(12),
+            height: 52,
+          ),
+        ],
+      ),
+    );
   }
 }

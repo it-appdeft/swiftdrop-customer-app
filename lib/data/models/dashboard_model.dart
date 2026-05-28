@@ -1,3 +1,35 @@
+class PaginationMeta {
+  final int currentPage;
+  final int lastPage;
+  final int perPage;
+  final int total;
+  final bool hasNextPage;
+
+  const PaginationMeta({
+    required this.currentPage,
+    required this.lastPage,
+    required this.perPage,
+    required this.total,
+    required this.hasNextPage,
+  });
+
+  factory PaginationMeta.fromJson(Map<String, dynamic> json) => PaginationMeta(
+        currentPage: json['current_page'] as int,
+        lastPage: json['last_page'] as int,
+        perPage: json['per_page'] as int,
+        total: json['total'] as int,
+        hasNextPage: json['next_page_url'] != null,
+      );
+
+  static PaginationMeta get empty => const PaginationMeta(
+        currentPage: 1,
+        lastPage: 1,
+        perPage: 10,
+        total: 0,
+        hasNextPage: false,
+      );
+}
+
 class FoodItemModel {
   final int id;
   final String name;
@@ -31,6 +63,7 @@ class RestaurantModel {
   final double rating;
   final int totalReviews;
   final double distanceMiles;
+  final bool isFavorited;
 
   const RestaurantModel({
     required this.id,
@@ -44,6 +77,7 @@ class RestaurantModel {
     required this.rating,
     required this.totalReviews,
     required this.distanceMiles,
+    this.isFavorited = false,
   });
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) => RestaurantModel(
@@ -58,6 +92,7 @@ class RestaurantModel {
         rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
         totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
         distanceMiles: (json['distance_miles'] as num?)?.toDouble() ?? 0.0,
+        isFavorited: json['is_favorited'] as bool? ?? false,
       );
 
   Map<String, dynamic> toMap() => {
@@ -110,31 +145,44 @@ class DashboardAddressModel {
 
 class DashboardModel {
   final List<FoodItemModel> foodItems;
+  final PaginationMeta foodItemsMeta;
   final List<RestaurantModel> restaurants;
+  final PaginationMeta restaurantsMeta;
   final DashboardAddressModel? address;
   final double radiusMiles;
   final bool usingFallback;
+  final int? selectedFoodItem;
 
   const DashboardModel({
     required this.foodItems,
+    required this.foodItemsMeta,
     required this.restaurants,
+    required this.restaurantsMeta,
     this.address,
     required this.radiusMiles,
     required this.usingFallback,
+    this.selectedFoodItem,
   });
 
   factory DashboardModel.fromJson(Map<String, dynamic> json) => DashboardModel(
         foodItems: (json['food_items'] as List)
             .map((e) => FoodItemModel.fromJson(e as Map<String, dynamic>))
             .toList(),
+        foodItemsMeta: json['food_items_meta'] != null
+            ? PaginationMeta.fromJson(json['food_items_meta'] as Map<String, dynamic>)
+            : PaginationMeta.empty,
         restaurants: (json['restaurants'] as List)
             .map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>))
             .toList(),
+        restaurantsMeta: json['restaurants_meta'] != null
+            ? PaginationMeta.fromJson(json['restaurants_meta'] as Map<String, dynamic>)
+            : PaginationMeta.empty,
         address: json['address'] != null
             ? DashboardAddressModel.fromJson(json['address'] as Map<String, dynamic>)
             : null,
         radiusMiles: (json['radius_miles'] as num?)?.toDouble() ?? 0.0,
         usingFallback: json['using_fallback'] as bool? ?? false,
+        selectedFoodItem: json['selected_food_item'] as int?,
       );
 }
 

@@ -46,7 +46,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
 
   Widget _buildHeader(BuildContext context) {
     return Obx(() {
-      final info = controller.detail.value?.restaurant;
+      final info = controller.restaurantInfo.value;
       return Stack(
         clipBehavior: Clip.none,
         children: [
@@ -269,7 +269,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                 activeTrackColor: AppColors.lightSurfaceVerified,
                 icon: Assets.images.vegToggle,
                 label: 'Veg',
-                onTap: () => controller.isVegSelected.toggle(),
+                onTap: controller.toggleVeg,
               ),
               const SizedBox(width: 12),
               _FoodToggle(
@@ -277,14 +277,11 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                 activeTrackColor: AppColors.error,
                 icon: Assets.images.nonVegToggle,
                 label: 'Non-Veg',
-                onTap: () => controller.isNonVegSelected.toggle(),
+                onTap: controller.toggleNonVeg,
               ),
               const SizedBox(width: 12),
               _buildPillFilter('Ratings 4.0+', controller.isRatingsSelected.value,
-                  onTap: () => controller.isRatingsSelected.toggle()),
-              const SizedBox(width: 8),
-              _buildPillFilter('Bestseller', controller.isBestsellerSelected.value,
-                  onTap: () => controller.isBestsellerSelected.toggle()),
+                  onTap: controller.toggleRatings),
             ],
           )),
     );
@@ -341,7 +338,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
           ),
         );
       }
-      final items = controller.detail.value?.menu ?? [];
+      final items = controller.menuItems;
       if (items.isEmpty) return const SizedBox.shrink();
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -352,6 +349,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                     isHorizontal: false,
                     showFavorite: true,
                     onTap: () => showProductDetailBottomSheet(item.toMap()),
+                    onFavoriteTap: () => controller.toggleItemFavorite(item.id),
                   ))
               .toList(),
         ),
@@ -360,26 +358,41 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
   }
 
   Widget _buildViewAllButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        width: double.infinity,
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.primarySurface,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          'View more',
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: AppColors.primary,
+    return Obx(() {
+      if (!controller.hasMoreMenu.value) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: GestureDetector(
+          onTap: controller.loadMoreMenu,
+          child: Container(
+            width: double.infinity,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.primarySurface,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            alignment: Alignment.center,
+            child: controller.isLoadingMore.value
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  )
+                : Text(
+                    'View more',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.primary,
+                    ),
+                  ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildRecommendedSection() {
@@ -441,8 +454,13 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               children: [
                 _buildOptionItem(
                   icon: Assets.images.heartUnfilled,
-                  label: 'Add To Favorites',
-                  onTap: () => Get.back(),
+                  label: controller.isFavorited.value
+                      ? 'Remove from Favourites'
+                      : 'Add to Favourites',
+                  onTap: () {
+                    controller.toggleRestaurantFavorite();
+                    Get.back();
+                  },
                 ),
                 const Divider(color: AppColors.lightSurfaceBorder, height: 32),
                 _buildOptionItem(

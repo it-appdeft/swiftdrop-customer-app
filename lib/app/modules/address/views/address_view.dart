@@ -2,6 +2,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../controllers/address_controller.dart';
+import '../controllers/delivery_address_controller.dart' show PlacePrediction;
 
 class AddressView extends GetView<AddressController> {
   const AddressView({super.key});
@@ -17,25 +18,38 @@ class AddressView extends GetView<AddressController> {
             const SizedBox(height: 11),
             _buildSearchRow(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                child: Column(
+              child: Obx(() {
+                if (controller.isSearchActive.value) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    child: _buildSearchResultsContent(),
+                  );
+                }
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildActionButtons(context),
-                    const SizedBox(height: AppDimensions.gapXl),
-                    Text(
-                      'Saved Addresses',
-                      style: AppTextStyles.pLarge.copyWith(
-                        color: AppColors.lightSurfaceDarkText,
-                        fontWeight: FontWeight.w500,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildActionButtons(context),
+                          const SizedBox(height: AppDimensions.gapXl),
+                          Text(
+                            'Saved Addresses',
+                            style: AppTextStyles.pLarge.copyWith(
+                              color: AppColors.lightSurfaceDarkText,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: AppDimensions.gapLg),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppDimensions.gapLg),
-                    _buildAddressList(context),
+                    Expanded(child: _buildAddressList()),
                   ],
-                ),
-              ),
+                );
+              }),
             ),
           ],
         ),
@@ -44,7 +58,9 @@ class AddressView extends GetView<AddressController> {
   }
 
   Widget _buildSearchRow() {
-    final canPop = Get.key.currentState?.canPop() ?? false;
+    final permissionDenied =
+        Get.arguments is Map && (Get.arguments as Map)['permissionDenied'] == true;
+    final canPop = !permissionDenied && (Get.key.currentState?.canPop() ?? false);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -78,6 +94,7 @@ class AddressView extends GetView<AddressController> {
                   Expanded(
                     child: TextField(
                       controller: controller.queryController,
+                      focusNode: controller.searchFocusNode,
                       cursorColor: AppColors.iconDark,
                       style: GoogleFonts.inter(
                         fontSize: 14,
@@ -99,11 +116,93 @@ class AddressView extends GetView<AddressController> {
                       ),
                     ),
                   ),
+                  Obx(() => controller.isSearchActive.value
+                      ? GestureDetector(
+                          onTap: controller.clearSearch,
+                          behavior: HitTestBehavior.opaque,
+                          child: const Icon(
+                            Icons.clear,
+                            color: AppColors.lightSurfaceSubtitle,
+                            size: 20,
+                          ),
+                        )
+                      : const SizedBox.shrink()),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchResultsContent() {
+    return Obx(() {
+      if (controller.isSearchingPlaces.value && controller.placeSuggestions.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: _ShimmerAddressTiles(),
+        );
+      }
+      if (controller.placeSuggestions.isEmpty) {
+        if (controller.queryController.text.trim().isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Text(
+            'No results found',
+            style: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceSubtitle),
+          ),
+        );
+      }
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(top: 8),
+        itemCount: controller.placeSuggestions.length,
+        itemBuilder: (_, i) => _buildSuggestionTile(controller.placeSuggestions[i]),
+      );
+    });
+  }
+
+  Widget _buildSuggestionTile(PlacePrediction place) {
+    return InkWell(
+      onTap: () => controller.selectPlace(place),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Assets.images.locationIcon.image(width: 20, height: 20),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    place.mainText,
+                    style: AppTextStyles.pMedium.copyWith(
+                      color: AppColors.lightSurfaceDarkText,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  if (place.secondaryText.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      place.secondaryText,
+                      style: AppTextStyles.pXSmall.copyWith(
+                        color: AppColors.lightSurfaceSubtitle,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -116,22 +215,16 @@ class AddressView extends GetView<AddressController> {
             icon: Icons.my_location,
             label: 'Use Current Location',
             onTap: () async {
-              final canGoBack = Navigator.canPop(context);
               LocationPermission permission = await Geolocator.checkPermission();
               if (permission == LocationPermission.denied) {
                 permission = await Geolocator.requestPermission();
               }
-              if (permission == LocationPermission.deniedForever) {
-                AppUtils.showLocationPermissionDialog();
-                return;
-              }
               if (permission == LocationPermission.whileInUse ||
                   permission == LocationPermission.always) {
-                if (canGoBack) {
-                  Get.until((route) => route.settings.name == AppRoutes.dashboard);
-                } else {
-                  Get.offAllNamed(AppRoutes.dashboard);
-                }
+                controller.startAdd();
+                Get.toNamed(AppRoutes.mapPicker);
+              } else {
+                AppUtils.showLocationPermissionDialog();
               }
             },
           ),
@@ -141,14 +234,21 @@ class AddressView extends GetView<AddressController> {
           child: _buildActionButton(
             icon: Icons.add_circle_outline,
             label: 'Add New Address',
-            onTap: () => Get.toNamed(AppRoutes.deliveryAddress),
+            onTap: () {
+              controller.startAdd();
+              Get.toNamed(AppRoutes.mapPicker);
+            },
           ),
         ),
       ],
     );
   }
 
-  Widget _buildActionButton({required IconData icon, required String label, VoidCallback? onTap}) {
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
@@ -177,24 +277,40 @@ class AddressView extends GetView<AddressController> {
     );
   }
 
-  Widget _buildAddressList(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.offWhite,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-        border: Border.all(color: AppColors.lightSurfaceBorder),
-      ),
-      child: Obx(() {
-        final addresses = controller.displayedAddresses;
-        return Column(
+  Widget _buildAddressList() {
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: _ShimmerAddressTiles(),
+        );
+      }
+      if (controller.savedAddresses.isEmpty) {
+        return Center(
+          child: NoDataWidget(
+            image: Assets.images.noAddress.image(width: 96, height: 96),
+            title: 'No Address Available',
+            subtitle: 'We couldn\'t find an address. Please add or select Current location to add address.',
+          ),
+        );
+      }
+      return SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.offWhite,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+          border: Border.all(color: AppColors.lightSurfaceBorder),
+        ),
+        child: Column(
           children: [
-            ...addresses.asMap().entries.map((entry) {
+            ...controller.savedAddresses.asMap().entries.map((entry) {
               final index = entry.key;
               final address = entry.value;
               return Column(
                 children: [
-                  _buildAddressTile(context, address),
-                  if (index < addresses.length - 1 || !controller.showAll.value)
+                  _buildAddressTile(address),
+                  if (index < controller.savedAddresses.length - 1)
                     const Divider(
                       height: 1.5,
                       color: AppColors.lightSurfaceBorder,
@@ -204,35 +320,38 @@ class AddressView extends GetView<AddressController> {
                 ],
               );
             }),
-            if (!controller.showAll.value)
-              Center(
-                child: TextButton(
-                  onPressed: controller.toggleViewAll,
-                  child: Text(
-                    'View all',
-                    style: AppTextStyles.pSmallSemiBold.copyWith(
-                      color: AppColors.lightSurfaceDarkText,
-                    ),
-                  ),
-                ),
+            if (controller.hasMore.value || controller.isLoadingMore.value)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: controller.isLoadingMore.value
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : TextButton(
+                        onPressed: controller.loadMore,
+                        child: Text(
+                          'Load more',
+                          style: AppTextStyles.pSmallSemiBold.copyWith(
+                            color: AppColors.lightSurfaceDarkText,
+                          ),
+                        ),
+                      ),
               ),
             const SizedBox(height: AppDimensions.paddingXs),
           ],
-        );
-      }),
-    );
+        ),
+      ));
+    });
   }
 
-  Widget _buildAddressTile(BuildContext context, AddressModel address) {
+  Widget _buildAddressTile(AddressModel address) {
     return InkWell(
-      onTap: () {
-        controller.selectAddress(address.id);
-        if (Navigator.canPop(context)) {
-          Get.until((route) => route.settings.name == AppRoutes.dashboard);
-        } else {
-          Get.offAllNamed(AppRoutes.dashboard);
-        }
-      },
+      onTap: () => controller.selectAddress(address.id),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingLg,
@@ -242,14 +361,7 @@ class AddressView extends GetView<AddressController> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GestureDetector(
-              onTap: () {
-                controller.selectAddress(address.id);
-                if (Navigator.canPop(context)) {
-                  Get.until((route) => route.settings.name == AppRoutes.dashboard);
-                } else {
-                  Get.offAllNamed(AppRoutes.dashboard);
-                }
-              },
+              onTap: () => controller.selectAddress(address.id),
               child: SizedBox(
                 height: 20,
                 width: 20,
@@ -304,8 +416,27 @@ class AddressView extends GetView<AddressController> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
+              leading: const Icon(Icons.edit_outlined, color: AppColors.lightSurfaceDarkText),
+              title: Text('Edit Address',
+                  style: AppTextStyles.pMedium.copyWith(color: AppColors.lightSurfaceDarkText)),
+              onTap: () {
+                Get.back();
+                controller.startEdit(address);
+                Get.toNamed(AppRoutes.mapPicker, arguments: {
+                  'lat': address.lat,
+                  'lng': address.lng,
+                  'name': address.addressLine1,
+                  'address': address.address,
+                  'city': address.city,
+                  'county': address.county,
+                });
+              },
+            ),
+            const Divider(height: 1, color: AppColors.lightSurfaceBorder),
+            ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
-              title: Text('Delete Address', style: AppTextStyles.pMedium.copyWith(color: AppColors.error)),
+              title: Text('Delete Address',
+                  style: AppTextStyles.pMedium.copyWith(color: AppColors.error)),
               onTap: () {
                 Get.back();
                 _showDeleteConfirmation(address);
@@ -320,15 +451,15 @@ class AddressView extends GetView<AddressController> {
   void _showDeleteConfirmation(AddressModel address) {
     Get.bottomSheet(
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 32),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusSm)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusSm)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            //const SizedBox(height: AppDimensions.gapSm),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -341,7 +472,6 @@ class AddressView extends GetView<AddressController> {
                       fontSize: 24,
                       fontWeight: FontWeight.w400,
                       color: AppColors.black,
-
                     ),
                   ),
                   const SizedBox(height: AppDimensions.gapSm),
@@ -357,16 +487,15 @@ class AddressView extends GetView<AddressController> {
                 ],
               ),
             ),
-
             const SizedBox(height: AppDimensions.gapXl),
             Row(
               children: [
                 Expanded(
                   child: AppButton(
                     label: 'Yes',
-                    onTap: () {
-                      controller.deleteAddress(address.id);
+                    onTap: () async {
                       Get.back();
+                      await controller.deleteAddress(address.id);
                     },
                     backgroundColor: AppColors.primary,
                     borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
@@ -390,6 +519,23 @@ class AddressView extends GetView<AddressController> {
       ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+    );
+  }
+}
+
+class _ShimmerAddressTiles extends StatelessWidget {
+  const _ShimmerAddressTiles();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        3,
+        (_) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: ShimmerBox(width: double.infinity, height: 66, borderRadius: 8),
+        ),
+      ),
     );
   }
 }

@@ -8,7 +8,10 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isForced = Get.arguments is Map && (Get.arguments as Map)['forceRedirect'] == true;
+    final bool isForced =
+        Get.arguments is Map && (Get.arguments as Map)['forceRedirect'] == true;
+    final bool fromMapPicker =
+        Get.arguments is Map && (Get.arguments as Map)['fromMapPicker'] == true;
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -22,7 +25,7 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
                 onPressed: () => Get.back(),
               ),
         title: Text(
-          'Delivery Address',
+          'Search Location',
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -39,18 +42,31 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
             child: _buildSearchBar(),
           ),
           const SizedBox(height: 8),
-          _buildChooseOnMap(),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Divider(height: 1, color: AppColors.lightSurfaceBorder),
           ),
           Expanded(
             child: Obx(() {
-              if (controller.query.value.isEmpty) {
-                return _buildInitialState(context);
-              } else {
-                return _buildSuggestionsList();
+              // if (controller.query.value.isEmpty) {
+              //   return _buildCurrentLocationOption(fromMapPicker);
+              // }
+              if (controller.isSearching.value && controller.suggestions.isEmpty) {
+                return const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                );
               }
+              if (controller.suggestions.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No results found',
+                    style: AppTextStyles.pSmall.copyWith(
+                      color: AppColors.lightSurfaceSubtitle,
+                    ),
+                  ),
+                );
+              }
+              return _buildSuggestionsList();
             }),
           ),
         ],
@@ -59,68 +75,106 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
   }
 
   Widget _buildSearchBar() {
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 52,
-            decoration: BoxDecoration(
-             // color: AppColors.offWhite,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.lightSurfaceBorder),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Assets.images.homeSearchIcon.image(width: 24, height: 24),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: TextField(
-                    controller: controller.searchController,
-                    cursorColor: AppColors.iconDark,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.lightSurfaceDarkText,
-                    ),
-                    decoration: const InputDecoration(
-                      isCollapsed: true,
-                      filled: false,
-                      border: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      hintText: 'Enter a new address',
-                      hintStyle: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.lightSurfaceSubtitle,
-                      ),
-                    ),
-                  ),
+    return Container(
+      height: 52,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.lightSurfaceBorder),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Assets.images.homeSearchIcon.image(width: 24, height: 24),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: controller.searchController,
+              autofocus: true,
+              cursorColor: AppColors.iconDark,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppColors.lightSurfaceDarkText,
+              ),
+              decoration: const InputDecoration(
+                isCollapsed: true,
+                filled: false,
+                border: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                hintText: 'Search address, area, landmark..',
+                hintStyle: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.lightSurfaceSubtitle,
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ],
+          Obx(() => controller.query.value.isNotEmpty
+              ? GestureDetector(
+                  onTap: controller.clearQuery,
+                  child: const Icon(Icons.clear, color: AppColors.lightSurfaceSubtitle, size: 20),
+                )
+              : const SizedBox.shrink()),
+        ],
+      ),
     );
   }
 
-  Widget _buildChooseOnMap() {
+  Widget _buildCurrentLocationOption(bool fromMapPicker) {
     return InkWell(
-      onTap: () => Get.toNamed(AppRoutes.mapPicker),
+      onTap: () async {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission == LocationPermission.whileInUse ||
+            permission == LocationPermission.always) {
+          if (fromMapPicker) {
+            final pos = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.high,
+            );
+            Get.back(result: {
+              'name': 'Current Location',
+              'address': 'Your current location',
+              'lat': pos.latitude,
+              'lng': pos.longitude,
+            });
+          } else {
+            Get.toNamed(AppRoutes.mapPicker, arguments: {'useCurrentLocation': true});
+          }
+        } else {
+          Get.toNamed(AppRoutes.address);
+        }
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Assets.images.chooseOnMap.image(width: 24, height: 24),
-            const SizedBox(width: 12),
-            Text(
-              'Choose on map',
-              style: AppTextStyles.pSmall.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w400,
-              ),
+            Assets.images.currentLocation.image(width: 24, height: 24),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Current location',
+                  style: AppTextStyles.pMedium.copyWith(
+                    color: AppColors.lightSurfaceDarkText,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                // const SizedBox(height: 4),
+                // Text(
+                //   'Using device GPS',
+                //   style: GoogleFonts.inter(
+                //     fontSize: 10,
+                //     fontWeight: FontWeight.w400,
+                //     color: AppColors.lightSurfaceSubtitle,
+                //   ),
+                // ),
+              ],
             ),
           ],
         ),
@@ -128,175 +182,53 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
     );
   }
 
-  Widget _buildInitialState(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          onTap: () async {
-            LocationPermission permission = await Geolocator.checkPermission();
-
-            if (permission == LocationPermission.denied) {
-              permission = await Geolocator.requestPermission();
-            }
-
-            if (permission == LocationPermission.deniedForever) {
-              AppUtils.showLocationPermissionDialog();
-              return;
-            }
-
-            if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-              if (Navigator.canPop(context)) {
-                Get.until((route) => route.settings.name == AppRoutes.dashboard);
-              } else {
-                Get.offAllNamed(AppRoutes.dashboard);
-              }
-            }
-          },
+  Widget _buildSuggestionsList() {
+    return ListView.builder(
+      itemCount: controller.suggestions.length,
+      padding: const EdgeInsets.only(top: 8),
+      itemBuilder: (context, index) {
+        final place = controller.suggestions[index];
+        return InkWell(
+          onTap: () => controller.selectPlace(place),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Assets.images.currentLocation.image(width: 24, height: 24),
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Assets.images.locationIcon.image(width: 20, height: 20),
+                ),
                 const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current location',
-                      style: AppTextStyles.pMedium.copyWith(
-                        color: AppColors.lightSurfaceDarkText,
-                        fontWeight: FontWeight.w400,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        place.mainText,
+                        style: AppTextStyles.pMedium.copyWith(
+                          color: AppColors.lightSurfaceDarkText,
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Allow location permissions',
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.lightSurfaceSubtitle,
-                      ),
-                    ),
-                  ],
+                      if (place.secondaryText.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          place.secondaryText,
+                          style: AppTextStyles.pXSmall.copyWith(
+                            color: AppColors.lightSurfaceSubtitle,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSuggestionsList() {
-    return ListView.builder(
-      itemCount: controller.suggestions.length,
-      padding: EdgeInsets.zero,
-      itemBuilder: (context, index) {
-        final suggestion = controller.suggestions[index];
-        return InkWell(
-          onTap: () => _showConfirmLocationDialog(suggestion),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Assets.images.locationIcon.image(width: 24, height: 24),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            suggestion['title']!,
-                            style: AppTextStyles.pSmallMedium.copyWith(
-                              color: AppColors.lightSurfaceDarkText,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            suggestion['subtitle']!,
-                            style: AppTextStyles.pXSmall.copyWith(
-                              color: AppColors.lightSurfaceSubtitle,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // if (index < controller.suggestions.length - 1)
-              //   const Divider(height: 1, color: AppColors.lightSurfaceBorder, indent: 52),
-            ],
-          ),
         );
       },
-    );
-  }
-
-  void _showConfirmLocationDialog(Map<String, String> suggestion) {
-    Get.dialog(
-      Dialog(
-        backgroundColor: AppColors.white,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24,vertical: 36),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              
-              Assets.images.mainIcon.image(width: 80, height: 80),
-             // const SizedBox(height: 16),
-              const Text(
-                'Confirm Location',
-                style: TextStyle(
-                  fontFamily: 'Helvetica Neue',
-                  fontSize: 20, // H6 size
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.black,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'The selected location is quite far from your current location. This may affect available services or delivery. Do you want to continue with this location?',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 11, // Pxs size
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.lightSurfaceSubtitle,
-
-                ),
-              ),
-              const SizedBox(height: 20),
-              AppButton(
-                label: 'Select Another Location',
-                onTap: () => Get.back(),
-                backgroundColor: AppColors.primary,
-                borderRadius: BorderRadius.circular(8),
-                height: 52,
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () {
-                  Get.back();
-                  Get.toNamed(AppRoutes.mapPicker);
-                },
-                child: Text(
-                  'Continue Anyway',
-                  style: AppTextStyles.pSmallMedium.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

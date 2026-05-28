@@ -4,6 +4,7 @@ import '../controllers/address_controller.dart';
 class AddressBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<AddressController>(() => AddressController());
+    Get.lazyPut<AddressRepository>(() => AddressRepository());
+    Get.lazyPut<AddressController>(() => AddressController(Get.find()));
   }
 }

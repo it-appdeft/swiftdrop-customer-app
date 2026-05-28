@@ -1,37 +1,40 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
-import '../controllers/address_controller.dart';
 
-class MapPickerView extends GetView<AddressController> {
+class MapPickerView extends GetView<MapPickerController> {
   const MapPickerView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Dummy Map Image
-          Positioned.fill(
-            child: Assets.images.mapImage.image(fit: BoxFit.cover),
+          GoogleMap(
+            initialCameraPosition: controller.initialCameraPosition,
+            onMapCreated: controller.onMapCreated,
+            onCameraMove: controller.onCameraMove,
+            onCameraIdle: controller.onCameraIdle,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            zoomControlsEnabled: false,
+            mapToolbarEnabled: false,
           ),
-          
-          // Center Marker Placeholder
-          const Center(
-            child: Icon(
-              Icons.location_on,
-              color: AppColors.primary,
-              size: 40,
+          // Fixed centre pin — tip aligned to map centre
+          const Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 40),
+              child: Icon(Icons.location_on, color: AppColors.primary, size: 48),
             ),
           ),
-
           SafeArea(
             child: Column(
               children: [
                 const SizedBox(height: 11),
-                _buildSearchRow(),
+                _buildSearchBar(),
                 const Spacer(),
-                _buildDeliveryInfoCard(),
+                _buildDeliveryCard(),
               ],
             ),
           ),
@@ -40,7 +43,7 @@ class MapPickerView extends GetView<AddressController> {
     );
   }
 
-  Widget _buildSearchRow() {
+  Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -56,49 +59,44 @@ class MapPickerView extends GetView<AddressController> {
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Container(
-              height: 52,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Row(
-                children: [
-                  Assets.images.homeSearchIcon.image(width: 24, height: 24),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: TextField(
-                      controller: controller.queryController,
-                      cursorColor: AppColors.iconDark,
+            child: GestureDetector(
+              onTap: () async {
+                final result = await Get.toNamed(
+                  AppRoutes.deliveryAddress,
+                  arguments: {'fromMapPicker': true},
+                );
+                if (result != null && result is Map) {
+                  controller.setLocationFromSearch(Map<String, dynamic>.from(result));
+                }
+              },
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    Assets.images.homeSearchIcon.image(width: 24, height: 24),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Search address, area, landmark..',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.lightSurfaceDarkText,
-                      ),
-                      decoration: const InputDecoration(
-                        isCollapsed: true,
-                        filled: false,
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        hintText: 'Search address, area, landmark..',
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.lightSurfaceSubtitle,
-                        ),
+                        color: AppColors.lightSurfaceSubtitle,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -107,7 +105,7 @@ class MapPickerView extends GetView<AddressController> {
     );
   }
 
-  Widget _buildDeliveryInfoCard() {
+  Widget _buildDeliveryCard() {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -115,7 +113,7 @@ class MapPickerView extends GetView<AddressController> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, -5),
           ),
@@ -123,7 +121,6 @@ class MapPickerView extends GetView<AddressController> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
@@ -145,52 +142,35 @@ class MapPickerView extends GetView<AddressController> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Assets.images.locationIcon.image(width: 24, height: 24),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'University Hall',
-                            style: TextStyle(
-                              fontFamily: 'Helvetica Neue',
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.black,
-                              height: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'West Coker Midtown, West Yelovil UK',
-                            style: AppTextStyles.pSmall.copyWith(
-                              color: AppColors.lightSurfaceSubtitle,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    Expanded(child: _buildLocationText()),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
                 AppButton(
                   label: 'Confirm & Proceed',
-                  onTap: () => Get.toNamed(AppRoutes.addressDetails),
+                  onTap: () => Get.toNamed(
+                    AppRoutes.addressDetails,
+                    arguments: {
+                      'address_line_1': controller.locationName.value,
+                      'city': controller.locationCity.value,
+                      'county': controller.locationCounty.value,
+                      'postcode': controller.locationPostcode.value,
+                      'lat': controller.currentLat,
+                      'lng': controller.currentLng,
+                    },
+                  ),
                   backgroundColor: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                   height: 56,
@@ -201,5 +181,59 @@ class MapPickerView extends GetView<AddressController> {
         ],
       ),
     );
+  }
+
+  Widget _buildLocationText() {
+    return Obx(() {
+      if (controller.isGeocoding.value) {
+        return const SizedBox(
+          height: 40,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+            ),
+          ),
+        );
+      }
+
+      final name = controller.locationName.value;
+      final address = controller.locationAddress.value;
+
+      if (name.isEmpty) {
+        return Text(
+          'Move the map to select location',
+          style: AppTextStyles.pMedium.copyWith(color: AppColors.lightSurfaceSubtitle),
+        );
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            name,
+            style: const TextStyle(
+              fontFamily: 'Helvetica Neue',
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              color: AppColors.black,
+              height: 1.2,
+            ),
+          ),
+          if (address.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              address,
+              style: AppTextStyles.pSmall.copyWith(
+                color: AppColors.lightSurfaceSubtitle,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ],
+      );
+    });
   }
 }

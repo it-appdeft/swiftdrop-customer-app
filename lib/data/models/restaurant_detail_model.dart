@@ -1,3 +1,5 @@
+import 'dashboard_model.dart';
+
 class ModifierOptionModel {
   final int id;
   final String name;
@@ -61,6 +63,7 @@ class MenuItemModel {
   final bool isVeg;
   final String? imageUrl;
   final double rating;
+  final bool isFavorited;
   final List<ModifierGroupModel> modifierGroups;
 
   const MenuItemModel({
@@ -71,6 +74,7 @@ class MenuItemModel {
     required this.isVeg,
     this.imageUrl,
     required this.rating,
+    required this.isFavorited,
     required this.modifierGroups,
   });
 
@@ -82,9 +86,22 @@ class MenuItemModel {
         isVeg: json['is_veg'] as bool? ?? true,
         imageUrl: json['image_url'] as String?,
         rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+        isFavorited: json['is_favorited'] as bool? ?? false,
         modifierGroups: (json['modifier_groups'] as List? ?? [])
             .map((e) => ModifierGroupModel.fromJson(e as Map<String, dynamic>))
             .toList(),
+      );
+
+  MenuItemModel copyWith({bool? isFavorited}) => MenuItemModel(
+        id: id,
+        name: name,
+        description: description,
+        price: price,
+        isVeg: isVeg,
+        imageUrl: imageUrl,
+        rating: rating,
+        isFavorited: isFavorited ?? this.isFavorited,
+        modifierGroups: modifierGroups,
       );
 
   Map<String, dynamic> toMap() => {
@@ -95,6 +112,7 @@ class MenuItemModel {
         'isVeg': isVeg,
         'image': imageUrl,
         'rating': rating.toStringAsFixed(1),
+        'isFavorited': isFavorited,
         'modifier_groups': modifierGroups,
       };
 }
@@ -113,6 +131,8 @@ class RestaurantDetailInfoModel {
   final double? distanceMiles;
   final String? description;
   final bool isTopRated;
+  final bool isFavorited;
+  final String? shareUrl;
 
   const RestaurantDetailInfoModel({
     required this.id,
@@ -128,6 +148,8 @@ class RestaurantDetailInfoModel {
     this.distanceMiles,
     this.description,
     required this.isTopRated,
+    required this.isFavorited,
+    this.shareUrl,
   });
 
   factory RestaurantDetailInfoModel.fromJson(Map<String, dynamic> json) =>
@@ -145,6 +167,8 @@ class RestaurantDetailInfoModel {
         distanceMiles: (json['distance_miles'] as num?)?.toDouble(),
         description: json['description'] as String?,
         isTopRated: json['is_top_rated'] as bool? ?? false,
+        isFavorited: json['is_favorited'] as bool? ?? false,
+        shareUrl: json['share_url'] as String?,
       );
 }
 
@@ -152,12 +176,14 @@ class RestaurantDetailModel {
   final RestaurantDetailInfoModel restaurant;
   final String keyword;
   final List<MenuItemModel> menu;
+  final PaginationMeta menuMeta;
   final List<MenuItemModel> recommended;
 
   const RestaurantDetailModel({
     required this.restaurant,
     required this.keyword,
     required this.menu,
+    required this.menuMeta,
     required this.recommended,
   });
 
@@ -169,6 +195,9 @@ class RestaurantDetailModel {
         menu: (json['menu'] as List? ?? [])
             .map((e) => MenuItemModel.fromJson(e as Map<String, dynamic>))
             .toList(),
+        menuMeta: json['menu_meta'] != null
+            ? PaginationMeta.fromJson(json['menu_meta'] as Map<String, dynamic>)
+            : PaginationMeta.empty,
         recommended: (json['recommended'] as List? ?? [])
             .map((e) => MenuItemModel.fromJson(e as Map<String, dynamic>))
             .toList(),

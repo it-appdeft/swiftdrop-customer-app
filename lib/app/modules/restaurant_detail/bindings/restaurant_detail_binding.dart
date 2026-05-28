@@ -7,7 +7,8 @@ class RestaurantDetailBinding extends Bindings {
   void dependencies() {
     Get.lazyPut<CartController>(() => CartController(), fenix: true);
     Get.lazyPut<RestaurantDetailRepository>(() => RestaurantDetailRepository());
+    Get.lazyPut<FavoritesRepository>(() => FavoritesRepository());
     Get.lazyPut<RestaurantDetailController>(
-        () => RestaurantDetailController(Get.find()));
+        () => RestaurantDetailController(Get.find(), Get.find()));
   }
 }

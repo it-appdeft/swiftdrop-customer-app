@@ -28,27 +28,27 @@ class LocationService extends GetxService {
 
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        _redirectToDelivery();
+        _redirectToAddress();
       }
     } catch (e) {
       AppLogger.e('Error checking location permission', e);
     }
   }
 
-  void _redirectToDelivery() {
-    if (Get.currentRoute == AppRoutes.deliveryAddress) return;
+  void _redirectToAddress() {
+    if (Get.currentRoute == AppRoutes.address) return;
 
-    AppLogger.i('Redirecting to Delivery Address screen due to missing permissions');
+    AppLogger.i('Redirecting to Address screen due to missing location permission');
 
-    const args = {'forceRedirect': true};
+    const args = {'permissionDenied': true};
 
     if (Get.currentRoute == AppRoutes.dashboard) {
-      Get.toNamed(AppRoutes.deliveryAddress, arguments: args);
+      Get.toNamed(AppRoutes.address, arguments: args);
     } else {
       Get.offAllNamed(AppRoutes.dashboard);
       Future.delayed(const Duration(milliseconds: 300), () {
-        if (Get.currentRoute != AppRoutes.deliveryAddress) {
-          Get.toNamed(AppRoutes.deliveryAddress, arguments: args);
+        if (Get.currentRoute != AppRoutes.address) {
+          Get.toNamed(AppRoutes.address, arguments: args);
         }
       });
     }

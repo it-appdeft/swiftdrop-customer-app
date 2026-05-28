@@ -9,12 +9,21 @@ class RestaurantDetailRepository {
 
   Future<ApiResponse<RestaurantDetailModel>> getRestaurantDetail(
     int id, {
-    String? q,
+    String? search,
+    String? diet,
+    bool minRating4 = false,
+    int page = 1,
   }) async {
     try {
+      final params = <String, dynamic>{};
+      if (search != null && search.isNotEmpty) params['search'] = search;
+      if (diet != null) params['diet'] = diet;
+      if (minRating4) params['min_rating'] = 4;
+      if (page > 1) params['page'] = page;
+
       final response = await _dio.get(
         ApiEndpoints.customerRestaurantDetail(id),
-        queryParameters: (q != null && q.isNotEmpty) ? {'q': q} : null,
+        queryParameters: params.isNotEmpty ? params : null,
       );
       final model = RestaurantDetailModel.fromJson(
           response.data['data'] as Map<String, dynamic>);

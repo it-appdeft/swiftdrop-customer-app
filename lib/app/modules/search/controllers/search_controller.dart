@@ -15,9 +15,9 @@ class SearchTabController extends BaseController {
   final RxList<Map<String, dynamic>> restaurantResults = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> itemResults = <Map<String, dynamic>>[].obs;
   final RxBool isSearching = false.obs;
+  final RxBool isLoadingRecent = false.obs;
 
   Timer? _debounceTimer;
-  String _lastSearchedQuery = '';
 
   @override
   void onInit() {
@@ -26,10 +26,12 @@ class SearchTabController extends BaseController {
   }
 
   Future<void> loadRecent() async {
+    isLoadingRecent.value = true;
     final result = await _repo.getRecent();
     if (result.success && result.data != null && result.data!.recent.isNotEmpty) {
       recentSearches.assignAll(result.data!.recent.map((r) => r.keyword).toList());
     }
+    isLoadingRecent.value = false;
   }
 
   void onQueryChanged(String text) {
@@ -45,14 +47,20 @@ class SearchTabController extends BaseController {
     _debounceTimer = Timer(const Duration(milliseconds: 300), () => _performSearch(trimmed));
   }
 
+  bool get _offersActive => activeFilters.contains('Offers');
+  bool get _highestRatedActive => activeFilters.contains('Highest rated');
+
   Future<void> _performSearch(String q) async {
-    if (q.isEmpty || q == _lastSearchedQuery) return;
-    _lastSearchedQuery = q;
+    if (q.isEmpty) return;
 
     _clearResults();
     isSearching.value = true;
 
-    final result = await _repo.search(q);
+    final result = await _repo.search(
+      q,
+      offers: _offersActive,
+      highestRated: _highestRatedActive,
+    );
     isSearching.value = false;
 
     if (result.success && result.data != null) {
@@ -68,7 +76,6 @@ class SearchTabController extends BaseController {
   void _clearResults() {
     restaurantResults.clear();
     itemResults.clear();
-    _lastSearchedQuery = '';
   }
 
   void toggleFilter(String filter) {
@@ -77,6 +84,7 @@ class SearchTabController extends BaseController {
     } else {
       activeFilters.add(filter);
     }
+    if (searchQuery.value.isNotEmpty) _performSearch(searchQuery.value);
   }
 
   void onSubmit(String q) {
