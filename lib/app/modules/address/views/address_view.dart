@@ -528,13 +528,49 @@ class _ShimmerAddressTiles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        3,
-        (_) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: ShimmerBox(width: double.infinity, height: 66, borderRadius: 8),
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.offWhite,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.lightSurfaceBorder),
+      ),
+      child: Column(
+        children: [
+          for (var i = 0; i < 3; i++) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingLg,
+                vertical: AppDimensions.paddingMd,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  AppShimmer.rect(width: 20, height: 20, radius: AppDimensions.radiusXs),
+                  const SizedBox(width: AppDimensions.gapXl),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AppShimmer.text(height: 14),
+                        const SizedBox(height: 4),
+                        AppShimmer.text(width: 160, height: 12),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppDimensions.gapSm),
+                  AppShimmer.rect(width: 20, height: 20, radius: AppDimensions.radiusXs),
+                ],
+              ),
+            ),
+            if (i < 2)
+              const Divider(
+                height: 1.5,
+                color: AppColors.lightSurfaceBorder,
+                indent: 20,
+                endIndent: 20,
+              ),
+          ],
+        ],
       ),
     );
   }

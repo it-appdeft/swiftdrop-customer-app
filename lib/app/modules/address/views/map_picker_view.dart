@@ -10,24 +10,37 @@ class MapPickerView extends GetView<MapPickerController> {
     return Scaffold(
       body: Stack(
         children: [
-          GoogleMap(
-            initialCameraPosition: controller.initialCameraPosition,
-            onMapCreated: controller.onMapCreated,
-            onCameraMove: controller.onCameraMove,
-            onCameraIdle: controller.onCameraIdle,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-            zoomControlsEnabled: false,
-            mapToolbarEnabled: false,
-          ),
+          Obx(() {
+            final showMap = !controller.isCheckingPermission.value &&
+                (!controller.isPermissionDenied.value ||
+                    controller.hasManualLocation.value);
+            if (!showMap) return Container(color: Colors.white);
+            final locationAllowed = !controller.isPermissionDenied.value;
+            return GoogleMap(
+              initialCameraPosition: controller.initialCameraPosition,
+              onMapCreated: controller.onMapCreated,
+              onCameraMove: controller.onCameraMove,
+              onCameraIdle: controller.onCameraIdle,
+              myLocationEnabled: locationAllowed,
+              myLocationButtonEnabled: locationAllowed,
+              zoomControlsEnabled: false,
+              mapToolbarEnabled: false,
+            );
+          }),
           // Fixed centre pin — tip aligned to map centre
-          const Align(
-            alignment: Alignment.center,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 40),
-              child: Icon(Icons.location_on, color: AppColors.primary, size: 48),
-            ),
-          ),
+          Obx(() {
+            final showPin = !controller.isCheckingPermission.value &&
+                (!controller.isPermissionDenied.value ||
+                    controller.hasManualLocation.value);
+            if (!showPin) return const SizedBox.shrink();
+            return const Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 40),
+                child: Icon(Icons.location_on, color: AppColors.primary, size: 48),
+              ),
+            );
+          }),
           SafeArea(
             child: Column(
               children: [

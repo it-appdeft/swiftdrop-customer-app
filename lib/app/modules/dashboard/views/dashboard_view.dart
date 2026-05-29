@@ -6,6 +6,8 @@ import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
+import '../../../widgets/cart_floating_bar.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../../home/views/home_view.dart';
 import '../../order_history/views/order_history_view.dart';
 import '../../profile/views/profile_view.dart';
@@ -24,13 +26,45 @@ class DashboardView extends GetView<DashboardController> {
 
   @override
   Widget build(BuildContext context) {
+    final cartController = Get.find<CartController>();
+
+    // Mirror _BottomNav height so the floating bar sits exactly 12 px above
+    // the rounded nav container.
+    final systemBottom = MediaQuery.of(context).padding.bottom;
+    final double navBottomPad;
+    if (GetPlatform.isIOS && systemBottom > 0) {
+      navBottomPad = (systemBottom - 8).clamp(0.0, double.infinity);
+    } else {
+      navBottomPad = systemBottom > 0 ? systemBottom + 12.0 : AppDimensions.gapMd;
+    }
+    // gapSm (top pad) + bottomNavHeight + navBottomPad = full widget height
+    final navTotalHeight = AppDimensions.gapSm + AppDimensions.bottomNavHeight + navBottomPad;
+
     return Scaffold(
       extendBody: true,
       backgroundColor: AppColors.darkBackground,
-      body: Obx(() => IndexedStack(
-            index: controller.currentIndex.value,
-            children: _pages,
-          )),
+      body: Stack(
+        children: [
+          Obx(() => IndexedStack(
+                index: controller.currentIndex.value,
+                children: _pages,
+              )),
+          // Floating bar overlays content, positioned 12 px above the rounded nav.
+          // navTotalHeight - 12 places the green container's bottom 12 px above
+          // the rounded container's top (accounting for the bar's 16 px margin).
+          Obx(() {
+            if (cartController.cartItemCount.value == 0) {
+              return const SizedBox.shrink();
+            }
+            return Positioned(
+              left: 0,
+              right: 0,
+              bottom: navTotalHeight - 12,
+              child: const CartFloatingBar(addSafeArea: false),
+            );
+          }),
+        ],
+      ),
       bottomNavigationBar: Obx(() => _BottomNav(
             currentIndex: controller.currentIndex.value,
             onTap: controller.changePage,

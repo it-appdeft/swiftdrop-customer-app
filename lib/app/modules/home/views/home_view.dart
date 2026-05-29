@@ -210,7 +210,7 @@ class _TopPicksSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final picks = controller.topPicks;
+      final picks = controller.topPickRestaurants;
       if (picks.isEmpty) return const SizedBox.shrink();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -474,10 +474,7 @@ class _AllRestaurantsList extends GetView<HomeController> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           sliver: SliverList(
             delegate: SliverChildBuilderDelegate(
-              (_, i) => Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: ShimmerBox(width: double.infinity, height: 276, borderRadius: 16),
-              ),
+              (_, i) => const RestaurantCardShimmer(),
               childCount: 3,
             ),
           ),
@@ -505,7 +502,10 @@ class _AllRestaurantsList extends GetView<HomeController> {
                       : const SizedBox.shrink(),
                 );
               }
-              return RestaurantCard(restaurant: list[i].toMap());
+              return RestaurantCard(
+                restaurant: list[i].toMap(),
+                onFavoriteTap: () => controller.toggleRestaurantFavorite(list[i].id),
+              );
             },
             childCount: list.length + (showLoader ? 1 : 0),
           ),

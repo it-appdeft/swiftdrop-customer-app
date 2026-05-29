@@ -4,14 +4,31 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 class RestaurantCard extends StatefulWidget {
   final Map<String, dynamic> restaurant;
   final String? searchQuery;
-  const RestaurantCard({super.key, required this.restaurant, this.searchQuery});
+  final VoidCallback? onFavoriteTap;
+  const RestaurantCard({super.key, required this.restaurant, this.searchQuery, this.onFavoriteTap});
 
   @override
   State<RestaurantCard> createState() => _RestaurantCardState();
 }
 
 class _RestaurantCardState extends State<RestaurantCard> {
-  bool _isFavourited = false;
+  late bool _isFavourited;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFavourited = widget.restaurant['is_favorited'] ?? false;
+  }
+
+  @override
+  void didUpdateWidget(covariant RestaurantCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.restaurant['is_favorited'] != oldWidget.restaurant['is_favorited']) {
+      setState(() {
+        _isFavourited = widget.restaurant['is_favorited'] ?? false;
+      });
+    }
+  }
 
   Widget _buildImage(String? path) {
     return AppImage(
@@ -112,7 +129,10 @@ class _RestaurantCardState extends State<RestaurantCard> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () => setState(() => _isFavourited = !_isFavourited),
+                  onTap: () {
+                    setState(() => _isFavourited = !_isFavourited);
+                    widget.onFavoriteTap?.call();
+                  },
                   behavior: HitTestBehavior.opaque,
                   child: (_isFavourited ? Assets.images.favouriteAdded : Assets.images.favourite)
                       .image(width: 24, height: 24),

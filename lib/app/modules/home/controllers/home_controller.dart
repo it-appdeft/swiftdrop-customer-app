@@ -3,9 +3,11 @@ import 'package:swiftdrop_customer_app/export.dart';
 
 class HomeController extends BaseController {
   final HomeRepository _repo;
-  HomeController(this._repo);
+  final FavoritesRepository _favRepo;
+  HomeController(this._repo, this._favRepo);
 
   final RxList<FoodItemModel> foodItems = <FoodItemModel>[].obs;
+  final RxList<RestaurantModel> topPickRestaurants = <RestaurantModel>[].obs;
   final RxList<RestaurantModel> restaurants = <RestaurantModel>[].obs;
   final RxString currentAddress = 'Select Location'.obs;
   final RxInt currentBannerPage = 0.obs;
@@ -18,8 +20,6 @@ class HomeController extends BaseController {
   int _restaurantsPage = 1;
   int? _selectedFoodItemId;
 
-  List<RestaurantModel> get topPicks => restaurants.take(5).toList();
-
   void selectCategory(int index, int foodItemId) {
     if (selectedCategoryIndex.value == index) {
       selectedCategoryIndex.value = -1;
@@ -30,7 +30,7 @@ class HomeController extends BaseController {
     }
     restaurants.clear();
     hasMoreRestaurants.value = false;
-    _loadDashboard();
+    _reloadRestaurants();
   }
 
   void _onScroll() {
@@ -73,22 +73,39 @@ class HomeController extends BaseController {
 
   Future<void> _loadDashboard() async {
     await runAsync(() async {
-      final result = await _repo.getDashboard(
-        restaurantsPage: 1,
-        foodItemId: _selectedFoodItemId,
-      );
+      final results = await Future.wait<dynamic>([
+        _repo.getFoodItems(),
+        _repo.getTopPicks(),
+        _repo.getRestaurants(page: 1, foodItemId: _selectedFoodItemId),
+      ]);
+
+      final foodResult = results[0] as ApiResponse<List<FoodItemModel>>;
+      final topPicksResult = results[1] as ApiResponse<List<RestaurantModel>>;
+      final restaurantsResult = results[2] as ApiResponse<RestaurantsPageModel>;
+
+      if (foodResult.success && foodResult.data != null) {
+        foodItems.value = foodResult.data!;
+      }
+      if (topPicksResult.success && topPicksResult.data != null) {
+        topPickRestaurants.value = topPicksResult.data!;
+      }
+      if (restaurantsResult.success && restaurantsResult.data != null) {
+        final page = restaurantsResult.data!;
+        restaurants.value = page.restaurants;
+        hasMoreRestaurants.value = page.meta.hasNextPage;
+        _restaurantsPage = page.meta.currentPage;
+      }
+    });
+  }
+
+  Future<void> _reloadRestaurants() async {
+    await runAsync(() async {
+      final result = await _repo.getRestaurants(page: 1, foodItemId: _selectedFoodItemId);
       if (result.success && result.data != null) {
-        final data = result.data!;
-        foodItems.value = data.foodItems;
-        restaurants.value = data.restaurants;
-        hasMoreRestaurants.value = data.restaurantsMeta.hasNextPage;
-        _restaurantsPage = data.restaurantsMeta.currentPage;
-        if (data.address == null) {
-          Get.toNamed(AppRoutes.address);
-          return;
-        }
-        final addr = data.address!;
-        currentAddress.value = '${addr.addressLine1}, ${addr.city}';
+        final page = result.data!;
+        restaurants.value = page.restaurants;
+        hasMoreRestaurants.value = page.meta.hasNextPage;
+        _restaurantsPage = page.meta.currentPage;
       }
     });
   }
@@ -97,19 +114,36 @@ class HomeController extends BaseController {
     if (isLoadingMore.value || !hasMoreRestaurants.value) return;
     isLoadingMore.value = true;
     try {
-      final result = await _repo.getDashboard(
-        restaurantsPage: _restaurantsPage + 1,
+      final result = await _repo.getRestaurants(
+        page: _restaurantsPage + 1,
         foodItemId: _selectedFoodItemId,
       );
       if (result.success && result.data != null) {
-        final data = result.data!;
-        restaurants.addAll(data.restaurants);
-        hasMoreRestaurants.value = data.restaurantsMeta.hasNextPage;
-        _restaurantsPage = data.restaurantsMeta.currentPage;
+        final page = result.data!;
+        restaurants.addAll(page.restaurants);
+        hasMoreRestaurants.value = page.meta.hasNextPage;
+        _restaurantsPage = page.meta.currentPage;
       }
     } catch (_) {
     } finally {
       isLoadingMore.value = false;
+    }
+  }
+
+  Future<void> toggleRestaurantFavorite(int id) async {
+    final idx = restaurants.indexWhere((r) => r.id == id);
+    if (idx == -1) return;
+
+    final restaurant = restaurants[idx];
+    final prev = restaurant.isFavorited;
+
+    restaurants[idx] = restaurant.copyWith(isFavorited: !prev);
+
+    final result = await _favRepo.toggleFavorite(FavoriteType.restaurant, id);
+    if (result.success) {
+      if (result.message.isNotEmpty) AppUtils.showSuccess(result.message);
+    } else {
+      restaurants[idx] = restaurant.copyWith(isFavorited: prev);
     }
   }
 
@@ -118,6 +152,7 @@ class HomeController extends BaseController {
     _selectedFoodItemId = null;
     selectedCategoryIndex.value = -1;
     restaurants.clear();
+    topPickRestaurants.clear();
     hasMoreRestaurants.value = false;
     await _loadDashboard();
   }

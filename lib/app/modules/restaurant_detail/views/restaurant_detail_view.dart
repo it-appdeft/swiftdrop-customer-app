@@ -5,7 +5,8 @@ import 'product_detail_bottom_sheet.dart';
 import 'store_info_bottom_sheet.dart';
 
 class RestaurantDetailView extends GetView<RestaurantDetailController> {
-  const RestaurantDetailView({super.key});
+  final bool isSheet;
+  const RestaurantDetailView({super.key, this.isSheet = false});
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +20,12 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context),
-                const SizedBox(height: 88), // 60 (overflow) + 28 (gap) = 88
+                const SizedBox(height: 24),
                 _buildSearchBar(),
                 const SizedBox(height: 28),
                 _buildFilters(),
                 const SizedBox(height: 24),
+
                 _buildItemList(),
                 _buildViewAllButton(),
                 // _buildRecommendedSection(),
@@ -31,14 +33,15 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               ],
             ),
           ),
-          Obx(() => controller.showCartFloatingBar.value
-              ? const Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: CartFloatingBar(),
-                )
-              : const SizedBox.shrink()),
+          if (!isSheet)
+            Obx(() => controller.showCartFloatingBar.value
+                ? const Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: CartFloatingBar(),
+                  )
+                : const SizedBox.shrink()),
         ],
       ),
     );
@@ -48,14 +51,171 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
     return Obx(() {
       final info = controller.restaurantInfo.value;
       return Stack(
-        clipBehavior: Clip.none,
         children: [
-          AppImage(
-            path: info?.coverUrl,
-            width: double.infinity,
-            height: 330,
-            fit: BoxFit.cover,
+          // Image is Positioned so it doesn't drive Stack height
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: AppImage(
+              path: info?.coverUrl,
+              width: double.infinity,
+              height: 330,
+              fit: BoxFit.cover,
+            ),
           ),
+          // Column drives Stack height: 256px transparent gap + card grows downward
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 256),
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 15,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: controller.isLoading.value
+                    ? _buildHeaderCardShimmer()
+                    : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            info?.name ?? '',
+                            style: GoogleFonts.inter(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.lightSurfaceDarkText,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.offWhite,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Assets.images.ratingStar.image(width: 14, height: 14),
+                              const SizedBox(width: 4),
+                              Text(
+                                info?.rating.toStringAsFixed(1) ?? '0.0',
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.lightSurfaceDarkText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            info?.cuisines ?? '',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: AppColors.lightSurfaceSubtitle,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '(${info?.totalReviews ?? 0})',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: AppColors.lightSurfaceSubtitle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (info?.deliveryMinutesMin != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Assets.images.timeIcon.image(width: 16, height: 16),
+                          const SizedBox(width: 8),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '${info!.deliveryMinutesMin}-${info.deliveryMinutesMax}',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.lightSurfaceDarkText,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: ' Delivery time',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.lightSurfaceSubtitle,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if ((info?.fullAddress ?? info?.city ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Assets.images.locationIcon.image(width: 16, height: 16),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              info?.fullAddress ?? info?.city ?? '',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.lightSurfaceSubtitle,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Nav buttons drawn last — in front of both image and card
           Positioned(
             top: 48,
             left: 16,
@@ -90,120 +250,50 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               ],
             ),
           ),
-          Positioned(
-            bottom: -74,
-            left: 16,
-            right: 16,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 15,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          info?.name ?? '',
-                          style: GoogleFonts.inter(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.lightSurfaceDarkText,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.offWhite,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Assets.images.ratingStar.image(width: 14, height: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              info?.rating.toStringAsFixed(1) ?? '0.0',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.lightSurfaceDarkText,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          info?.cuisines ?? '',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            color: AppColors.lightSurfaceSubtitle,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '(${info?.totalReviews ?? 0})',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: AppColors.lightSurfaceSubtitle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if ((info?.fullAddress ?? info?.city ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Assets.images.locationIcon.image(width: 16, height: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            info?.fullAddress ?? info?.city ?? '',
-                            style: GoogleFonts.inter(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.lightSurfaceSubtitle,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
         ],
       );
     });
+  }
+
+  Widget _buildHeaderCardShimmer() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: AppShimmer.text(height: 24)),
+            const SizedBox(width: 8),
+            AppShimmer.rect(width: 60, height: 26, radius: 12),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            AppShimmer.text(width: 120, height: 14),
+            AppShimmer.text(width: 40, height: 14),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            AppShimmer.rect(width: 16, height: 16),
+            const SizedBox(width: 8),
+            AppShimmer.text(width: 140, height: 14),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            AppShimmer.rect(width: 16, height: 16),
+            const SizedBox(width: 8),
+            Expanded(child: AppShimmer.text(height: 14)),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _buildSearchBar() {
@@ -328,13 +418,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
-            children: List.generate(
-              3,
-              (_) => const Padding(
-                padding: EdgeInsets.only(bottom: 24),
-                child: ShimmerBox(width: double.infinity, height: 160, borderRadius: 12),
-              ),
-            ),
+            children: List.generate(3, (_) => const MenuItemCardShimmer()),
           ),
         );
       }

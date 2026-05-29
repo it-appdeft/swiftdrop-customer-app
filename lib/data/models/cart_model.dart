@@ -85,7 +85,8 @@ class CartApiResponse {
     final restaurant = json['restaurant'] as Map<String, dynamic>?;
     return CartApiResponse(
       cartId: (json['id'] as num).toInt(),
-      restaurantId: (json['restaurant_id'] as num?)?.toInt(),
+      restaurantId: (json['restaurant_id'] as num?)?.toInt() ??
+          (restaurant?['id'] as num?)?.toInt(),
       restaurantName: restaurant?['name'] as String?,
       restaurantLogoUrl: restaurant?['logo_url'] as String?,
       items: (json['items'] as List? ?? [])

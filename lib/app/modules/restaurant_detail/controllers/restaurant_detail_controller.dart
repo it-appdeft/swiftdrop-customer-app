@@ -5,7 +5,8 @@ import '../../../modules/cart/controllers/cart_controller.dart';
 class RestaurantDetailController extends BaseController {
   final RestaurantDetailRepository _repo;
   final FavoritesRepository _favRepo;
-  RestaurantDetailController(this._repo, this._favRepo);
+  final int? _overrideId;
+  RestaurantDetailController(this._repo, this._favRepo, [this._overrideId]);
 
   final Rx<RestaurantDetailInfoModel?> restaurantInfo = Rx(null);
   final RxList<MenuItemModel> menuItems = <MenuItemModel>[].obs;
@@ -33,9 +34,9 @@ class RestaurantDetailController extends BaseController {
   void onInit() {
     super.onInit();
     final args = Get.arguments as Map<String, dynamic>?;
-    final id = (args?['id'] as num?)?.toInt() ?? 0;
+    final id = _overrideId ?? (args?['id'] as num?)?.toInt() ?? 0;
     _restaurantId = id;
-    final q = args?['q'] as String? ?? '';
+    final q = _overrideId != null ? '' : (args?['q'] as String? ?? '');
     if (q.isNotEmpty) {
       searchQuery.value = q;
       searchController.text = q;
@@ -80,7 +81,11 @@ class RestaurantDetailController extends BaseController {
       FavoriteType.restaurant,
       _restaurantId,
     );
-    if (!result.success) isFavorited.value = prev;
+    if (result.success) {
+      if (result.message.isNotEmpty) AppUtils.showSuccess(result.message);
+    } else {
+      isFavorited.value = prev;
+    }
   }
 
   Future<void> toggleItemFavorite(int itemId) async {
@@ -92,7 +97,11 @@ class RestaurantDetailController extends BaseController {
       FavoriteType.menuItem,
       itemId,
     );
-    if (!result.success) menuItems[idx] = menuItems[idx].copyWith(isFavorited: prev);
+    if (result.success) {
+      if (result.message.isNotEmpty) AppUtils.showSuccess(result.message);
+    } else {
+      menuItems[idx] = menuItems[idx].copyWith(isFavorited: prev);
+    }
   }
 
   void _reloadWithFilters() {

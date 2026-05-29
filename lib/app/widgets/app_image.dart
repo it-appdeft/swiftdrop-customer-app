@@ -37,10 +37,10 @@ class AppImage extends StatelessWidget {
   }
 
   Widget _shimmer(BoxConstraints? constraints) {
-    return ShimmerBox(
+    return AppShimmer.rect(
       width: width ?? constraints?.maxWidth ?? double.infinity,
       height: height ?? constraints?.maxHeight ?? double.infinity,
-      borderRadius: borderRadius,
+      radius: borderRadius,
     );
   }
 

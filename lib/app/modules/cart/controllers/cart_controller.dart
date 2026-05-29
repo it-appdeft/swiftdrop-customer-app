@@ -2,6 +2,7 @@ import '../../../../export.dart';
 
 class CartItem {
   final String id;
+  final int menuItemId;
   final String name;
   final String? addons;
   final double price;
@@ -11,6 +12,7 @@ class CartItem {
 
   CartItem({
     required this.id,
+    required this.menuItemId,
     required this.name,
     this.addons,
     required this.price,
@@ -51,6 +53,10 @@ class CartController extends BaseController {
   final RxString cartRestaurantName = ''.obs;
   final RxString cartRestaurantLogo = ''.obs;
   final RxInt cartItemCount = 0.obs;
+  final RxInt cartRestaurantId = 0.obs;
+
+  // Checkout summary
+  final checkoutData = Rx<CheckoutModel?>(null);
 
   // Cooking Request states
   final RxString cookingRequest = ''.obs;
@@ -70,7 +76,7 @@ class CartController extends BaseController {
     cookingRequestController.addListener(() {
       cookingRequestTemp.value = cookingRequestController.text;
     });
-    fetchCart();
+    Future.wait([fetchCart(), fetchCheckout()]);
   }
 
   void _populateCoupons() {
@@ -112,6 +118,7 @@ class CartController extends BaseController {
             : null;
         newItems.add(CartItem(
           id: item.id.toString(),
+          menuItemId: item.menuItemId,
           name: item.name,
           addons: addonsStr,
           price: item.unitPrice,
@@ -125,6 +132,7 @@ class CartController extends BaseController {
       cartRestaurantName.value = cart.restaurantName ?? '';
       cartRestaurantLogo.value = cart.restaurantLogoUrl ?? '';
       cartItemCount.value = cart.itemCount;
+      if (cart.restaurantId != null) cartRestaurantId.value = cart.restaurantId!;
     }
   }
 
@@ -159,33 +167,111 @@ class CartController extends BaseController {
     return [];
   }
 
-  double get itemTotal =>
-      items.fold(0, (sum, item) => sum + item.price * item.quantity.value);
+  Future<void> fetchCheckout() async {
+    final result = await _repo.getCheckout();
+    if (result.success && result.data != null) {
+      final data = result.data!;
+      checkoutData.value = data;
 
-  double get totalToPay {
-    double total = itemTotal + deliveryFee.value + taxesAndCharges.value;
-    if (isCouponApplied.value) {
-      total -= couponDiscount.value;
+      // Populate items from checkout response
+      final newQty = <int, int>{};
+      final newItems = <CartItem>[];
+      for (final item in data.items) {
+        newQty[item.menuItemId] = (newQty[item.menuItemId] ?? 0) + item.quantity;
+        newItems.add(CartItem(
+          id: item.id.toString(),
+          menuItemId: item.menuItemId,
+          name: item.name,
+          addons: item.modifiers.isNotEmpty
+              ? item.modifiers.map((m) => m.optionName).join(', ')
+              : null,
+          price: item.unitPrice,
+          qty: item.quantity,
+          image: item.imageUrl,
+        ));
+      }
+      quantities.value = newQty;
+      items.value = newItems;
+      cartApiItems.value = data.items;
+      cartItemCount.value = newQty.values.fold(0, (sum, q) => sum + q);
+      cartRestaurantName.value = data.restaurantName ?? cartRestaurantName.value;
+      if (data.restaurantId != null) cartRestaurantId.value = data.restaurantId!;
+
+      // Sync bill
+      deliveryFee.value = data.bill.deliveryFee;
+      taxesAndCharges.value = data.bill.taxes;
+      isCouponApplied.value = data.appliedCoupon != null;
+      if (data.appliedCoupon != null) {
+        couponDiscount.value = data.bill.itemDiscount;
+      }
     }
-    return total;
   }
 
+  double get itemTotal =>
+      checkoutData.value?.bill.itemTotal ??
+      items.fold(0, (sum, item) => sum + item.price * item.quantity.value);
+
+  double get itemDiscount => checkoutData.value?.bill.itemDiscount ?? 0.0;
+
+  double get totalToPay =>
+      checkoutData.value?.bill.toPay ??
+      (itemTotal + deliveryFee.value + taxesAndCharges.value -
+          (isCouponApplied.value ? couponDiscount.value : 0.0));
+
   void addItem(String id) {
-    final existing = items.firstWhereOrNull((i) => i.id == id);
-    if (existing != null) {
-      existing.quantity.value++;
-    } else {
-      items.add(CartItem(id: id, name: 'New Item', price: 0, qty: 1));
+    final cartItemId = int.tryParse(id);
+    if (cartItemId == null) return;
+    final item = items.firstWhereOrNull((i) => i.id == id);
+    if (item != null) {
+      updateCartItemQty(cartItemId, item.quantity.value + 1);
     }
   }
 
   void decrementItem(String id) {
-    final existing = items.firstWhereOrNull((i) => i.id == id);
-    if (existing == null) return;
-    if (existing.quantity.value <= 1) {
-      items.remove(existing);
+    final cartItemId = int.tryParse(id);
+    if (cartItemId == null) return;
+    final item = items.firstWhereOrNull((i) => i.id == id);
+    if (item != null) {
+      if (item.quantity.value <= 1) {
+        deleteCartItem(cartItemId);
+      } else {
+        updateCartItemQty(cartItemId, item.quantity.value - 1);
+      }
+    }
+  }
+
+  Future<void> updateCartItemQty(int cartItemId, int newQty) async {
+    final result = await _repo.updateCartItemQuantity(cartItemId, newQty);
+    if (result.success) {
+      await fetchCart();
+      await fetchCheckout();
+    }
+  }
+
+  Future<void> deleteCartItem(int cartItemId) async {
+    final result = await _repo.removeCartItem(cartItemId);
+    if (result.success) {
+      await fetchCart();
+      await fetchCheckout();
+    }
+  }
+
+  Future<void> decrementCartItem(int menuItemId) async {
+    int? cartItemId;
+    int currentQty = 0;
+    for (final item in cartApiItems) {
+      if (item.menuItemId == menuItemId) {
+        cartItemId = item.id;
+        currentQty = item.quantity;
+        break;
+      }
+    }
+    if (cartItemId == null) return;
+
+    if (currentQty <= 1) {
+      deleteCartItem(cartItemId);
     } else {
-      existing.quantity.value--;
+      updateCartItemQty(cartItemId, currentQty - 1);
     }
   }
 
@@ -233,61 +319,38 @@ class CartController extends BaseController {
     }
     if (cartItemId == null) return;
 
-    quantities[menuItemId] = (quantities[menuItemId] ?? 0) + 1;
-    _syncItemCount();
-
     final result =
         await _repo.updateCartItemQuantity(cartItemId, currentQty + 1);
     if (result.success) {
       await fetchCart();
-    } else {
-      final reverted = (quantities[menuItemId] ?? 1) - 1;
-      if (reverted <= 0) {
-        quantities.remove(menuItemId);
-      } else {
-        quantities[menuItemId] = reverted;
-      }
-      _syncItemCount();
+      await fetchCheckout();
     }
   }
 
   Future<void> removeFromCartApi(int menuItemId) async {
     int? cartItemId;
+    int currentQty = 0;
     for (final item in cartApiItems) {
       if (item.menuItemId == menuItemId) {
         cartItemId = item.id;
+        currentQty = item.quantity;
         break;
       }
     }
     if (cartItemId == null) return;
-
-    final prevQty = quantities[menuItemId] ?? 0;
-    if (prevQty <= 1) {
-      quantities.remove(menuItemId);
-      items.removeWhere((i) => i.id == cartItemId.toString());
-    } else {
-      quantities[menuItemId] = prevQty - 1;
-    }
-    _syncItemCount();
-
-    final result = await _repo.removeCartItem(cartItemId);
-    if (result.success) {
-      await fetchCart();
-    } else {
-      quantities[menuItemId] = prevQty;
-      _syncItemCount();
-      if (prevQty <= 1) await fetchCart();
-    }
+    deleteCartItem(cartItemId);
   }
 
   Future<void> clearCartApi() async {
-    await _repo.clearCart();
+    final result = await _repo.clearCart();
     quantities.clear();
     items.clear();
     cartApiItems.clear();
     cartItemCount.value = 0;
+    cartRestaurantId.value = 0;
     cartRestaurantName.value = '';
     cartRestaurantLogo.value = '';
+    if (result.success && result.message.isNotEmpty) AppUtils.showSuccess(result.message);
   }
 
   void applyCoupon() => isCouponApplied.value = true;

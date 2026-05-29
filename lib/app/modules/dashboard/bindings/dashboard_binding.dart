@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import '../../../../data/repositories/earnings_repository.dart';
+import '../../../../data/repositories/favorites_repository.dart';
 import '../../../../data/repositories/home_repository.dart';
 import '../../../../data/repositories/notification_repository.dart';
 import '../../../../data/repositories/order_repository.dart';
@@ -19,7 +20,7 @@ class DashboardBinding extends Bindings {
     Get.lazyPut<DashboardController>(() => DashboardController());
     HomeBinding().dependencies();
     Get.delete<SearchTabController>(force: true);
-    Get.put<SearchTabController>(SearchTabController(Get.find<HomeRepository>()), permanent: true);
+    Get.put<SearchTabController>(SearchTabController(Get.find<HomeRepository>(), Get.find<FavoritesRepository>()), permanent: true);
     Get.delete<CartController>(force: true);
     Get.put<CartController>(CartController(), permanent: true);
     Get.lazyPut<OrderRepository>(() => OrderRepository());

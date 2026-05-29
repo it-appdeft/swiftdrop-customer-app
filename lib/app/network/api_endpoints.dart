@@ -40,8 +40,14 @@ class ApiEndpoints {
 
   static const String customerCart = '/customer/cart';
   static String customerCartItem(int id) => '/customer/cart/items/$id';
-  static const String customerDashboard = '/customer/dashboard';
+  static const String customerCheckout = '/customer/checkout';
+  static const String customerRestaurants = '/customer/restaurants';
+  static const String customerFoodItems = '/customer/food-types';
+  static const String customerTopPicks = '/customer/top-picks';
   static const String customerSearch = '/customer/search';
+  static const String customerSearchHistory = '/customer/search/history';
+  static const String customerSearchRestaurants = '/customer/search/restaurant';
+  static const String customerSearchItems = '/customer/search/items';
   static String customerRestaurantDetail(int id) => '/customer/restaurants/$id';
   static String favoriteRestaurant(int id) => '/customer/favorites/restaurants/$id';
   static String favoriteMenuItem(int id) => '/customer/favorites/menu-items/$id';

@@ -68,6 +68,7 @@ export 'app/widgets/cart_floating_bar.dart';
 
 export 'data/models/address_model.dart';
 export 'data/models/cart_model.dart';
+export 'data/models/checkout_model.dart';
 export 'data/models/dashboard_model.dart';
 export 'data/models/api_response.dart';
 export 'data/models/restaurant_detail_model.dart';

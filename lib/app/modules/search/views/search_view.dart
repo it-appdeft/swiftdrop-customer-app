@@ -425,23 +425,50 @@ class _SearchResultsList extends GetView<SearchTabController> {
       }
 
       if (isRestaurantsTab) {
+        final list = controller.restaurantResults;
+        final showLoader = controller.isLoadingMore.value || controller.hasMoreRestaurants.value;
         return ListView.builder(
+          controller: controller.scrollController,
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-          itemCount: controller.restaurantResults.length,
-          itemBuilder: (_, i) => RestaurantCard(
-                restaurant: controller.restaurantResults[i],
-                searchQuery: controller.searchQuery.value,
-              ),
+          itemCount: list.length + (showLoader ? 1 : 0),
+          itemBuilder: (_, i) {
+            if (i == list.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: controller.isLoadingMore.value
+                    ? const AppLoader()
+                    : const SizedBox.shrink(),
+              );
+            }
+            return RestaurantCard(
+              restaurant: list[i],
+              searchQuery: controller.searchQuery.value,
+              onFavoriteTap: () => controller.toggleRestaurantFavorite(list[i]['id']),
+            );
+          },
         );
       }
 
+      final list = controller.itemResults;
+      final showLoader = controller.isLoadingMore.value || controller.hasMoreItems.value;
       return ListView.builder(
+        controller: controller.scrollController,
         padding: const EdgeInsets.only(bottom: 150),
-        itemCount: controller.itemResults.length,
-        itemBuilder: (_, i) => RestaurantWithItems(
-              data: controller.itemResults[i],
-              searchQuery: controller.searchQuery.value,
-            ),
+        itemCount: list.length + (showLoader ? 1 : 0),
+        itemBuilder: (_, i) {
+          if (i == list.length) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: controller.isLoadingMore.value
+                  ? const AppLoader()
+                  : const SizedBox.shrink(),
+            );
+          }
+          return RestaurantWithItems(
+            data: list[i],
+            searchQuery: controller.searchQuery.value,
+          );
+        },
       );
     });
   }
@@ -455,56 +482,7 @@ class _ShimmerRestaurantList extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       itemCount: 3,
-      itemBuilder: (_, __) => AppShimmer(
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 210,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppShimmer.baseColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: AppShimmer.baseColor,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: AppShimmer.baseColor,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 14,
-                width: 160,
-                decoration: BoxDecoration(
-                  color: AppShimmer.baseColor,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      itemBuilder: (_, __) => const RestaurantCardShimmer(),
     );
   }
 }
@@ -516,119 +494,81 @@ class _ShimmerItemGroupList extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: 2,
-      itemBuilder: (_, __) => AppShimmer(
-        child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          color: AppShimmer.highlightColor,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(32, 12, 28, 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            height: 18,
-                            width: 140,
-                            decoration: BoxDecoration(
-                              color: AppShimmer.baseColor,
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            height: 12,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: AppShimmer.baseColor,
-                              borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: AppShimmer.baseColor,
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: 174,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 36),
-                  itemCount: 3,
-                  itemBuilder: (_, __) => Container(
-                    width: 330,
-                    height: 160,
-                    margin: const EdgeInsets.only(right: 16),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppShimmer.highlightColor,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                    ),
-                    child: Row(
+      itemBuilder: (_, __) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        color: AppColors.offWhite,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(32, 12, 28, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 128,
-                          height: 119,
-                          decoration: BoxDecoration(
-                            color: AppShimmer.baseColor,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: AppShimmer.baseColor,
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: AppShimmer.baseColor,
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Container(
-                                height: 14,
-                                width: 60,
-                                decoration: BoxDecoration(
-                                  color: AppShimmer.baseColor,
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusXs),
-                                ),
-                              ),
-                            ],
-                          ),
+                        AppShimmer.text(width: 140, height: 18),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            AppShimmer.circle(size: 16),
+                            const SizedBox(width: 4),
+                            AppShimmer.text(width: 60, height: 12),
+                            const SizedBox(width: 16),
+                            AppShimmer.text(width: 40, height: 12),
+                          ],
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  AppShimmer.circle(size: 24),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 160,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 36),
+                itemCount: 3,
+                itemBuilder: (_, __) => Container(
+                  width: 330,
+                  height: 160,
+                  margin: const EdgeInsets.only(right: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppShimmer.rect(width: 128, height: 119, radius: 10),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppShimmer.rect(width: 16, height: 16),
+                            const SizedBox(height: 4),
+                            AppShimmer.text(height: 16),
+                            const SizedBox(height: 4),
+                            AppShimmer.text(width: 60, height: 14),
+                            const SizedBox(height: 4),
+                            AppShimmer.rect(width: 52, height: 22, radius: 11),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );
@@ -638,18 +578,32 @@ class _ShimmerItemGroupList extends StatelessWidget {
 class _ShimmerRecentChips extends StatelessWidget {
   const _ShimmerRecentChips();
 
+  static const _widths = [80.0, 120.0, 60.0, 100.0, 90.0, 70.0];
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: List.generate(
-          4,
-          (_) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: ShimmerBox(width: double.infinity, height: 41, borderRadius: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 12,
+        children: _widths.map((w) => Container(
+          height: 41,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppColors.offWhite,
+            borderRadius: BorderRadius.circular(44),
+            border: Border.all(color: AppColors.lightSurfaceBorder),
           ),
-        ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppShimmer.circle(size: 20),
+              const SizedBox(width: 9),
+              AppShimmer.text(width: w, height: 14),
+            ],
+          ),
+        )).toList(),
       ),
     );
   }

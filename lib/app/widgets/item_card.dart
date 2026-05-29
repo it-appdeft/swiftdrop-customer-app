@@ -69,7 +69,7 @@ class _ItemCardState extends State<ItemCard> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
-          onTap: () => cart.removeFromCartApi(_itemId),
+          onTap: () => cart.decrementCartItem(_itemId),
           behavior: HitTestBehavior.opaque,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),

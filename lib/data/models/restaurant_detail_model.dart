@@ -133,6 +133,12 @@ class RestaurantDetailInfoModel {
   final bool isTopRated;
   final bool isFavorited;
   final String? shareUrl;
+  final int? deliveryMinutesMin;
+  final int? deliveryMinutesMax;
+  final bool? todayIsOpen;
+  final String? todayOpenFrom;
+  final String? todayOpenTo;
+  final String? hoursSummary;
 
   const RestaurantDetailInfoModel({
     required this.id,
@@ -150,26 +156,41 @@ class RestaurantDetailInfoModel {
     required this.isTopRated,
     required this.isFavorited,
     this.shareUrl,
+    this.deliveryMinutesMin,
+    this.deliveryMinutesMax,
+    this.todayIsOpen,
+    this.todayOpenFrom,
+    this.todayOpenTo,
+    this.hoursSummary,
   });
 
-  factory RestaurantDetailInfoModel.fromJson(Map<String, dynamic> json) =>
-      RestaurantDetailInfoModel(
-        id: (json['id'] as num).toInt(),
-        name: json['name'] as String,
-        tagline: json['tagline'] as String?,
-        cuisines: json['cuisines'] as String?,
-        city: json['city'] as String?,
-        fullAddress: json['full_address'] as String?,
-        logoUrl: json['logo_url'] as String?,
-        coverUrl: json['cover_url'] as String?,
-        rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-        totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
-        distanceMiles: (json['distance_miles'] as num?)?.toDouble(),
-        description: json['description'] as String?,
-        isTopRated: json['is_top_rated'] as bool? ?? false,
-        isFavorited: json['is_favorited'] as bool? ?? false,
-        shareUrl: json['share_url'] as String?,
-      );
+  factory RestaurantDetailInfoModel.fromJson(Map<String, dynamic> json) {
+    final storeInfo = json['store_info'] as Map<String, dynamic>?;
+    final today = storeInfo?['today'] as Map<String, dynamic>?;
+    return RestaurantDetailInfoModel(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
+      tagline: json['tagline'] as String?,
+      cuisines: json['cuisines'] as String?,
+      city: json['city'] as String?,
+      fullAddress: json['full_address'] as String?,
+      logoUrl: json['logo_url'] as String?,
+      coverUrl: json['cover_url'] as String?,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+      totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
+      distanceMiles: (json['distance_miles'] as num?)?.toDouble(),
+      description: json['description'] as String?,
+      isTopRated: json['is_top_rated'] as bool? ?? false,
+      isFavorited: json['is_favorited'] as bool? ?? false,
+      shareUrl: json['share_url'] as String?,
+      deliveryMinutesMin: (storeInfo?['delivery_minutes_min'] as num?)?.toInt(),
+      deliveryMinutesMax: (storeInfo?['delivery_minutes_max'] as num?)?.toInt(),
+      todayIsOpen: today?['is_open'] as bool?,
+      todayOpenFrom: today?['open_from'] as String?,
+      todayOpenTo: today?['open_to'] as String?,
+      hoursSummary: storeInfo?['hours_summary'] as String?,
+    );
+  }
 }
 
 class RestaurantDetailModel {

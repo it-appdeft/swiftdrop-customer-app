@@ -18,7 +18,8 @@ class PaginationMeta {
         lastPage: json['last_page'] as int,
         perPage: json['per_page'] as int,
         total: json['total'] as int,
-        hasNextPage: json['next_page_url'] != null,
+        hasNextPage: (json['next_page_url'] != null) ||
+            ((json['current_page'] as int) < (json['last_page'] as int)),
       );
 
   static PaginationMeta get empty => const PaginationMeta(
@@ -64,6 +65,7 @@ class RestaurantModel {
   final int totalReviews;
   final double distanceMiles;
   final bool isFavorited;
+  final List<SearchDishModel>? items;
 
   const RestaurantModel({
     required this.id,
@@ -78,7 +80,24 @@ class RestaurantModel {
     required this.totalReviews,
     required this.distanceMiles,
     this.isFavorited = false,
+    this.items,
   });
+
+  RestaurantModel copyWith({bool? isFavorited, List<SearchDishModel>? items}) => RestaurantModel(
+        id: id,
+        name: name,
+        tagline: tagline,
+        cuisines: cuisines,
+        city: city,
+        fullAddress: fullAddress,
+        logoUrl: logoUrl,
+        coverUrl: coverUrl,
+        rating: rating,
+        totalReviews: totalReviews,
+        distanceMiles: distanceMiles,
+        isFavorited: isFavorited ?? this.isFavorited,
+        items: items ?? this.items,
+      );
 
   factory RestaurantModel.fromJson(Map<String, dynamic> json) => RestaurantModel(
         id: json['id'] as int,
@@ -93,6 +112,11 @@ class RestaurantModel {
         totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
         distanceMiles: (json['distance_miles'] as num?)?.toDouble() ?? 0.0,
         isFavorited: json['is_favorited'] as bool? ?? false,
+        items: json['items'] != null
+            ? (json['items'] as List)
+                .map((e) => SearchDishModel.fromJson(e as Map<String, dynamic>))
+                .toList()
+            : null,
       );
 
   Map<String, dynamic> toMap() => {
@@ -103,6 +127,8 @@ class RestaurantModel {
         'distance': '${distanceMiles.toStringAsFixed(1)} mi',
         'coverUrl': coverUrl,
         'logoUrl': logoUrl,
+        'is_favorited': isFavorited,
+        'items': items?.map((e) => e.toMap()).toList(),
         'offer': null,
         'badge': null,
         'tagline': tagline,
@@ -140,6 +166,23 @@ class DashboardAddressModel {
         postcode: json['postcode'] as String,
         lat: (json['lat'] as num).toDouble(),
         lng: (json['lng'] as num).toDouble(),
+      );
+}
+
+class RestaurantsPageModel {
+  final List<RestaurantModel> restaurants;
+  final PaginationMeta meta;
+
+  const RestaurantsPageModel({required this.restaurants, required this.meta});
+
+  factory RestaurantsPageModel.fromJson(Map<String, dynamic> json) =>
+      RestaurantsPageModel(
+        restaurants: (json['restaurants'] as List? ?? [])
+            .map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        meta: json['meta'] != null
+            ? PaginationMeta.fromJson(json['meta'] as Map<String, dynamic>)
+            : PaginationMeta.empty,
       );
 }
 
@@ -201,25 +244,41 @@ class SearchRecentModel {
 class SearchDishModel {
   final int id;
   final String name;
+  final String? description;
   final double price;
   final double rating;
   final String? imageUrl;
+  final bool isVeg;
 
   const SearchDishModel({
     required this.id,
     required this.name,
+    this.description,
     required this.price,
     required this.rating,
     this.imageUrl,
+    this.isVeg = false,
   });
 
   factory SearchDishModel.fromJson(Map<String, dynamic> json) => SearchDishModel(
         id: (json['id'] as num?)?.toInt() ?? 0,
         name: json['name'] as String? ?? '',
+        description: json['description'] as String?,
         price: (json['price'] as num?)?.toDouble() ?? 0.0,
         rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
         imageUrl: json['image_url'] as String?,
+        isVeg: json['is_veg'] as bool? ?? false,
       );
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'price': price.toStringAsFixed(2),
+        'rating': rating.toStringAsFixed(1),
+        'image': imageUrl,
+        'is_veg': isVeg,
+      };
 }
 
 class SearchDishRestaurantModel {
@@ -266,24 +325,65 @@ class SearchResultModel {
   final List<RestaurantModel> restaurants;
   final List<SearchDishRestaurantModel> dishesByRestaurant;
   final List<SearchRecentModel> recent;
+  final PaginationMeta? pagination;
 
   const SearchResultModel({
     required this.keyword,
     required this.restaurants,
     required this.dishesByRestaurant,
     required this.recent,
+    this.pagination,
   });
 
-  factory SearchResultModel.fromJson(Map<String, dynamic> json) => SearchResultModel(
-        keyword: json['keyword'] as String? ?? '',
-        restaurants: (json['restaurants'] as List? ?? [])
-            .map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        dishesByRestaurant: (json['dishes_by_restaurant'] as List? ?? [])
-            .map((e) => SearchDishRestaurantModel.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        recent: (json['recent'] as List? ?? [])
-            .map((e) => SearchRecentModel.fromJson(e as Map<String, dynamic>))
-            .toList(),
+  factory SearchResultModel.fromJson(Map<String, dynamic> json) {
+    // New structure from log: data: { results: [...], pagination: {...}, recent: [...] }
+    final dataPart = json['data'];
+    if (dataPart is Map<String, dynamic>) {
+      final results = (dataPart['results'] as List? ?? [])
+          .map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final recent = (dataPart['recent'] as List? ?? [])
+          .map((e) => SearchRecentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      final pagination = dataPart['pagination'] != null
+          ? PaginationMeta.fromJson(dataPart['pagination'] as Map<String, dynamic>)
+          : null;
+      return SearchResultModel(
+        keyword: '',
+        restaurants: results,
+        dishesByRestaurant: [],
+        recent: recent,
+        pagination: pagination,
       );
+    }
+
+    // New structure from previous prompt: data: [...], pagination: {...}
+    if (json.containsKey('pagination')) {
+      final restaurants = (json['data'] as List? ?? [])
+          .map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return SearchResultModel(
+        keyword: '',
+        restaurants: restaurants,
+        dishesByRestaurant: [],
+        recent: [],
+        pagination: PaginationMeta.fromJson(json['pagination'] as Map<String, dynamic>),
+      );
+    }
+
+    // Legacy structure
+    final data = json['data'] is Map ? json['data'] : json;
+    return SearchResultModel(
+      keyword: data['keyword'] as String? ?? '',
+      restaurants: (data['restaurants'] as List? ?? [])
+          .map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      dishesByRestaurant: (data['dishes_by_restaurant'] as List? ?? [])
+          .map((e) => SearchDishRestaurantModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      recent: (data['recent'] as List? ?? [])
+          .map((e) => SearchRecentModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
 }

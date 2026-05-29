@@ -53,10 +53,21 @@ class CartRepository {
     }
   }
 
+  Future<ApiResponse<CheckoutModel>> getCheckout() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.customerCheckout);
+      final data = CheckoutModel.fromJson(response.data['data'] as Map<String, dynamic>);
+      return ApiResponse(success: true, message: '', data: data);
+    } catch (_) {
+      return ApiResponse(success: false, message: '', data: null);
+    }
+  }
+
   Future<ApiResponse<bool>> clearCart() async {
     try {
-      await _dio.delete(ApiEndpoints.customerCart);
-      return ApiResponse(success: true, message: '', data: true);
+      final response = await _dio.delete(ApiEndpoints.customerCart);
+      final msg = (response.data as Map?)?['message'] as String? ?? '';
+      return ApiResponse(success: true, message: msg, data: true);
     } catch (_) {
       return ApiResponse(success: false, message: '', data: false);
     }

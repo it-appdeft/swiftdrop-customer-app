@@ -16,8 +16,9 @@ class FavoritesRepository {
       final endpoint = type == FavoriteType.restaurant
           ? ApiEndpoints.favoriteRestaurant(id)
           : ApiEndpoints.favoriteMenuItem(id);
-      await _dio.post(endpoint);
-      return const ApiResponse(success: true, message: '', data: null);
+      final response = await _dio.post(endpoint);
+      final msg = (response.data as Map?)?['message'] as String? ?? '';
+      return ApiResponse(success: true, message: msg, data: null);
     } catch (e) {
       if (e is DioException && e.response != null) {
         final msg = (e.response!.data as Map?)?['message'] as String? ?? 'Something went wrong';
