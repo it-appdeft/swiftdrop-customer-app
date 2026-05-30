@@ -13,4 +13,5 @@ class StorageKeys {
   static const String settingPushNotifications = 'setting_push_notifications';
   static const String settingOrderUpdates = 'setting_order_updates';
   static const String settingPromotions = 'setting_promotions';
+  static const String selectedAddress = 'selected_address';
 }

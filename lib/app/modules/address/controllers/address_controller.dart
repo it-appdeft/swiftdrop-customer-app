@@ -232,11 +232,7 @@ class AddressController extends BaseController {
 
     try {
       final selected = savedAddresses.firstWhere((a) => a.id == id);
-      final home = Get.find<HomeController>();
-      final display = [selected.addressLine1, selected.city]
-          .where((s) => s.isNotEmpty)
-          .join(', ');
-      if (display.isNotEmpty) home.currentAddress.value = display;
+      await AuthService.to.saveSelectedAddress(selected);
     } catch (_) {}
 
     if (Get.key.currentState?.canPop() ?? false) {

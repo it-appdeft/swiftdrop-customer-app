@@ -355,7 +355,7 @@ class _PromoBannerSection extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (!controller.isLoading.value && controller.restaurants.isEmpty) {
+      if (controller.isLoading.value || controller.restaurants.isEmpty) {
         return const SizedBox.shrink();
       }
       return _buildBanners();

@@ -49,7 +49,17 @@ class HomeController extends BaseController {
     bannerPageController.addListener(_onBannerPage);
     scrollController = ScrollController();
     scrollController.addListener(_onScroll);
+    _syncSelectedAddress(AuthService.to.selectedAddress.value);
+    ever(AuthService.to.selectedAddress, _syncSelectedAddress);
     _initFlow();
+  }
+
+  void _syncSelectedAddress(AddressModel? addr) {
+    if (addr == null) return;
+    final display = [addr.addressLine1, addr.city]
+        .where((s) => s.isNotEmpty)
+        .join(', ');
+    if (display.isNotEmpty) currentAddress.value = display;
   }
 
   void _onBannerPage() {

@@ -123,8 +123,9 @@ class EditProfileController extends BaseController {
       await AuthService.to.saveSession(
         accessToken: StorageService.to.read<String>(StorageKeys.authToken) ??
             AppConfig.accessTokenKey,
-        user: result.data!,
+        user: result.data!.user,
       );
+      await AuthService.to.saveSelectedAddress(result.data!.selectedAddress);
     }
   }
 

@@ -30,5 +30,6 @@ class StorageService extends GetxService {
     await remove(StorageKeys.authToken);
     await remove(StorageKeys.refreshToken);
     await remove(StorageKeys.userData);
+    await remove(StorageKeys.selectedAddress);
   }
 }

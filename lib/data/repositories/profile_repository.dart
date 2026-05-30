@@ -3,15 +3,22 @@ import 'package:dio/dio.dart';
 import '../../app/network/api_endpoints.dart';
 import '../../app/network/dio_client.dart';
 import '../../app/utils/app_logger.dart';
+import '../models/address_model.dart';
 import '../models/api_response.dart';
 import '../models/deletion_reason.dart';
 import '../models/user_model.dart';
+
+class ProfileData {
+  final UserModel user;
+  final AddressModel? selectedAddress;
+  const ProfileData({required this.user, this.selectedAddress});
+}
 
 class ProfileRepository {
   final Dio _dio = DioClient.instance;
 
   /// GET /customer/profile
-  Future<ApiResponse<UserModel>> getProfile() async {
+  Future<ApiResponse<ProfileData>> getProfile() async {
     try {
       final response = await _dio.get(ApiEndpoints.customerProfile);
       final json = response.data as Map<String, dynamic>;
@@ -22,13 +29,17 @@ class ProfileRepository {
         '[PROFILE] getProfile ${success ? 'SUCCESS' : 'FAILED'} | status: ${response.statusCode}',
       );
       if (success && userJson != null) {
-        return ApiResponse<UserModel>(
+        final addrData = data?['selected_address'] as Map<String, dynamic>?;
+        return ApiResponse<ProfileData>(
           success: true,
           message: json['message'] as String? ?? '',
-          data: UserModel.fromJson(userJson),
+          data: ProfileData(
+            user: UserModel.fromJson(userJson),
+            selectedAddress: addrData != null ? AddressModel.fromJson(addrData) : null,
+          ),
         );
       }
-      return ApiResponse<UserModel>(
+      return ApiResponse<ProfileData>(
         success: false,
         message: json['message'] as String? ?? '',
       );
@@ -37,18 +48,18 @@ class ProfileRepository {
         '[PROFILE] getProfile FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data}',
       );
       if (_isNetworkError(e)) {
-        return const ApiResponse<UserModel>(
+        return const ApiResponse<ProfileData>(
           success: false,
           message: _offlineMessage,
         );
       }
-      return ApiResponse<UserModel>(
+      return ApiResponse<ProfileData>(
         success: false,
         message: _extractMessage(e) ?? '',
       );
     } catch (e) {
       AppLogger.w('[PROFILE] getProfile — unexpected error | $e');
-      return const ApiResponse<UserModel>(success: false, message: '');
+      return const ApiResponse<ProfileData>(success: false, message: '');
     }
   }
 

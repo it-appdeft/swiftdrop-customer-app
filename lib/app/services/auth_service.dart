@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:get/get.dart';
+import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../constants/storage_keys.dart';
@@ -11,6 +12,7 @@ class AuthService extends GetxService {
   static AuthService get to => Get.find();
 
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
+  final Rx<AddressModel?> selectedAddress = Rx<AddressModel?>(null);
 
   bool get isAuthenticated => StorageService.to.isLoggedIn;
 
@@ -18,6 +20,7 @@ class AuthService extends GetxService {
   void onInit() {
     super.onInit();
     _loadStoredUser();
+    _loadStoredAddress();
   }
 
   void _loadStoredUser() {
@@ -28,6 +31,17 @@ class AuthService extends GetxService {
       }
     } catch (e) {
       AppLogger.w('Failed to load stored user', e);
+    }
+  }
+
+  void _loadStoredAddress() {
+    try {
+      final addrJson = StorageService.to.read<String>(StorageKeys.selectedAddress);
+      if (addrJson != null && addrJson.isNotEmpty) {
+        selectedAddress.value = AddressModel.fromJson(jsonDecode(addrJson));
+      }
+    } catch (e) {
+      AppLogger.w('Failed to load stored address', e);
     }
   }
 
@@ -44,6 +58,19 @@ class AuthService extends GetxService {
     currentUser.value = user;
   }
 
+  Future<void> saveSelectedAddress(AddressModel? address) async {
+    if (address == null) {
+      await StorageService.to.remove(StorageKeys.selectedAddress);
+      selectedAddress.value = null;
+      return;
+    }
+    await StorageService.to.write(
+      StorageKeys.selectedAddress,
+      jsonEncode(address.toJson()),
+    );
+    selectedAddress.value = address;
+  }
+
   Future<void> logout() async {
     try {
       await AuthRepository().logout();
@@ -53,5 +80,6 @@ class AuthService extends GetxService {
     await StorageService.to.clearAuth();
     DioClient.reset();
     currentUser.value = null;
+    selectedAddress.value = null;
   }
 }

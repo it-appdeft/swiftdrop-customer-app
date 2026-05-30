@@ -47,6 +47,21 @@ class AddressModel {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        'address_line_1': addressLine1,
+        'address_line_2': addressLine2,
+        'city': city,
+        'county': county,
+        'postcode': postcode,
+        'lat': lat.toString(),
+        'lng': lng.toString(),
+        'is_default': isDefault,
+        'is_selected': isSelected,
+        'delivery_instructions': deliveryInstructions,
+      };
+
   AddressModel copyWith({
     String? id,
     String? label,
