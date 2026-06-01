@@ -50,9 +50,9 @@ class CartApiItem {
         menuItemId: (json['menu_item_id'] as num).toInt(),
         name: json['name'] as String,
         isVeg: json['is_veg'] as bool? ?? true,
-        imageUrl: json['image_url'] as String?,
-        unitPrice: (json['unit_price'] as num).toDouble(),
-        quantity: (json['quantity'] as num).toInt(),
+        imageUrl: (json['image_url'] ?? json['image']) as String?,
+        unitPrice: (json['unit_price'] as num?)?.toDouble() ?? 0.0,
+        quantity: (json['quantity'] as num?)?.toInt() ?? 0,
         lineTotal: (json['line_total'] as num?)?.toDouble() ?? 0.0,
         modifiers: (json['modifiers'] as List? ?? [])
             .map((e) => CartApiModifier.fromJson(e as Map<String, dynamic>))

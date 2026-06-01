@@ -1,5 +1,6 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../controllers/search_controller.dart';
 
@@ -8,12 +9,16 @@ class SearchView extends GetView<SearchTabController> {
 
   @override
   Widget build(BuildContext context) {
+    final cartController = Get.find<CartController>();
+
     return Scaffold(
       backgroundColor: AppColors.buttonLabel,
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // _SearchRow is a direct, static child of this Column — never
             // inside any Obx — so its TextField element is never touched
             // by reactive rebuilds, keeping focus and keystrokes intact.
@@ -74,7 +79,9 @@ class SearchView extends GetView<SearchTabController> {
             ),
           ],
         ),
-      ),
+      ],
+    ),
+  ),
     );
   }
 }
@@ -277,13 +284,13 @@ class _ResultTabs extends GetView<SearchTabController> {
         padding: const EdgeInsets.symmetric(horizontal: 0),
         child: Row(
           children: [
-            _TabItem(
+            AppTabItem(
               label: 'Restaurants',
               isSelected: controller.selectedTabIndex.value == 0,
               onTap: () => controller.selectedTabIndex.value = 0,
             ),
             const SizedBox(width: 16),
-            _TabItem(
+            AppTabItem(
               label: 'Items',
               isSelected: controller.selectedTabIndex.value == 1,
               onTap: () => controller.selectedTabIndex.value = 1,
@@ -295,42 +302,8 @@ class _ResultTabs extends GetView<SearchTabController> {
   }
 }
 
-class _TabItem extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  const _TabItem({required this.label, required this.isSelected, required this.onTap});
+// Remove _TabItem class since we now use AppTabItem
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: IntrinsicWidth(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                  color: isSelected ? AppColors.lightSurfaceDarkText : AppColors.navyMedium,
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              height: 2,
-              width: double.infinity,
-              color: isSelected ? AppColors.lightSurfaceDarkText : Colors.transparent,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _FilterRow extends GetView<SearchTabController> {
   @override
@@ -427,9 +400,38 @@ class _SearchResultsList extends GetView<SearchTabController> {
       if (isRestaurantsTab) {
         final list = controller.restaurantResults;
         final showLoader = controller.isLoadingMore.value || controller.hasMoreRestaurants.value;
+        return Obx(() {
+          final hasCart = Get.find<CartController>().cartItemCount.value > 0;
+          return ListView.builder(
+            controller: controller.scrollController,
+            padding: EdgeInsets.fromLTRB(16, 0, 16, hasCart ? 120 : 20),
+            itemCount: list.length + (showLoader ? 1 : 0),
+            itemBuilder: (_, i) {
+              if (i == list.length) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: controller.isLoadingMore.value
+                      ? const AppLoader()
+                      : const SizedBox.shrink(),
+                );
+              }
+              return RestaurantCard(
+                restaurant: list[i],
+                searchQuery: controller.searchQuery.value,
+                onFavoriteTap: () => controller.toggleRestaurantFavorite(list[i]['id']),
+              );
+            },
+          );
+        });
+      }
+
+      final list = controller.itemResults;
+      final showLoader = controller.isLoadingMore.value || controller.hasMoreItems.value;
+      return Obx(() {
+        final hasCart = Get.find<CartController>().cartItemCount.value > 0;
         return ListView.builder(
           controller: controller.scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          padding: EdgeInsets.only(bottom: hasCart ? 150 : 40),
           itemCount: list.length + (showLoader ? 1 : 0),
           itemBuilder: (_, i) {
             if (i == list.length) {
@@ -440,36 +442,13 @@ class _SearchResultsList extends GetView<SearchTabController> {
                     : const SizedBox.shrink(),
               );
             }
-            return RestaurantCard(
-              restaurant: list[i],
+            return RestaurantWithItems(
+              data: list[i],
               searchQuery: controller.searchQuery.value,
-              onFavoriteTap: () => controller.toggleRestaurantFavorite(list[i]['id']),
             );
           },
         );
-      }
-
-      final list = controller.itemResults;
-      final showLoader = controller.isLoadingMore.value || controller.hasMoreItems.value;
-      return ListView.builder(
-        controller: controller.scrollController,
-        padding: const EdgeInsets.only(bottom: 150),
-        itemCount: list.length + (showLoader ? 1 : 0),
-        itemBuilder: (_, i) {
-          if (i == list.length) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: controller.isLoadingMore.value
-                  ? const AppLoader()
-                  : const SizedBox.shrink(),
-            );
-          }
-          return RestaurantWithItems(
-            data: list[i],
-            searchQuery: controller.searchQuery.value,
-          );
-        },
-      );
+      });
     });
   }
 }

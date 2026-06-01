@@ -29,6 +29,8 @@ import '../modules/edit_profile/views/delete_account_reason_view.dart';
 import '../modules/edit_profile/views/edit_entry_view.dart';
 import '../modules/edit_profile/views/edit_otp_view.dart';
 import '../modules/edit_profile/views/edit_profile_view.dart';
+import '../modules/favorites/bindings/favorites_binding.dart';
+import '../modules/favorites/views/favorites_view.dart';
 import '../modules/notifications/bindings/notifications_binding.dart';
 import '../modules/notifications/views/notifications_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
@@ -234,6 +236,12 @@ class AppPages {
       name: AppRoutes.coupons,
       page: () => const CouponsView(),
       binding: CartBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.favorites,
+      page: () => const FavoritesView(),
+      binding: FavoritesBinding(),
       middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
     ),
     GetPage(

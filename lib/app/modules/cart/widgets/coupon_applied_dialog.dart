@@ -2,7 +2,7 @@ import 'package:swiftdrop_customer_app/export.dart';
 import '../controllers/cart_controller.dart';
 
 class CouponAppliedDialog extends StatelessWidget {
-  final Coupon coupon;
+  final CheckoutCoupon coupon;
   final CartController controller;
 
   const CouponAppliedDialog({
@@ -11,7 +11,7 @@ class CouponAppliedDialog extends StatelessWidget {
     required this.controller,
   });
 
-  static void show(BuildContext context, Coupon coupon, CartController controller) {
+  static void show(BuildContext context, CheckoutCoupon coupon, CartController controller) {
     Get.dialog(
       CouponAppliedDialog(coupon: coupon, controller: controller),
       barrierDismissible: false,
@@ -73,7 +73,7 @@ class CouponAppliedDialog extends StatelessWidget {
                   const Icon(Icons.stars, color: AppColors.primary, size: 16),
                   const SizedBox(width: 4),
                   Text(
-                    coupon.title,
+                    coupon.title ?? coupon.headline,
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -104,7 +104,7 @@ class CouponAppliedDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${coupon.offerAmount} applied',
+                    '${coupon.headline} applied',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -132,9 +132,8 @@ class CouponAppliedDialog extends StatelessWidget {
             AppButton(
               label: 'Yah!',
               onTap: () {
-                controller.applyCoupon();
-                Get.back();
-                Get.back();
+                Get.back(); // Close Dialog
+                Get.back(); // Go back from CouponsView to CartView
               },
             ),
           ],

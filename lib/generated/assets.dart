@@ -60,6 +60,9 @@ class $AssetsImagesGen {
   final AssetGenImage currentLocation = const AssetGenImage(
     'assets/images/currentLocation.png',
   );
+  final AssetGenImage delivered = const AssetGenImage(
+    'assets/images/delivered.png',
+  );
   final AssetGenImage favourite = const AssetGenImage(
     'assets/images/favourite.png',
   );

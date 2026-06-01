@@ -64,6 +64,8 @@ class MenuItemModel {
   final String? imageUrl;
   final double rating;
   final bool isFavorited;
+  final int cartQuantity;
+  final bool isInCart;
   final List<ModifierGroupModel> modifierGroups;
 
   const MenuItemModel({
@@ -75,6 +77,8 @@ class MenuItemModel {
     this.imageUrl,
     required this.rating,
     required this.isFavorited,
+    this.cartQuantity = 0,
+    this.isInCart = false,
     required this.modifierGroups,
   });
 
@@ -87,6 +91,8 @@ class MenuItemModel {
         imageUrl: json['image_url'] as String?,
         rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
         isFavorited: json['is_favorited'] as bool? ?? false,
+        cartQuantity: (json['cart_quantity'] as num?)?.toInt() ?? 0,
+        isInCart: json['is_in_cart'] as bool? ?? false,
         modifierGroups: (json['modifier_groups'] as List? ?? [])
             .map((e) => ModifierGroupModel.fromJson(e as Map<String, dynamic>))
             .toList(),
@@ -101,6 +107,8 @@ class MenuItemModel {
         imageUrl: imageUrl,
         rating: rating,
         isFavorited: isFavorited ?? this.isFavorited,
+        cartQuantity: cartQuantity,
+        isInCart: isInCart,
         modifierGroups: modifierGroups,
       );
 
@@ -113,8 +121,31 @@ class MenuItemModel {
         'image': imageUrl,
         'rating': rating.toStringAsFixed(1),
         'isFavorited': isFavorited,
+        'cart_quantity': cartQuantity,
+        'is_in_cart': isInCart,
         'modifier_groups': modifierGroups,
       };
+}
+
+class MenuCategoryModel {
+  final int id;
+  final String name;
+  final List<MenuItemModel> items;
+
+  const MenuCategoryModel({
+    required this.id,
+    required this.name,
+    required this.items,
+  });
+
+  factory MenuCategoryModel.fromJson(Map<String, dynamic> json) =>
+      MenuCategoryModel(
+        id: (json['id'] as num).toInt(),
+        name: json['name'] as String,
+        items: (json['items'] as List? ?? [])
+            .map((e) => MenuItemModel.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
 }
 
 class RestaurantDetailInfoModel {
@@ -196,15 +227,13 @@ class RestaurantDetailInfoModel {
 class RestaurantDetailModel {
   final RestaurantDetailInfoModel restaurant;
   final String keyword;
-  final List<MenuItemModel> menu;
-  final PaginationMeta menuMeta;
+  final List<MenuCategoryModel> categories;
   final List<MenuItemModel> recommended;
 
   const RestaurantDetailModel({
     required this.restaurant,
     required this.keyword,
-    required this.menu,
-    required this.menuMeta,
+    required this.categories,
     required this.recommended,
   });
 
@@ -213,12 +242,9 @@ class RestaurantDetailModel {
         restaurant: RestaurantDetailInfoModel.fromJson(
             json['restaurant'] as Map<String, dynamic>),
         keyword: json['keyword'] as String? ?? '',
-        menu: (json['menu'] as List? ?? [])
-            .map((e) => MenuItemModel.fromJson(e as Map<String, dynamic>))
+        categories: (json['categories'] as List? ?? [])
+            .map((e) => MenuCategoryModel.fromJson(e as Map<String, dynamic>))
             .toList(),
-        menuMeta: json['menu_meta'] != null
-            ? PaginationMeta.fromJson(json['menu_meta'] as Map<String, dynamic>)
-            : PaginationMeta.empty,
         recommended: (json['recommended'] as List? ?? [])
             .map((e) => MenuItemModel.fromJson(e as Map<String, dynamic>))
             .toList(),

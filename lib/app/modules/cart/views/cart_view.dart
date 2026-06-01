@@ -107,7 +107,10 @@ class CartView extends GetView<CartController> {
                     Align(
                       alignment: Alignment.center,
                       child: GestureDetector(
-                        onTap: () => Get.toNamed(AppRoutes.address),
+                        onTap: () => Get.toNamed(AppRoutes.address)?.then((_) {
+                          controller.fetchCheckout();
+                          controller.fetchCart();
+                        }),
                         child: Text(
                           hasAddress ? 'Change' : 'Add address',
                           style: GoogleFonts.inter(
@@ -289,42 +292,72 @@ class CartView extends GetView<CartController> {
   }
 
   Widget _buildQuantitySelector(CartItem item) {
-    return Container(
-      width: 112,
-      height: 40,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F3F7),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildQtyBtn(Assets.images.cartMinus, () => controller.decrementItem(item.id)),
-          Obx(() => Text(
-                '${item.quantity.value}',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.lightSurfaceDarkText,
-                ),
-              )),
-          _buildQtyBtn(Assets.images.cartPlus, () => controller.addItem(item.id), isAdd: true),
-        ],
-      ),
-    );
+    return Obx(() {
+      final isPlusLoading = controller.loadingButtons.contains("${item.menuItemId}-plus");
+      final isMinusLoading = controller.loadingButtons.contains("${item.menuItemId}-minus");
+      
+      return Container(
+        width: 112,
+        height: 40,
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF3F3F7),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildQtyBtn(
+              Assets.images.cartMinus,
+              () => controller.decrementItem(item.id),
+              isLoading: isMinusLoading,
+            ),
+            Text(
+              '${item.quantity.value}',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.lightSurfaceDarkText,
+              ),
+            ),
+            _buildQtyBtn(
+              Assets.images.cartPlus,
+              () => controller.addItem(item.id),
+              isAdd: true,
+              isLoading: isPlusLoading,
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap, {bool isAdd = false}) {
+  Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap,
+      {bool isAdd = false, bool isLoading = false}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(0),
-        child: icon.image(
-          width: 32,
-          height: 32,
-        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 32,
+                height: 32,
+                child: Center(
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              )
+            : icon.image(
+                width: 32,
+                height: 32,
+              ),
       ),
     );
   }
@@ -466,16 +499,26 @@ class CartView extends GetView<CartController> {
                   ),
                   Obx(() {
                     final canSave = controller.cookingRequestTemp.value.trim().isNotEmpty;
+                    final isSaving = controller.isSavingCookingRequest.value;
                     return GestureDetector(
-                      onTap: canSave ? controller.saveCookingRequest : null,
-                      child: Text(
-                        'Save',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: canSave ? AppColors.primary : AppColors.lightSurfaceDisabled,
-                        ),
-                      ),
+                      onTap: (canSave && !isSaving) ? controller.saveCookingRequest : null,
+                      child: isSaving
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.primary,
+                              ),
+                            )
+                          : Text(
+                              'Save',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: canSave ? AppColors.primary : AppColors.lightSurfaceDisabled,
+                              ),
+                            ),
                     );
                   }),
                 ],
@@ -857,8 +900,7 @@ class CartView extends GetView<CartController> {
         child: AppButton(
           label: 'Place Order',
           onTap: () {
-            controller.clearCart();
-            Get.toNamed(AppRoutes.orderSuccess);
+            controller.placeOrder();
           },
         ),
       ),

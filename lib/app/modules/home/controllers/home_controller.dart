@@ -19,6 +19,7 @@ class HomeController extends BaseController {
 
   int _restaurantsPage = 1;
   int? _selectedFoodItemId;
+  bool _isInitialized = false;
 
   void selectCategory(int index, int foodItemId) {
     if (selectedCategoryIndex.value == index) {
@@ -30,7 +31,7 @@ class HomeController extends BaseController {
     }
     restaurants.clear();
     hasMoreRestaurants.value = false;
-    _reloadRestaurants();
+    Future.wait([_reloadRestaurants(), _reloadTopPicks()]);
   }
 
   void _onScroll() {
@@ -55,11 +56,27 @@ class HomeController extends BaseController {
   }
 
   void _syncSelectedAddress(AddressModel? addr) {
-    if (addr == null) return;
+    if (addr == null) {
+      currentAddress.value = 'Select Location';
+      return;
+    }
     final display = [addr.addressLine1, addr.city]
         .where((s) => s.isNotEmpty)
         .join(', ');
-    if (display.isNotEmpty) currentAddress.value = display;
+    if (display.isNotEmpty) {
+      final oldAddress = currentAddress.value;
+      currentAddress.value = display;
+      
+      // If we already had an address and it changed, refresh everything
+      if (oldAddress != 'Select Location' && oldAddress != display) {
+        refresh();
+      } 
+      // If we didn't have an address (Select Location) but now we do, 
+      // and the dashboard is empty, load it.
+      else if (oldAddress == 'Select Location' && _isInitialized && restaurants.isEmpty) {
+        _loadDashboard();
+      }
+    }
   }
 
   void _onBannerPage() {
@@ -79,9 +96,11 @@ class HomeController extends BaseController {
     } else {
       Get.toNamed(AppRoutes.address, arguments: {'permissionDenied': true});
     }
+    _isInitialized = true;
   }
 
   Future<void> _loadDashboard() async {
+    if (isLoading.value) return;
     await runAsync(() async {
       final results = await Future.wait<dynamic>([
         _repo.getFoodItems(),
@@ -118,6 +137,14 @@ class HomeController extends BaseController {
         _restaurantsPage = page.meta.currentPage;
       }
     });
+  }
+
+  Future<void> _reloadTopPicks() async {
+    topPickRestaurants.clear();
+    final result = await _repo.getTopPicks(foodItemId: _selectedFoodItemId);
+    if (result.success && result.data != null) {
+      topPickRestaurants.value = result.data!;
+    }
   }
 
   Future<void> _loadMoreRestaurants() async {

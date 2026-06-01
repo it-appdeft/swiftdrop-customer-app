@@ -5,6 +5,7 @@ import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../controllers/profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -12,6 +13,8 @@ class ProfileView extends GetView<ProfileController> {
 
   @override
   Widget build(BuildContext context) {
+    final cartController = Get.find<CartController>();
+
     return Scaffold(
       backgroundColor: AppColors.offWhite,
       appBar: AppBar(
@@ -24,22 +27,25 @@ class ProfileView extends GetView<ProfileController> {
         backgroundColor: AppColors.primary,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingMd,
-          AppDimensions.paddingMd,
-          AppDimensions.paddingMd,
-          150, // Bottom padding to account for floating bottom nav
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: AppDimensions.gapSm),
-            _ProfileCard(),
-            const SizedBox(height: AppDimensions.gapLg),
-            _MenuList(),
-          ],
-        ),
-      ),
+      body: Obx(() {
+        final hasCart = cartController.cartItemCount.value > 0;
+        return SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            AppDimensions.paddingMd,
+            AppDimensions.paddingMd,
+            AppDimensions.paddingMd,
+            hasCart ? 200 : 150, // Increased bottom padding if cart view is visible
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: AppDimensions.gapSm),
+              _ProfileCard(),
+              const SizedBox(height: AppDimensions.gapLg),
+              _MenuList(),
+            ],
+          ),
+        );
+      }),
     );
   }
 }
@@ -155,8 +161,8 @@ class _MenuList extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     void comingSoon() => AppUtils.showInfo('Feature coming soon.');
     final items = [
-      _MenuItemData(icon: Icons.location_on_outlined,   label: 'Saved Address',      onTap: comingSoon),
-      _MenuItemData(icon: Icons.favorite_border_rounded, label: 'Favorites',          onTap: comingSoon),
+      _MenuItemData(icon: Icons.location_on_outlined,   label: 'Saved Address',      onTap: controller.navigateToAddress),
+      _MenuItemData(icon: Icons.favorite_border_rounded, label: 'Favorites',          onTap: controller.navigateToFavorites),
       _MenuItemData(icon: Icons.credit_card_outlined,    label: 'Payments',           onTap: comingSoon),
       _MenuItemData(icon: Icons.settings_outlined,       label: 'Settings',           onTap: controller.navigateToSettings),
       _MenuItemData(icon: Icons.privacy_tip_outlined,    label: 'Privacy Policy',     onTap: comingSoon),

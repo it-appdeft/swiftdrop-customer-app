@@ -19,9 +19,14 @@ class HomeRepository {
     }
   }
 
-  Future<ApiResponse<List<RestaurantModel>>> getTopPicks() async {
+  Future<ApiResponse<List<RestaurantModel>>> getTopPicks({int? foodItemId}) async {
     try {
-      final response = await _dio.get(ApiEndpoints.customerTopPicks);
+      final params = <String, dynamic>{};
+      if (foodItemId != null) params['food_item_id'] = foodItemId;
+      final response = await _dio.get(
+        ApiEndpoints.customerTopPicks,
+        queryParameters: params.isEmpty ? null : params,
+      );
       final list = (response.data['data'] as List)
           .map((e) => RestaurantModel.fromJson(e as Map<String, dynamic>))
           .toList();

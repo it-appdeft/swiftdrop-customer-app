@@ -90,19 +90,41 @@ class DeliveryAddressController extends GetxController {
         queryParameters: {
           'place_id': place.placeId,
           'key': AppConfig.googleMapsApiKey,
-          'fields': 'geometry,name,formatted_address',
+          'fields': 'geometry,name,formatted_address,address_components',
           'language': 'en',
         },
       );
       if (response.data['status'] != 'OK') return;
       final result = response.data['result'] as Map<String, dynamic>;
       final loc = (result['geometry'] as Map)['location'] as Map;
+      final components = result['address_components'] as List? ?? [];
+
+      String city = '';
+      String county = '';
+      String postcode = '';
+      for (final c in components) {
+        final types = c['types'] as List;
+        if (city.isEmpty &&
+            (types.contains('locality') || types.contains('postal_town'))) {
+          city = c['long_name'] as String;
+        }
+        if (county.isEmpty && types.contains('country')) {
+          county = c['long_name'] as String;
+        }
+        if (postcode.isEmpty && types.contains('postal_code')) {
+          postcode = c['long_name'] as String;
+        }
+      }
+
       final address = place.secondaryText.isNotEmpty
           ? place.secondaryText
           : result['formatted_address'] as String? ?? '';
       Get.back(result: {
         'name': place.mainText,
         'address': address,
+        'city': city,
+        'county': county,
+        'postcode': postcode,
         'lat': (loc['lat'] as num).toDouble(),
         'lng': (loc['lng'] as num).toDouble(),
       });

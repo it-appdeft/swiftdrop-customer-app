@@ -39,73 +39,111 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
   }
 
   Widget _buildCounter(CartController cart, int qty) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () => cart.decrementCartItem(_itemId),
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Assets.images.minus.image(width: 24, height: 24),
+    return Obx(() {
+      final isLoading = cart.loadingItems.contains(_itemId);
+      if (isLoading) {
+        return const Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '$qty',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: AppColors.primary,
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () => cart.decrementCartItem(_itemId),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Assets.images.minus.image(width: 24, height: 24),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () {
-            if (_hasModifiers) {
-              final mods = _cart?.getModifiersForItem(_itemId);
-              showProductAddonsSheet(widget.item, existingModifiers: mods);
-            } else {
-              _cart?.incrementCartItem(_itemId);
-            }
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Assets.images.plus.image(width: 24, height: 24),
+          const SizedBox(width: 8),
+          Text(
+            '$qty',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.primary,
+            ),
           ),
-        ),
-      ],
-    );
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              if (_hasModifiers) {
+                final mods = _cart?.getModifiersForItem(_itemId);
+                showProductAddonsSheet(widget.item, existingModifiers: mods);
+              } else {
+                _cart?.incrementCartItem(_itemId);
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Assets.images.plus.image(width: 24, height: 24),
+            ),
+          ),
+        ],
+      );
+    });
   }
 
   Widget _buildAddButton() {
-    return GestureDetector(
-      onTap: () {
-        if (_hasModifiers) {
-          showProductAddonsSheet(widget.item);
-        } else {
-          try {
-            Get.find<CartController>().addToCartApi(_itemId, [], 1);
-            Get.find<RestaurantDetailController>()
-                .showCartFloatingBar
-                .value = true;
-          } catch (_) {}
-        }
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Center(
-        child: Text(
-          'ADD',
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: AppColors.primary,
+    return Obx(() {
+      final isLoading = _cart?.loadingItems.contains(_itemId) ?? false;
+      if (isLoading) {
+        return const Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+        );
+      }
+      return GestureDetector(
+        onTap: () {
+          if (_hasModifiers) {
+            showProductAddonsSheet(widget.item);
+          } else {
+            try {
+              int? rId = widget.item['restaurant_id'] as int?;
+              if (rId == null) {
+                try {
+                  rId = Get.find<RestaurantDetailController>().restaurantId;
+                } catch (_) {}
+              }
+
+              Get.find<CartController>().addToCartApi(_itemId, [], 1, restaurantId: rId).then((result) {
+                if (result.success) {
+                  Get.find<RestaurantDetailController>().showCartFloatingBar.value = true;
+                }
+              });
+            } catch (_) {}
+          }
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: Text(
+            'ADD',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   @override

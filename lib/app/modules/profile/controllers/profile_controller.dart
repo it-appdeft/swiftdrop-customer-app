@@ -110,4 +110,6 @@ class ProfileController extends BaseController {
 
   void navigateToSettings() => Get.toNamed(AppRoutes.settings);
   void navigateToEditProfile() => Get.toNamed(AppRoutes.editProfile);
+  void navigateToAddress() => Get.toNamed(AppRoutes.address);
+  void navigateToFavorites() => Get.toNamed(AppRoutes.favorites);
 }

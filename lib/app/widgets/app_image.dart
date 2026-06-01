@@ -27,7 +27,7 @@ class AppImage extends StatelessWidget {
 
     try {
       final uri = Uri.parse(base);
-      final origin = '${uri.scheme}://${uri.host}';
+      final origin = '${uri.scheme}://${uri.authority}';
       final cleanPath = path.startsWith('/') ? path : '/$path';
       return '$origin$cleanPath';
     } catch (_) {

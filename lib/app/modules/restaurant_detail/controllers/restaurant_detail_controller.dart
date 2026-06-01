@@ -9,13 +9,17 @@ class RestaurantDetailController extends BaseController {
   RestaurantDetailController(this._repo, this._favRepo, [this._overrideId]);
 
   final Rx<RestaurantDetailInfoModel?> restaurantInfo = Rx(null);
-  final RxList<MenuItemModel> menuItems = <MenuItemModel>[].obs;
-  final RxBool hasMoreMenu = false.obs;
+  final RxList<MenuCategoryModel> categories = <MenuCategoryModel>[].obs;
+  final RxList<MenuItemModel> recommended = <MenuItemModel>[].obs;
+  final RxSet<int> collapsedCategories = <int>{}.obs;
   final RxBool isFavorited = false.obs;
+  final RxBool isScrolled = false.obs;
+  final RxBool showStickyName = false.obs;
 
   int _restaurantId = 0;
-  int _menuPage = 1;
+  int get restaurantId => _restaurantId;
   Timer? _searchDebounce;
+  final scrollController = ScrollController();
 
   final searchController = TextEditingController();
   final RxString searchQuery = ''.obs;
@@ -42,7 +46,26 @@ class RestaurantDetailController extends BaseController {
       searchController.text = q;
     }
     if (id > 0) _loadDetail(id, search: q.isEmpty ? null : q);
-    _refreshCart();
+    
+    scrollController.addListener(() {
+      final offset = scrollController.offset;
+      
+      // We unify the sticky header state. 
+      // 250px is roughly when the restaurant card's title starts getting hidden.
+      if (offset > 250) {
+        if (!isScrolled.value) isScrolled.value = true;
+        if (!showStickyName.value) showStickyName.value = true;
+      } else {
+        if (isScrolled.value) isScrolled.value = false;
+        if (showStickyName.value) showStickyName.value = false;
+      }
+    });
+
+    // Initial check for cart bar
+    try {
+      final cart = Get.find<CartController>();
+      if (cart.cartItemCount.value > 0) showCartFloatingBar.value = true;
+    } catch (_) {}
 
     ever(searchQuery, (_) {
       _searchDebounce?.cancel();
@@ -51,6 +74,13 @@ class RestaurantDetailController extends BaseController {
   }
 
   void searchNow() {
+    _searchDebounce?.cancel();
+    _reloadWithFilters();
+  }
+
+  void clearQuery() {
+    searchController.clear();
+    searchQuery.value = '';
     _searchDebounce?.cancel();
     _reloadWithFilters();
   }
@@ -88,19 +118,80 @@ class RestaurantDetailController extends BaseController {
     }
   }
 
+  void toggleCategory(int categoryId) {
+    if (collapsedCategories.contains(categoryId)) {
+      collapsedCategories.remove(categoryId);
+    } else {
+      collapsedCategories.add(categoryId);
+    }
+  }
+
   Future<void> toggleItemFavorite(int itemId) async {
-    final idx = menuItems.indexWhere((m) => m.id == itemId);
-    if (idx == -1) return;
-    final prev = menuItems[idx].isFavorited;
-    menuItems[idx] = menuItems[idx].copyWith(isFavorited: !prev);
+    // Helper to update favorite status in a list of items
+    List<MenuItemModel> updateList(List<MenuItemModel> list, int id, bool status) {
+      final idx = list.indexWhere((m) => m.id == id);
+      if (idx == -1) return list;
+      final newList = List<MenuItemModel>.from(list);
+      newList[idx] = newList[idx].copyWith(isFavorited: status);
+      return newList;
+    }
+
+    // Find current status
+    bool? currentStatus;
+    for (var cat in categories) {
+      final item = cat.items.firstWhereOrNull((m) => m.id == itemId);
+      if (item != null) {
+        currentStatus = item.isFavorited;
+        break;
+      }
+    }
+    if (currentStatus == null) {
+      final item = recommended.firstWhereOrNull((m) => m.id == itemId);
+      if (item != null) currentStatus = item.isFavorited;
+    }
+
+    if (currentStatus == null) return;
+    final nextStatus = !currentStatus;
+
+    // Optimistically update all occurrences
+    // Update categories
+    for (int i = 0; i < categories.length; i++) {
+      final items = categories[i].items;
+      if (items.any((m) => m.id == itemId)) {
+        categories[i] = MenuCategoryModel(
+          id: categories[i].id,
+          name: categories[i].name,
+          items: updateList(items, itemId, nextStatus),
+        );
+      }
+    }
+    // Update recommended
+    if (recommended.any((m) => m.id == itemId)) {
+      recommended.value = updateList(recommended, itemId, nextStatus);
+    }
+
     final result = await _favRepo.toggleFavorite(
       FavoriteType.menuItem,
       itemId,
     );
-    if (result.success) {
-      if (result.message.isNotEmpty) AppUtils.showSuccess(result.message);
-    } else {
-      menuItems[idx] = menuItems[idx].copyWith(isFavorited: prev);
+
+    if (!result.success) {
+      // Revert if failed
+      for (int i = 0; i < categories.length; i++) {
+        final items = categories[i].items;
+        if (items.any((m) => m.id == itemId)) {
+          categories[i] = MenuCategoryModel(
+            id: categories[i].id,
+            name: categories[i].name,
+            items: updateList(items, itemId, currentStatus),
+          );
+        }
+      }
+      if (recommended.any((m) => m.id == itemId)) {
+        recommended.value = updateList(recommended, itemId, currentStatus);
+      }
+    } else if (result.message.isNotEmpty) {
+      AppUtils.showSuccess(result.message);
     }
   }
 
@@ -116,22 +207,12 @@ class RestaurantDetailController extends BaseController {
     }
   }
 
-  void _refreshCart() {
-    try {
-      final cart = Get.find<CartController>();
-      cart.fetchCart().then((_) {
-        if (cart.items.isNotEmpty) showCartFloatingBar.value = true;
-      });
-    } catch (_) {}
-  }
-
   Future<void> _loadDetail(
     int id, {
     String? search,
     String? diet,
     bool minRating4 = false,
   }) async {
-    _menuPage = 1;
     await runAsync(() async {
       final result = await _repo.getRestaurantDetail(
         id,
@@ -143,41 +224,34 @@ class RestaurantDetailController extends BaseController {
       if (result.success && result.data != null) {
         final data = result.data!;
         restaurantInfo.value = data.restaurant;
-        menuItems.value = data.menu;
-        hasMoreMenu.value = data.menuMeta.hasNextPage;
+        categories.value = data.categories;
+        recommended.value = data.recommended;
         isFavorited.value = data.restaurant.isFavorited;
+
+        // Sync initial quantities with CartController
+        try {
+          final cart = Get.find<CartController>();
+          for (var category in data.categories) {
+            for (var item in category.items) {
+              if (item.isInCart) {
+                cart.quantities[item.id] = item.cartQuantity;
+              } else {
+                cart.quantities.remove(item.id);
+              }
+            }
+          }
+        } catch (_) {}
       }
     });
   }
 
-  Future<void> loadMoreMenu() async {
-    if (!hasMoreMenu.value || isLoadingMore.value) return;
-    isLoadingMore.value = true;
-    try {
-      _menuPage++;
-      final q = searchQuery.value.trim();
-      final result = await _repo.getRestaurantDetail(
-        _restaurantId,
-        search: q.isEmpty ? null : q,
-        diet: _activeDiet,
-        minRating4: isRatingsSelected.value,
-        page: _menuPage,
-      );
-      if (result.success && result.data != null) {
-        menuItems.addAll(result.data!.menu);
-        hasMoreMenu.value = result.data!.menuMeta.hasNextPage;
-      } else {
-        _menuPage--;
-      }
-    } finally {
-      isLoadingMore.value = false;
-    }
-  }
+  // Removed loadMoreMenu as the new data structure doesn't support flat menu pagination
 
   @override
   void onClose() {
     _searchDebounce?.cancel();
     searchController.dispose();
+    scrollController.dispose();
     super.onClose();
   }
 }

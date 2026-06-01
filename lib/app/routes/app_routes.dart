@@ -33,5 +33,6 @@ abstract class AppRoutes {
   static const String mapPicker = '/map-picker';
   static const String addressDetails = '/address-details';
   static const String coupons = '/coupons';
+  static const String favorites = '/favorites';
   static const String orderSuccess = '/order-success';
 }

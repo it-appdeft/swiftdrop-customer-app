@@ -29,6 +29,7 @@ class CheckoutBill {
 }
 
 class CheckoutCoupon {
+  final int id;
   final String code;
   final String? title;
   final String? description;
@@ -43,6 +44,7 @@ class CheckoutCoupon {
   final bool upcoming;
 
   const CheckoutCoupon({
+    required this.id,
     required this.code,
     this.title,
     this.description,
@@ -58,6 +60,7 @@ class CheckoutCoupon {
   });
 
   factory CheckoutCoupon.fromJson(Map<String, dynamic> json) => CheckoutCoupon(
+        id: (json['id'] as num?)?.toInt() ?? 0,
         code: json['code'] as String,
         title: json['title'] as String?,
         description: json['description'] as String?,
@@ -78,12 +81,14 @@ class CheckoutModel {
   final bool isEmpty;
   final String? restaurantName;
   final String? restaurantArea;
+  final String? restaurantLogoUrl;
   final List<AddressModel> addresses;
   final String? selectedAddressId;
   final bool inRange;
   final String? rangeMessage;
   final double? distanceMiles;
   final bool acceptsCookingRequests;
+  final String? specialInstructions;
   final CheckoutCoupon? appliedCoupon;
   final String? couponError;
   final List<CheckoutCoupon> availableCoupons;
@@ -95,12 +100,14 @@ class CheckoutModel {
     required this.isEmpty,
     this.restaurantName,
     this.restaurantArea,
+    this.restaurantLogoUrl,
     required this.addresses,
     this.selectedAddressId,
     required this.inRange,
     this.rangeMessage,
     this.distanceMiles,
     required this.acceptsCookingRequests,
+    this.specialInstructions,
     this.appliedCoupon,
     this.couponError,
     required this.availableCoupons,
@@ -138,12 +145,14 @@ class CheckoutModel {
       isEmpty: json['is_empty'] as bool? ?? true,
       restaurantName: restaurant?['name'] as String?,
       restaurantArea: restaurant?['area'] as String?,
+      restaurantLogoUrl: restaurant?['logo_url'] as String?,
       addresses: addresses,
       selectedAddressId: json['selected_address_id']?.toString(),
       inRange: json['in_range'] as bool? ?? false,
       rangeMessage: json['range_message'] as String?,
       distanceMiles: (json['distance_miles'] as num?)?.toDouble(),
-      acceptsCookingRequests: json['accepts_cooking_requests'] as bool? ?? true,
+      acceptsCookingRequests: (json['accepts_cooking_requests'] as bool?) ?? true,
+      specialInstructions: json['special_instructions'] as String?,
       appliedCoupon: json['applied_coupon'] != null
           ? CheckoutCoupon.fromJson(json['applied_coupon'] as Map<String, dynamic>)
           : null,

@@ -1,5 +1,6 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../controllers/home_controller.dart';
 
@@ -11,41 +12,58 @@ class HomeView extends GetView<HomeController> {
     return Scaffold(
       backgroundColor: AppColors.buttonLabel,
       body: SafeArea(
-        child: CustomScrollView(
-          controller: controller.scrollController,
-          slivers: [
-            SliverToBoxAdapter(child: _LocationBar()),
-            SliverToBoxAdapter(child: _SearchBar()),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: _CategoriesSection(),
+        child: Column(
+          children: [
+            _LocationBar(),
+            _SearchBar(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => controller.refresh(),
+                color: AppColors.primary,
+                child: CustomScrollView(
+                  controller: controller.scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 20),
+                        child: _CategoriesSection(),
+                      ),
+                    ),
+                    SliverToBoxAdapter(child: _TopPicksSection()),
+                    //const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                   // SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
+                    SliverToBoxAdapter(child: _PromoBannerSection()),
+                    SliverToBoxAdapter(
+                      child: Obx(() {
+                        if (!controller.isLoading.value && controller.restaurants.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                          child: SectionHeader(
+                            title: 'All Restaurants',
+                            style: const TextStyle(
+                              fontFamily: 'Helvetica Neue',
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.lightSurfaceDarkText,
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                    _AllRestaurantsList(),
+                    SliverToBoxAdapter(
+                      child: Obx(() {
+                        final hasCart = Get.find<CartController>().cartItemCount.value > 0;
+                        return SizedBox(height: hasCart ? 80 : 40);
+                      }),
+                    ),
+                  ],
+                ),
               ),
             ),
-            SliverToBoxAdapter(child: _TopPicksSection()),
-            //const SliverToBoxAdapter(child: SizedBox(height: 12)),
-           // SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
-            SliverToBoxAdapter(child: _PromoBannerSection()),
-            SliverToBoxAdapter(
-              child: Obx(() {
-                if (!controller.isLoading.value && controller.restaurants.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: SectionHeader(
-                    title: 'All Restaurants',
-                    style: const TextStyle(
-                      fontFamily: 'Helvetica Neue',
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.lightSurfaceDarkText,
-                    ),
-                  ),
-                );
-              }),
-            ),
-            _AllRestaurantsList(),
           ],
         ),
       ),
@@ -134,6 +152,17 @@ class _CategoriesSection extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final items = controller.foodItems;
+      if (controller.isLoading.value && items.isEmpty) {
+        return SizedBox(
+          height: 108,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: 5,
+            itemBuilder: (_, __) => const CategoryShimmer(),
+          ),
+        );
+      }
       if (items.isEmpty) return const SizedBox(height: 108);
       return SizedBox(
         height: 108,
@@ -211,6 +240,37 @@ class _TopPicksSection extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final picks = controller.topPickRestaurants;
+      if (controller.isLoading.value && picks.isEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+              child: Shimmer.fromColors(
+                baseColor: AppShimmer.baseColor,
+                highlightColor: AppShimmer.highlightColor,
+                child: Container(
+                  width: 120,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppShimmer.baseColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 188,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: 3,
+                itemBuilder: (_, __) => const TopPickShimmer(),
+              ),
+            ),
+          ],
+        );
+      }
       if (picks.isEmpty) return const SizedBox.shrink();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,6 +544,9 @@ class _AllRestaurantsList extends GetView<HomeController> {
       final list = controller.restaurants;
 
       if (list.isEmpty) {
+        if (controller.topPickRestaurants.isNotEmpty) {
+          return const SliverToBoxAdapter(child: SizedBox.shrink());
+        }
         return const SliverToBoxAdapter(child: _EmptyHomeState());
       }
 

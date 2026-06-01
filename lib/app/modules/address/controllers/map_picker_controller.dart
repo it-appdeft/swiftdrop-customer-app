@@ -268,7 +268,7 @@ class MapPickerController extends GetxController {
           city = c['long_name'] as String;
         }
         if (county.isEmpty &&
-            types.contains('administrative_area_level_2')) {
+            types.contains('country')) {
           county = c['long_name'] as String;
         }
         if (postcode.isEmpty && types.contains('postal_code')) {
@@ -292,9 +292,9 @@ class MapPickerController extends GetxController {
     final lng = (result['lng'] as num).toDouble();
     locationName.value = result['name'] as String? ?? '';
     locationAddress.value = result['address'] as String? ?? '';
-    locationCity.value = '';
-    locationCounty.value = '';
-    locationPostcode.value = '';
+    locationCity.value = result['city'] as String? ?? '';
+    locationCounty.value = result['county'] as String? ?? '';
+    locationPostcode.value = result['postcode'] as String? ?? '';
     final pos = CameraPosition(target: LatLng(lat, lng), zoom: 16.0);
     _lastCamera = pos;
     if (isPermissionDenied.value && !hasManualLocation.value) {

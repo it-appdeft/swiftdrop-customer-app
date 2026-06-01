@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 import '../../home/controllers/home_controller.dart';
+import '../../cart/controllers/cart_controller.dart';
 import 'delivery_address_controller.dart' show PlacePrediction;
 
 class AddressController extends BaseController {
@@ -116,7 +117,7 @@ class AddressController extends BaseController {
             (types.contains('postal_town') || types.contains('locality'))) {
           city = comp['long_name'] as String? ?? '';
         }
-        if (county.isEmpty && types.contains('administrative_area_level_2')) {
+        if (county.isEmpty && types.contains('country')) {
           county = comp['long_name'] as String? ?? '';
         }
         if (postcode.isEmpty && types.contains('postal_code')) {
@@ -236,7 +237,7 @@ class AddressController extends BaseController {
     } catch (_) {}
 
     if (Get.key.currentState?.canPop() ?? false) {
-      Get.until((route) => route.settings.name == AppRoutes.dashboard);
+      Get.back();
     } else {
       Get.offAllNamed(AppRoutes.dashboard);
     }
@@ -275,7 +276,7 @@ class AddressController extends BaseController {
           : selectedAddressType.value;
 
       final editId = _editingAddressId;
-      late final ApiResponse<void> result;
+      late final ApiResponse<dynamic> result;
 
       if (editId != null) {
         result = await _repo.updateAddress(
@@ -309,8 +310,9 @@ class AddressController extends BaseController {
         return;
       }
 
+      final isNewAddress = _editingAddressId == null;
       _editingAddressId = null;
-      if (editId != null) await loadAddresses();
+      await loadAddresses();
 
       try {
         final home = Get.find<HomeController>();
@@ -318,7 +320,22 @@ class AddressController extends BaseController {
         if (display.isNotEmpty) home.currentAddress.value = display;
       } catch (_) {}
 
-      Get.until((route) => route.settings.name == AppRoutes.dashboard);
+      if (isNewAddress && result.data != null) {
+        try {
+          final newAddr = AddressModel.fromJson(result.data as Map<String, dynamic>);
+          await selectAddress(newAddr.id);
+        } catch (e) {
+          AppLogger.e('Error selecting new address', e);
+        }
+      }
+
+      if (Get.isRegistered<CartController>()) {
+        Get.until((route) => route.settings.name == AppRoutes.cart || route.isFirst);
+      } else if (editId != null) {
+        Get.back();
+      } else {
+        Get.until((route) => route.settings.name == AppRoutes.address || route.isFirst);
+      }
     } finally {
       isSaving.value = false;
     }

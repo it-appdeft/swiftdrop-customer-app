@@ -12,7 +12,7 @@ class CouponsView extends GetView<CartController> {
       backgroundColor: AppColors.white,
       appBar: _buildAppBar(),
       body: Obx(() {
-        final coupons = controller.coupons;
+        final coupons = controller.checkoutData.value?.availableCoupons ?? [];
 
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
@@ -40,7 +40,7 @@ class CouponsView extends GetView<CartController> {
                 final coupon = entry.value;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: coupon.isExclusive
+                  child: coupon.type == 'exclusive'
                       ? _buildExclusiveCoupon(context, coupon)
                       : _buildStandardCoupon(context, coupon),
                 );
@@ -131,7 +131,7 @@ class CouponsView extends GetView<CartController> {
     );
   }
 
-  Widget _buildExclusiveCoupon(BuildContext context, Coupon coupon) {
+  Widget _buildExclusiveCoupon(BuildContext context, CheckoutCoupon coupon) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -161,7 +161,7 @@ class CouponsView extends GetView<CartController> {
                   const Icon(Icons.stars_rounded, color: Colors.white, size: 14),
                   const SizedBox(width: 4),
                   Text(
-                    coupon.title,
+                    coupon.title ?? 'EXCLUSIVE OFFER',
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -173,7 +173,7 @@ class CouponsView extends GetView<CartController> {
             ),
             const SizedBox(height: 12),
             Text(
-              coupon.offerAmount,
+              coupon.headline,
               style: GoogleFonts.inter(
                 fontSize: 48,
                 fontWeight: FontWeight.w700,
@@ -183,7 +183,7 @@ class CouponsView extends GetView<CartController> {
             ),
             const SizedBox(height: 8),
             Text(
-              coupon.description,
+              coupon.description ?? '',
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -197,7 +197,9 @@ class CouponsView extends GetView<CartController> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  'Valid until 28 May 2026',
+                  coupon.validUntil != null
+                      ? 'Valid until ${coupon.validUntil}'
+                      : 'Valid for limited time',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -205,7 +207,7 @@ class CouponsView extends GetView<CartController> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () => CouponAppliedDialog.show(context, coupon, controller),
+                  onPressed: () => controller.applyCouponApi(coupon.id),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.white,
                     foregroundColor: const Color(0xFFE53915),
@@ -232,7 +234,7 @@ class CouponsView extends GetView<CartController> {
     );
   }
 
-  Widget _buildStandardCoupon(BuildContext context, Coupon coupon) {
+  Widget _buildStandardCoupon(BuildContext context, CheckoutCoupon coupon) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -279,7 +281,7 @@ class CouponsView extends GetView<CartController> {
           ),
           const SizedBox(height: 16),
           Text(
-            coupon.title,
+            coupon.title ?? coupon.headline,
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -288,7 +290,7 @@ class CouponsView extends GetView<CartController> {
           ),
           const SizedBox(height: 4),
           Text(
-            coupon.description,
+            coupon.description ?? '',
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w400,
@@ -301,9 +303,9 @@ class CouponsView extends GetView<CartController> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (coupon.validOn != null)
+              if (coupon.minOrderValue != null)
                 Text(
-                  coupon.validOn!,
+                  'Valid on orders > £${coupon.minOrderValue}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -313,7 +315,7 @@ class CouponsView extends GetView<CartController> {
               else
                 const SizedBox.shrink(),
               GestureDetector(
-                onTap: () => CouponAppliedDialog.show(context, coupon, controller),
+                onTap: () => controller.applyCouponApi(coupon.id),
                 behavior: HitTestBehavior.opaque,
                 child: Text(
                   'Apply',

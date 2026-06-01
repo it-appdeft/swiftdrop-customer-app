@@ -139,6 +139,7 @@ class _RestaurantCardState extends State<RestaurantCard> {
                 ),
               ],
             ),
+
             const SizedBox(height: 4),
             Row(
               children: [

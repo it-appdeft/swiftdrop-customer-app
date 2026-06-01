@@ -80,7 +80,13 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
 
   double get _currentPrice {
     double delta = 0;
+    bool hasRequiredVariant = false;
+
     for (final group in _groups) {
+      if (group.isRequired && group.selectionType == 'single') {
+        hasRequiredVariant = true;
+      }
+
       if (group.selectionType == 'single') {
         final selectedId = _singleSelections[group.id];
         if (selectedId != null) {
@@ -95,7 +101,9 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
         }
       }
     }
-    return _basePrice + delta;
+    // If the item has a required variant (size), we ignore the base price
+    // and only show the sum of modifiers. Otherwise, we add deltas to base price.
+    return (hasRequiredVariant ? 0 : _basePrice) + delta;
   }
 
   @override
@@ -389,19 +397,32 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                       }
 
                       try {
-                        await Get.find<CartController>()
-                            .addToCartApi(menuItemId, selectedOptionIds, _quantity);
-                      } catch (_) {}
+                        int? rId = widget.item['restaurant_id'] as int?;
+                        if (rId == null) {
+                          try {
+                            rId = Get.find<RestaurantDetailController>().restaurantId;
+                          } catch (_) {}
+                        }
 
-                      try {
-                        Get.find<RestaurantDetailController>()
-                            .showCartFloatingBar
-                            .value = true;
-                      } catch (_) {}
+                        final result = await Get.find<CartController>()
+                            .addToCartApi(menuItemId, selectedOptionIds, _quantity, restaurantId: rId);
+                        
+                        if (result.success) {
+                          try {
+                            Get.find<RestaurantDetailController>()
+                                .showCartFloatingBar
+                                .value = true;
+                          } catch (_) {}
 
-                      if (mounted) setState(() => _isAddingToCart = false);
-                      Get.back();
-                      if (Get.isBottomSheetOpen ?? false) Get.back();
+                          if (mounted) setState(() => _isAddingToCart = false);
+                          Get.back();
+                          if (Get.isBottomSheetOpen ?? false) Get.back();
+                        } else {
+                          if (mounted) setState(() => _isAddingToCart = false);
+                        }
+                      } catch (_) {
+                        if (mounted) setState(() => _isAddingToCart = false);
+                      }
                     },
               child: Container(
                 height: 48,

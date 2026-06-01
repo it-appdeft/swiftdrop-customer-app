@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../controllers/restaurant_detail_controller.dart';
@@ -15,6 +16,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
       body: Stack(
         children: [
           SingleChildScrollView(
+            controller: controller.scrollController,
             physics: const ClampingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,13 +28,72 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                 _buildFilters(),
                 const SizedBox(height: 24),
 
-                _buildItemList(),
-                _buildViewAllButton(),
+                Obx(() {
+                  final isSearching = controller.searchQuery.value.isNotEmpty;
+                  if (!isSearching) {
+                    return _buildItemList();
+                  }
+
+                  final hasResults = controller.recommended.isNotEmpty || controller.categories.isNotEmpty;
+
+                  if (!hasResults && !controller.isLoading.value) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: NoDataWidget(
+                        image: Assets.images.noResultofSearch.image(width: 96, height: 96),
+                        subtitle: 'No items found matching "${controller.searchQuery.value}"',
+                      ),
+                    );
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        child: Text(
+                          'Results for "${controller.searchQuery.value}" (${controller.recommended.length + controller.categories.fold(0, (sum, c) => sum + c.items.length)})',
+                          style: GoogleFonts.inter(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.lightSurfaceDarkText,
+                          ),
+                        ),
+                      ),
+                      if (controller.recommended.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            children: controller.recommended
+                                .map((item) {
+                                  final itemMap = item.toMap();
+                                  itemMap['restaurant_id'] = controller.restaurantId;
+                                  return ItemCard(
+                                      item: itemMap,
+                                      isHorizontal: false,
+                                      showFavorite: true,
+                                      onTap: () => showProductDetailBottomSheet(itemMap),
+                                      onFavoriteTap: () => controller.toggleItemFavorite(item.id),
+                                    );
+                                })
+                                .toList(),
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                          child: Divider(color: AppColors.lightSurfaceBorder, thickness: 1),
+                        ),
+                      ],
+                      _buildItemList(),
+                    ],
+                  );
+                }),
                 // _buildRecommendedSection(),
                 Obx(() => SizedBox(height: controller.showCartFloatingBar.value ? 160 : 40)),
               ],
             ),
           ),
+          _buildStickyHeader(context),
           if (!isSheet)
             Obx(() => controller.showCartFloatingBar.value
                 ? const Positioned(
@@ -45,6 +106,85 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
         ],
       ),
     );
+  }
+
+  Widget _buildStickyHeader(BuildContext context) {
+    return Obx(() {
+      final isScrolled = controller.isScrolled.value;
+      final showName = controller.showStickyName.value;
+      final info = controller.restaurantInfo.value;
+
+      return Container(
+        height: MediaQuery.of(context).padding.top + 60,
+        decoration: BoxDecoration(
+          color: isScrolled ? AppColors.white : Colors.transparent,
+          boxShadow: isScrolled
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Assets.images.back.image(
+                        width: 16, height: 16, color: AppColors.white),
+                  ),
+                ),
+                if (showName)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        info?.name ?? '',
+                        style: GoogleFonts.inter(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.lightSurfaceDarkText,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  )
+                else
+                  const Spacer(),
+                GestureDetector(
+                  onTap: () => _showMoreOptions(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                        Icons.more_vert, color: AppColors.white, size: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -129,18 +269,19 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Text(
-                            info?.cuisines ?? '',
+                            (info?.description ?? info?.cuisines ?? ''),
                             style: GoogleFonts.inter(
                               fontSize: 14,
+                              fontWeight: FontWeight.w400,
                               color: AppColors.lightSurfaceSubtitle,
                             ),
-                            maxLines: 1,
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -154,6 +295,18 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                         ),
                       ],
                     ),
+                    if ((info?.description ?? '').isNotEmpty && (info?.cuisines ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        info?.cuisines ?? '',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: AppColors.lightSurfaceSubtitle,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                     if (info?.deliveryMinutesMin != null) ...[
                       const SizedBox(height: 8),
                       Row(
@@ -164,7 +317,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                             text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text: '${info!.deliveryMinutesMin}-${info.deliveryMinutesMax}',
+                                  text: '${info!.deliveryMinutesMin}-${info.deliveryMinutesMax} min',
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
@@ -214,41 +367,6 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                 ),
               ),
             ],
-          ),
-          // Nav buttons drawn last — in front of both image and card
-          Positioned(
-            top: 48,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => Get.back(),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Assets.images.back.image(
-                        width: 16, height: 16, color: AppColors.white),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => _showMoreOptions(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                        Icons.more_vert, color: AppColors.white, size: 16),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       );
@@ -310,7 +428,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
         child: Row(
           children: [
             Assets.images.homeSearchIcon.image(width: 24, height: 24),
-            //const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: TextField(
                 controller: controller.searchController,
@@ -340,6 +458,19 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                   ),
                 ),
               ),
+            ),
+            Obx(
+              () => controller.searchQuery.value.isNotEmpty
+                  ? GestureDetector(
+                      onTap: controller.clearQuery,
+                      behavior: HitTestBehavior.opaque,
+                      child: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: AppColors.lightSurfaceSubtitle,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -422,59 +553,80 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
           ),
         );
       }
-      final items = controller.menuItems;
-      if (items.isEmpty) return const SizedBox.shrink();
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          children: items
-              .map((item) => ItemCard(
-                    item: item.toMap(),
-                    isHorizontal: false,
-                    showFavorite: true,
-                    onTap: () => showProductDetailBottomSheet(item.toMap()),
-                    onFavoriteTap: () => controller.toggleItemFavorite(item.id),
-                  ))
-              .toList(),
-        ),
-      );
-    });
-  }
+      final categories = controller.categories;
 
-  Widget _buildViewAllButton() {
-    return Obx(() {
-      if (!controller.hasMoreMenu.value) return const SizedBox.shrink();
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: GestureDetector(
-          onTap: controller.loadMoreMenu,
-          child: Container(
-            width: double.infinity,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primarySurface,
-              borderRadius: BorderRadius.circular(8),
+      if (categories.isEmpty) {
+        // If not searching, show empty state for the whole menu
+        if (controller.searchQuery.value.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: NoDataWidget(
+              image: Assets.images.noResultofSearch.image(width: 96, height: 96),
+              subtitle: 'No items available in this restaurant yet.',
             ),
-            alignment: Alignment.center,
-            child: controller.isLoadingMore.value
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    ),
-                  )
-                : Text(
-                    'View more',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
-                    ),
+          );
+        }
+        return const SizedBox.shrink();
+      }
+
+      return Column(
+        children: categories.map((category) {
+          final isCollapsed = controller.collapsedCategories.contains(category.id);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: () => controller.toggleCategory(category.id),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          category.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.lightSurfaceDarkText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Icon(
+                        isCollapsed
+                            ? Icons.keyboard_arrow_down_rounded
+                            : Icons.keyboard_arrow_up_rounded,
+                        color: AppColors.lightSurfaceDarkText,
+                      ),
+                    ],
                   ),
-          ),
-        ),
+                ),
+              ),
+              if (!isCollapsed)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    children: category.items
+                        .map((item) {
+                              final itemMap = item.toMap();
+                              itemMap['restaurant_id'] = controller.restaurantId;
+                              return ItemCard(
+                                item: itemMap,
+                                isHorizontal: false,
+                                showFavorite: true,
+                                onTap: () => showProductDetailBottomSheet(itemMap),
+                                onFavoriteTap: () => controller.toggleItemFavorite(item.id),
+                              );
+                            })
+                        .toList(),
+                  ),
+                ),
+            ],
+          );
+        }).toList(),
       );
     });
   }

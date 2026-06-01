@@ -35,7 +35,7 @@ class AddressRepository {
     }
   }
 
-  Future<ApiResponse<void>> saveAddress({
+  Future<ApiResponse<dynamic>> saveAddress({
     required String label,
     required String addressLine1,
     required String addressLine2,
@@ -66,14 +66,14 @@ class AddressRepository {
       return ApiResponse(
         success: success,
         message: response.data['message'] as String? ?? '',
-        data: null,
+        data: response.data['data'],
       );
     } catch (e) {
       return _apiError(e);
     }
   }
 
-  Future<ApiResponse<void>> updateAddress({
+  Future<ApiResponse<dynamic>> updateAddress({
     required String id,
     required String label,
     required String addressLine1,
@@ -106,7 +106,7 @@ class AddressRepository {
       return ApiResponse(
         success: success,
         message: response.data['message'] as String? ?? '',
-        data: null,
+        data: response.data['data'],
       );
     } catch (e) {
       return _apiError(e);

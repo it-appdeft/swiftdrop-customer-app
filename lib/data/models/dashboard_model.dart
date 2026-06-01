@@ -56,6 +56,7 @@ class RestaurantModel {
   final int id;
   final String name;
   final String? tagline;
+  final String? description;
   final String? cuisines;
   final String? city;
   final String? fullAddress;
@@ -71,6 +72,7 @@ class RestaurantModel {
     required this.id,
     required this.name,
     this.tagline,
+    this.description,
     this.cuisines,
     this.city,
     this.fullAddress,
@@ -87,6 +89,7 @@ class RestaurantModel {
         id: id,
         name: name,
         tagline: tagline,
+        description: description,
         cuisines: cuisines,
         city: city,
         fullAddress: fullAddress,
@@ -103,6 +106,7 @@ class RestaurantModel {
         id: json['id'] as int,
         name: json['name'] as String,
         tagline: json['tagline'] as String?,
+        description: json['description'] as String?,
         cuisines: json['cuisines'] as String?,
         city: json['city'] as String?,
         fullAddress: json['full_address'] as String?,
@@ -132,6 +136,7 @@ class RestaurantModel {
         'offer': null,
         'badge': null,
         'tagline': tagline,
+        'description': description,
         'cuisines': cuisines,
         'city': city,
         'total_reviews': totalReviews,

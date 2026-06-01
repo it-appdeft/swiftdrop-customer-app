@@ -186,6 +186,90 @@ class MenuItemCardShimmer extends StatelessWidget {
   }
 }
 
+class CategoryShimmer extends StatelessWidget {
+  const CategoryShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppShimmer.baseColor,
+      highlightColor: AppShimmer.highlightColor,
+      child: Container(
+        width: 75,
+        margin: const EdgeInsets.only(right: 14),
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                color: AppShimmer.baseColor,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: 50,
+              height: 14,
+              decoration: BoxDecoration(
+                color: AppShimmer.baseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TopPickShimmer extends StatelessWidget {
+  const TopPickShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppShimmer.baseColor,
+      highlightColor: AppShimmer.highlightColor,
+      child: Container(
+        width: 220,
+        margin: const EdgeInsets.only(right: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 220,
+              height: 130,
+              decoration: BoxDecoration(
+                color: AppShimmer.baseColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: 150,
+              height: 18,
+              decoration: BoxDecoration(
+                color: AppShimmer.baseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: 80,
+              height: 14,
+              decoration: BoxDecoration(
+                color: AppShimmer.baseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ShimmerList extends StatelessWidget {
   final int itemCount;
   const ShimmerList({super.key, this.itemCount = 5});

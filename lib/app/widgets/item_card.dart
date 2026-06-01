@@ -1,6 +1,7 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../modules/cart/controllers/cart_controller.dart';
+import '../modules/restaurant_detail/controllers/restaurant_detail_controller.dart';
 import '../modules/restaurant_detail/views/product_detail_bottom_sheet.dart';
 import '../modules/restaurant_detail/views/product_addons_sheet.dart';
 
@@ -8,6 +9,7 @@ class ItemCard extends StatefulWidget {
   final Map<String, dynamic> item;
   final bool showFavorite;
   final bool isHorizontal;
+  final bool noDecoration;
   final VoidCallback? onTap;
   final VoidCallback? onFavoriteTap;
   const ItemCard({
@@ -15,6 +17,7 @@ class ItemCard extends StatefulWidget {
     required this.item,
     this.showFavorite = false,
     this.isHorizontal = true,
+    this.noDecoration = false,
     this.onTap,
     this.onFavoriteTap,
   });
@@ -64,62 +67,141 @@ class _ItemCardState extends State<ItemCard> {
       widget.item['isVeg'] == false ? Assets.images.nonVegToggle : Assets.images.vegIcon;
 
   Widget _buildCounter(CartController cart, int qty) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () => cart.decrementCartItem(_itemId),
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Assets.images.minus.image(width: 24, height: 24),
+    return Obx(() {
+      final isLoading = cart.loadingItems.contains(_itemId);
+      if (isLoading) {
+        return const Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '$qty',
-          style: GoogleFonts.inter(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: AppColors.primary,
+        );
+      }
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () => cart.decrementCartItem(_itemId),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Assets.images.minus.image(width: 24, height: 24),
+            ),
           ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () {
-            if (_hasModifiers) {
-              final mods = _cart?.getModifiersForItem(_itemId);
-              showProductAddonsSheet(widget.item, existingModifiers: mods);
-            } else {
-              cart.incrementCartItem(_itemId);
-            }
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Assets.images.plus.image(width: 24, height: 24),
+          const SizedBox(width: 8),
+          Text(
+            '$qty',
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.primary,
+            ),
           ),
-        ),
-      ],
-    );
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              if (_hasModifiers) {
+                final mods = _cart?.getModifiersForItem(_itemId);
+                showProductAddonsSheet(widget.item, existingModifiers: mods);
+              } else {
+                cart.incrementCartItem(_itemId);
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Assets.images.plus.image(width: 24, height: 24),
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  bool _checkRestaurantConflict() {
+    final cart = _cart;
+    if (cart == null) return false;
+
+    int? rId = widget.item['restaurant_id'] as int?;
+    if (rId == null) {
+      try {
+        rId = Get.find<RestaurantDetailController>().restaurantId;
+      } catch (_) {}
+    }
+
+    if (cart.cartItemCount.value > 0 &&
+        rId != null &&
+        cart.cartRestaurantId.value != 0 &&
+        cart.cartRestaurantId.value != rId) {
+      const errorMsg =
+          "Your cart already has items from another restaurant. Clear it before adding this dish.";
+      AppUtils.showError(errorMsg);
+      return true;
+    }
+    return false;
   }
 
   Widget _buildAddButton() {
-    return GestureDetector(
-      onTap: () => showProductDetailBottomSheet(widget.item),
-      behavior: HitTestBehavior.opaque,
-      child: Center(
-        child: Text(
-          'ADD',
-          style: GoogleFonts.inter(
-            fontSize: widget.isHorizontal ? 16 : 14,
-            fontWeight: widget.isHorizontal ? FontWeight.w500 : FontWeight.w600,
-            color: AppColors.primary,
+    return Obx(() {
+      final isLoading = _cart?.loadingItems.contains(_itemId) ?? false;
+      if (isLoading) {
+        return const Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+        );
+      }
+      return GestureDetector(
+        onTap: () {
+          if (_checkRestaurantConflict()) return;
+
+          if (_hasModifiers) {
+            showProductDetailBottomSheet(widget.item);
+          } else {
+            final cart = _cart;
+            if (cart != null) {
+              int? rId = widget.item['restaurant_id'] as int?;
+              if (rId == null) {
+                try {
+                  rId = Get.find<RestaurantDetailController>().restaurantId;
+                } catch (_) {}
+              }
+
+              cart.addToCartApi(_itemId, [], 1, restaurantId: rId).then((result) {
+                if (result.success) {
+                  try {
+                    Get.find<RestaurantDetailController>().showCartFloatingBar.value = true;
+                  } catch (_) {}
+                }
+              });
+            } else {
+              showProductDetailBottomSheet(widget.item);
+            }
+          }
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: Text(
+            'ADD',
+            style: GoogleFonts.inter(
+              fontSize: widget.isHorizontal ? 16 : 14,
+              fontWeight: widget.isHorizontal ? FontWeight.w500 : FontWeight.w600,
+              color: AppColors.primary,
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   @override
@@ -165,7 +247,7 @@ class _ItemCardState extends State<ItemCard> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _vegIcon.image(width: 16, height: 16),
-            if (!widget.isHorizontal && widget.showFavorite)
+            if (widget.showFavorite)
               GestureDetector(
                 onTap: () {
                   setState(() => _isFavourited = !_isFavourited);
@@ -199,28 +281,29 @@ class _ItemCardState extends State<ItemCard> {
           ),
         ),
         const SizedBox(height: 4),
-        Container(
-          width: 52,
-          height: 22,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: AppColors.lightSurfaceBorder),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Assets.images.ratingStar.image(width: 12, height: 12),
-              const SizedBox(width: 2),
-              Text(
-                '${widget.item['rating']}',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.darkBackground,
+        IntrinsicWidth(
+          child: Container(
+            height: 22,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: const Color(0xFF85929D)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Assets.images.ratingStar.image(width: 12, height: 12),
+                const SizedBox(width: 4),
+                Text(
+                  '${widget.item['rating'] ?? '0.0'}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.lightSurfaceDarkText,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -233,10 +316,10 @@ class _ItemCardState extends State<ItemCard> {
         width: widget.isHorizontal ? 330 : null,
         height: 160,
         margin: widget.isHorizontal
-            ? const EdgeInsets.only(right: 16)
+            ? (widget.noDecoration ? EdgeInsets.zero : const EdgeInsets.only(right: 16))
             : const EdgeInsets.only(bottom: 24),
         padding: widget.isHorizontal ? const EdgeInsets.all(12) : null,
-        decoration: widget.isHorizontal
+        decoration: widget.isHorizontal && !widget.noDecoration
             ? BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(12))
             : null,
         child: Row(
@@ -329,7 +412,8 @@ class RestaurantWithItems extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 36),
                 itemCount: (data['items'] as List?)?.length ?? 0,
                 itemBuilder: (context, index) {
-                  final item = data['items'][index];
+                  final item = Map<String, dynamic>.from(data['items'][index]);
+                  item['restaurant_id'] = data['id'];
                   return ItemCard(item: item);
                 },
               ),
@@ -337,6 +421,118 @@ class RestaurantWithItems extends StatelessWidget {
             const SizedBox(height: 12),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class FavoriteItemCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final VoidCallback? onFavoriteTap;
+  final VoidCallback? onTap;
+
+  const FavoriteItemCard({
+    super.key,
+    required this.item,
+    this.onFavoriteTap,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final restaurant = item['restaurant'] as Map<String, dynamic>? ?? {};
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+      decoration: BoxDecoration(
+        color: AppColors.offWhite, // #F6F8FA
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        restaurant['name']?.toString() ?? 'The Marble Grill',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF0B243A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Assets.images.timeIcon.image(width: 16, height: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${restaurant['time'] ?? restaurant['delivery_time'] ?? '25-35'} (min) Delivery Time',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.lightSurfaceSubtitle,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(color: const Color(0xFF85929D)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Assets.images.ratingStar.image(width: 12, height: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${restaurant['rating'] ?? '4.8'}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.lightSurfaceDarkText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(
+            height: 33, // 16 top + 16 bottom + 1 thickness
+            thickness: 1,
+            color: AppColors.lightSurfaceBorder,
+            indent: 12,
+            endIndent: 12,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20),
+            child: ItemCard(
+              item: item,
+              isHorizontal: true,
+              showFavorite: true,
+              noDecoration: true,
+              onFavoriteTap: onFavoriteTap,
+              onTap: onTap,
+            ),
+          ),
+        ],
       ),
     );
   }

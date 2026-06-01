@@ -20,14 +20,19 @@ class CartRepository {
     required int quantity,
   }) async {
     try {
-      await _dio.post(ApiEndpoints.customerCart, data: {
+      final response = await _dio.post(ApiEndpoints.customerCart, data: {
         'menu_item_id': menuItemId,
         'options': options,
         'quantity': quantity,
       });
-      return ApiResponse(success: true, message: '', data: true);
-    } catch (_) {
-      return ApiResponse(success: false, message: '', data: false);
+      final msg = (response.data as Map?)?['message'] as String? ?? '';
+      return ApiResponse(success: true, message: msg, data: true);
+    } catch (e) {
+      String msg = '';
+      if (e is DioException) {
+        msg = (e.response?.data as Map?)?['message'] as String? ?? '';
+      }
+      return ApiResponse(success: false, message: msg, data: false);
     }
   }
 
@@ -70,6 +75,46 @@ class CartRepository {
       return ApiResponse(success: true, message: msg, data: true);
     } catch (_) {
       return ApiResponse(success: false, message: '', data: false);
+    }
+  }
+
+  Future<ApiResponse<bool>> applyCoupon(int couponId) async {
+    try {
+      final response = await _dio.post(ApiEndpoints.customerApplyCoupon, data: {
+        'coupon_id': couponId,
+      });
+      final success = response.data['success'] as bool? ?? false;
+      final msg = response.data['message'] as String? ?? '';
+      return ApiResponse(success: success, message: msg, data: success);
+    } catch (e) {
+      return ApiResponse(success: false, message: e.toString(), data: false);
+    }
+  }
+
+  Future<ApiResponse<bool>> updateCookingRequest(String request) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.customerCookingRequest,
+        queryParameters: {'special_instructions': request},
+      );
+      final success = response.data['success'] as bool? ?? false;
+      final msg = response.data['message'] as String? ?? '';
+      return ApiResponse(success: success, message: msg, data: success);
+    } catch (e) {
+      return ApiResponse(success: false, message: e.toString(), data: false);
+    }
+  }
+
+  Future<ApiResponse<bool>> placeOrder(int addressId) async {
+    try {
+      final response = await _dio.post(ApiEndpoints.customerCheckout, data: {
+        'address_id': addressId,
+      });
+      final success = response.data['success'] as bool? ?? false;
+      final msg = response.data['message'] as String? ?? '';
+      return ApiResponse(success: success, message: msg, data: success);
+    } catch (e) {
+      return ApiResponse(success: false, message: e.toString(), data: false);
     }
   }
 }

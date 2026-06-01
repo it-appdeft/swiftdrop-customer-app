@@ -27,4 +27,24 @@ class FavoritesRepository {
       return const ApiResponse(success: false, message: 'Network error. Please try again.', data: null);
     }
   }
+
+  Future<ApiResponse<List<Map<String, dynamic>>>> getFavoriteRestaurants() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.favoriteRestaurants);
+      final list = (response.data['data'] as List).cast<Map<String, dynamic>>();
+      return ApiResponse(success: true, message: '', data: list);
+    } catch (e) {
+      return const ApiResponse(success: false, message: 'Failed to fetch favorites', data: null);
+    }
+  }
+
+  Future<ApiResponse<List<Map<String, dynamic>>>> getFavoriteItems() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.favoriteMenuItems);
+      final list = (response.data['data'] as List).cast<Map<String, dynamic>>();
+      return ApiResponse(success: true, message: '', data: list);
+    } catch (e) {
+      return const ApiResponse(success: false, message: 'Failed to fetch favorites', data: null);
+    }
+  }
 }
