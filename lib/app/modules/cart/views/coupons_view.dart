@@ -207,10 +207,10 @@ class CouponsView extends GetView<CartController> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: () => controller.applyCouponApi(coupon.id),
+                  onPressed: coupon.eligible ? () => controller.applyCouponApi(coupon.id) : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.white,
-                    foregroundColor: const Color(0xFFE53915),
+                    backgroundColor: AppColors.white.withOpacity(coupon.eligible ? 1.0 : 0.6),
+                    foregroundColor: const Color(0xFFE53915).withOpacity(coupon.eligible ? 1.0 : 0.6),
                     elevation: 0,
                     minimumSize: const Size(100, 44),
                     shape: RoundedRectangleBorder(
@@ -237,7 +237,7 @@ class CouponsView extends GetView<CartController> {
   Widget _buildStandardCoupon(BuildContext context, CheckoutCoupon coupon) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       decoration: BoxDecoration(
         color: const Color(0xFFF8F9FB),
         borderRadius: BorderRadius.circular(20),
@@ -298,7 +298,7 @@ class CouponsView extends GetView<CartController> {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -315,14 +315,14 @@ class CouponsView extends GetView<CartController> {
               else
                 const SizedBox.shrink(),
               GestureDetector(
-                onTap: () => controller.applyCouponApi(coupon.id),
+                onTap: coupon.eligible ? () => controller.applyCouponApi(coupon.id) : null,
                 behavior: HitTestBehavior.opaque,
                 child: Text(
                   'Apply',
                   style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: coupon.eligible ? AppColors.primary : AppColors.lightSurfaceDisabled,
                   ),
                 ),
               ),

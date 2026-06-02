@@ -78,7 +78,7 @@ class _RestaurantCardState extends State<RestaurantCard> {
                         Assets.images.ratingStar.image(width: 14, height: 14),
                         const SizedBox(width: 4),
                         Text(
-                          '${widget.restaurant['rating']}',
+                          '${widget.restaurant['rating'] ?? '0.0'}',
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,

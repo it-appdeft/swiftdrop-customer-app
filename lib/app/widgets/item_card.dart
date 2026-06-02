@@ -313,12 +313,14 @@ class _ItemCardState extends State<ItemCard> {
       onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: widget.isHorizontal ? 330 : null,
-        height: 160,
+        width: widget.isHorizontal ? (widget.noDecoration ? double.infinity : 330) : null,
+        height: widget.isHorizontal ? 140 : null,
         margin: widget.isHorizontal
             ? (widget.noDecoration ? EdgeInsets.zero : const EdgeInsets.only(right: 16))
             : const EdgeInsets.only(bottom: 24),
-        padding: widget.isHorizontal ? const EdgeInsets.all(12) : null,
+        padding: widget.isHorizontal 
+            ? (widget.noDecoration ? const EdgeInsets.symmetric(horizontal: 12) : const EdgeInsets.all(12)) 
+            : null,
         decoration: widget.isHorizontal && !widget.noDecoration
             ? BoxDecoration(color: AppColors.white, borderRadius: BorderRadius.circular(12))
             : null,
@@ -463,7 +465,7 @@ class FavoriteItemCard extends StatelessWidget {
                       Text(
                         restaurant['name']?.toString() ?? 'The Marble Grill',
                         style: GoogleFonts.inter(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF0B243A),
                         ),
@@ -522,7 +524,7 @@ class FavoriteItemCard extends StatelessWidget {
             endIndent: 12,
           ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.only(bottom: 10),
             child: ItemCard(
               item: item,
               isHorizontal: true,

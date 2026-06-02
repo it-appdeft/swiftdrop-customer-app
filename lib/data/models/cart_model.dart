@@ -1,3 +1,5 @@
+import 'restaurant_detail_model.dart';
+
 class CartApiModifier {
   final int groupId;
   final String groupName;
@@ -26,29 +28,34 @@ class CartApiItem {
   final int id;
   final int menuItemId;
   final String name;
+  final String? description;
   final bool isVeg;
   final String? imageUrl;
   final double unitPrice;
   final int quantity;
   final double lineTotal;
   final List<CartApiModifier> modifiers;
+  final List<ModifierGroupModel> modifierGroups;
 
   const CartApiItem({
     required this.id,
     required this.menuItemId,
     required this.name,
+    this.description,
     required this.isVeg,
     this.imageUrl,
     required this.unitPrice,
     required this.quantity,
     required this.lineTotal,
     required this.modifiers,
+    required this.modifierGroups,
   });
 
   factory CartApiItem.fromJson(Map<String, dynamic> json) => CartApiItem(
         id: (json['id'] as num).toInt(),
         menuItemId: (json['menu_item_id'] as num).toInt(),
         name: json['name'] as String,
+        description: json['description'] as String?,
         isVeg: json['is_veg'] as bool? ?? true,
         imageUrl: (json['image_url'] ?? json['image']) as String?,
         unitPrice: (json['unit_price'] as num?)?.toDouble() ?? 0.0,
@@ -57,7 +64,21 @@ class CartApiItem {
         modifiers: (json['modifiers'] as List? ?? [])
             .map((e) => CartApiModifier.fromJson(e as Map<String, dynamic>))
             .toList(),
+        modifierGroups: (json['modifier_groups'] as List? ?? [])
+            .map((e) => ModifierGroupModel.fromJson(e as Map<String, dynamic>))
+            .toList(),
       );
+
+  Map<String, dynamic> toMap() => {
+        'id': menuItemId,
+        'cart_item_id': id,
+        'name': name,
+        'description': description,
+        'price': unitPrice.toStringAsFixed(2),
+        'isVeg': isVeg,
+        'image': imageUrl,
+        'modifier_groups': modifierGroups,
+      };
 }
 
 class CartApiResponse {

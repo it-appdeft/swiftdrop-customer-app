@@ -61,29 +61,31 @@ class CouponAppliedDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD8FFEF),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.stars, color: AppColors.primary, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    coupon.title ?? coupon.headline,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
+            if (coupon.type == 'exclusive') ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD8FFEF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.stars, color: AppColors.primary, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      coupon.title ?? coupon.headline,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               width: double.infinity,

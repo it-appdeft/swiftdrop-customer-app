@@ -169,36 +169,37 @@ class _SearchRow extends GetView<SearchTabController> {
 class _RecentHeader extends GetView<SearchTabController> {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'Recent Searches',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: AppColors.navyMedium,
+    return Obx(() {
+      if (controller.recentSearches.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Searches',
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: AppColors.navyMedium,
+              ),
             ),
-          ),
-          Obx(() => controller.recentSearches.isNotEmpty
-              ? GestureDetector(
-                  onTap: controller.clearRecent,
-                  behavior: HitTestBehavior.opaque,
-                  child: Text(
-                    'Clear',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.error,
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink()),
-        ],
-      ),
-    );
+            GestureDetector(
+              onTap: controller.clearRecent,
+              behavior: HitTestBehavior.opaque,
+              child: Text(
+                'Clear',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.error,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -214,7 +215,7 @@ class _RecentChipsRow extends GetView<SearchTabController> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'No saved searches',
+              'Type something to search!',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 14,

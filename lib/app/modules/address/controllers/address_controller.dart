@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 import '../../home/controllers/home_controller.dart';
@@ -100,6 +101,12 @@ class AddressController extends BaseController {
           'language': 'en',
         },
       );
+      if (kDebugMode) {
+        print('--- PLACE DETAILS RESPONSE START ---');
+        print(response.data);
+        print('--- PLACE DETAILS RESPONSE END ---');
+      }
+
       if (response.data['status'] != 'OK') return;
       final result = response.data['result'] as Map<String, dynamic>;
       final loc = (result['geometry'] as Map)['location'] as Map;
@@ -108,21 +115,50 @@ class AddressController extends BaseController {
           : result['formatted_address'] as String? ?? '';
 
       String city = '';
-      String county = '';
+      String country = '';
       String postcode = '';
       final components = result['address_components'] as List? ?? [];
       for (final comp in components) {
         final types = (comp['types'] as List).cast<String>();
+        final longName = comp['long_name'] as String? ?? '';
         if (city.isEmpty &&
             (types.contains('postal_town') || types.contains('locality'))) {
-          city = comp['long_name'] as String? ?? '';
+          city = longName;
         }
-        if (county.isEmpty && types.contains('country')) {
-          county = comp['long_name'] as String? ?? '';
+        if (types.contains('country')) {
+          country = longName;
         }
         if (postcode.isEmpty && types.contains('postal_code')) {
-          postcode = comp['long_name'] as String? ?? '';
+          postcode = longName;
         }
+      }
+
+      // Fallbacks for City
+      if (city.isEmpty) {
+        for (final comp in components) {
+          final types = (comp['types'] as List).cast<String>();
+          if (types.contains('sublocality_level_1') || types.contains('neighborhood')) {
+            city = comp['long_name'] as String? ?? '';
+            break;
+          }
+        }
+      }
+      if (city.isEmpty) {
+        for (final comp in components) {
+          final types = (comp['types'] as List).cast<String>();
+          if (types.contains('administrative_area_level_2')) {
+            city = comp['long_name'] as String? ?? '';
+            break;
+          }
+        }
+      }
+
+      if (kDebugMode) {
+        print('EXTRACTED DATA FROM SEARCH:');
+        print('Name: ${place.mainText}');
+        print('City: $city');
+        print('Country: $country');
+        print('Postcode: $postcode');
       }
 
       clearSearch();
@@ -133,7 +169,7 @@ class AddressController extends BaseController {
         'name': place.mainText,
         'address': address,
         'city': city,
-        'county': county,
+        'county': country,
         'postcode': postcode,
       });
     } catch (e) {

@@ -1,6 +1,7 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../restaurant_detail/controllers/restaurant_detail_controller.dart';
+import '../../restaurant_detail/views/product_addons_sheet.dart';
 import '../../restaurant_detail/views/restaurant_detail_view.dart';
 import '../controllers/cart_controller.dart';
 
@@ -234,40 +235,55 @@ class CartView extends GetView<CartController> {
               ),
               if (item.addons != null) ...[
                 const SizedBox(height: 4),
-                Obx(() => GestureDetector(
-                  onTap: () => item.isExpanded.toggle(),
-                  behavior: HitTestBehavior.opaque,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Flexible(
-                        child: Text(
-                          item.addons ?? '',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.lightSurfaceSubtitle,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final text = item.addons ?? '';
+                    final style = GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.lightSurfaceSubtitle,
+                    );
+                    final span = TextSpan(text: text, style: style);
+                    final tp = TextPainter(
+                      text: span,
+                      maxLines: 1,
+                      textDirection: TextDirection.ltr,
+                    );
+                    tp.layout(maxWidth: constraints.maxWidth);
+                    final bool canExpand = tp.didExceedMaxLines;
+
+                    return Obx(() => GestureDetector(
+                      onTap: canExpand ? () => item.isExpanded.toggle() : null,
+                      behavior: HitTestBehavior.opaque,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              text,
+                              style: style,
+                              maxLines: item.isExpanded.value ? null : 1,
+                              overflow: item.isExpanded.value ? null : TextOverflow.ellipsis,
+                            ),
                           ),
-                          maxLines: item.isExpanded.value ? null : 1,
-                          overflow: item.isExpanded.value ? null : TextOverflow.ellipsis,
-                        ),
+                          if (canExpand)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Transform.rotate(
+                                angle: item.isExpanded.value ? 3.14159 : 0,
+                                child: Assets.images.locationdropIcon.image(
+                                  width: 16,
+                                  height: 16,
+                                  color: AppColors.lightSurfaceSubtitle,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                     // const SizedBox(width: 4),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Transform.rotate(
-                          angle: item.isExpanded.value ? 3.14159 : 0,
-                          child: Assets.images.locationdropIcon.image(
-                            width: 16,
-                            height: 16,
-                            color: AppColors.lightSurfaceSubtitle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
+                    ));
+                  },
+                ),
               ],
               const SizedBox(height: 8),
               Row(
@@ -293,8 +309,8 @@ class CartView extends GetView<CartController> {
 
   Widget _buildQuantitySelector(CartItem item) {
     return Obx(() {
-      final isPlusLoading = controller.loadingButtons.contains("${item.menuItemId}-plus");
-      final isMinusLoading = controller.loadingButtons.contains("${item.menuItemId}-minus");
+      final isPlusLoading = controller.loadingButtons.contains("${item.id}-plus");
+      final isMinusLoading = controller.loadingButtons.contains("${item.id}-minus");
       
       return Container(
         width: 112,
@@ -322,7 +338,17 @@ class CartView extends GetView<CartController> {
             ),
             _buildQtyBtn(
               Assets.images.cartPlus,
-              () => controller.addItem(item.id),
+              () {
+                if (item.hasModifiers) {
+                  final cartApiItem = controller.cartApiItems.firstWhereOrNull((i) => i.id.toString() == item.id);
+                  showProductAddonsSheet(
+                    item.toMap(restaurantId: controller.cartRestaurantId.value),
+                    existingModifiers: cartApiItem?.modifiers,
+                  );
+                } else {
+                  controller.addItem(item.id);
+                }
+              },
               isAdd: true,
               isLoading: isPlusLoading,
             ),

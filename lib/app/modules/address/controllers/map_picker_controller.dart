@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:swiftdrop_customer_app/export.dart';
@@ -230,6 +231,13 @@ class MapPickerController extends GetxController {
           'language': 'en',
         },
       );
+      
+      if (kDebugMode) {
+        print('--- GEOCODE RESPONSE START ---');
+        print(response.data);
+        print('--- GEOCODE RESPONSE END ---');
+      }
+
       final results = response.data['results'] as List?;
       if (results == null || results.isEmpty) return;
 
@@ -237,51 +245,107 @@ class MapPickerController extends GetxController {
       final components = first['address_components'] as List;
       final formatted = first['formatted_address'] as String? ?? '';
 
+      bool isPurelyNumeric(String s) => RegExp(r'^\d+$').hasMatch(s.trim());
+      bool containsBlacklistedKeywords(String s) {
+        final lower = s.toLowerCase();
+        return lower.contains('booth') || 
+               lower.contains('shop') || 
+               lower.contains('gali') || 
+               lower.contains('house no');
+      }
+
       String name = '';
       for (final c in components) {
         final types = c['types'] as List;
         if (types.contains('premise') ||
             types.contains('establishment') ||
             types.contains('point_of_interest')) {
-          name = c['long_name'] as String;
-          break;
+          final longName = c['long_name'] as String;
+          if (!isPurelyNumeric(longName) && !containsBlacklistedKeywords(longName)) {
+            name = longName;
+            break;
+          }
         }
       }
       if (name.isEmpty) {
-        String num = '', route = '';
+        String route = '';
         for (final c in components) {
           final types = c['types'] as List;
-          if (types.contains('street_number')) num = c['long_name'] as String;
-          if (types.contains('route')) route = c['long_name'] as String;
+          if (types.contains('route')) {
+            route = c['long_name'] as String;
+            break;
+          }
         }
-        name = [num, route].where((s) => s.isNotEmpty).join(' ');
+        name = route;
       }
+      
+      if (name.isEmpty || isPurelyNumeric(name) || containsBlacklistedKeywords(name)) {
+        // Fallback: search components for sublocality or neighborhood
+        for (final c in components) {
+          final types = c['types'] as List;
+          if (types.contains('sublocality_level_1') || types.contains('neighborhood')) {
+            name = c['long_name'] as String;
+            break;
+          }
+        }
+      }
+
       if (name.isEmpty) name = formatted.split(',').first;
 
       String city = '';
-      String county = '';
+      String country = '';
       String postcode = '';
+
       for (final c in components) {
         final types = c['types'] as List;
-        if (city.isEmpty &&
-            (types.contains('locality') || types.contains('postal_town'))) {
-          city = c['long_name'] as String;
+        final longName = c['long_name'] as String;
+
+        if (city.isEmpty && (types.contains('locality') || types.contains('postal_town'))) {
+          city = longName;
         }
-        if (county.isEmpty &&
-            types.contains('country')) {
-          county = c['long_name'] as String;
+        if (types.contains('country')) {
+          country = longName;
         }
         if (postcode.isEmpty && types.contains('postal_code')) {
-          postcode = c['long_name'] as String;
+          postcode = longName;
+        }
+      }
+
+      // Fallbacks for City
+      if (city.isEmpty) {
+        for (final c in components) {
+          final types = c['types'] as List;
+          if (types.contains('sublocality_level_1') || types.contains('neighborhood')) {
+            city = c['long_name'] as String;
+            break;
+          }
+        }
+      }
+      if (city.isEmpty) {
+        for (final c in components) {
+          final types = c['types'] as List;
+          if (types.contains('administrative_area_level_2')) {
+            city = c['long_name'] as String;
+            break;
+          }
         }
       }
 
       locationName.value = name;
       locationAddress.value = formatted;
       locationCity.value = city;
-      locationCounty.value = county;
+      locationCounty.value = country;
       locationPostcode.value = postcode;
-    } catch (_) {
+
+      if (kDebugMode) {
+        print('EXTRACTED DATA:');
+        print('Name: $name');
+        print('City: $city');
+        print('Country: $country');
+        print('Postcode: $postcode');
+      }
+    } catch (e) {
+      if (kDebugMode) print('Geocoding error: $e');
     } finally {
       isGeocoding.value = false;
     }

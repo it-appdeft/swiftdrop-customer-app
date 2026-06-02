@@ -82,7 +82,11 @@ class FavoritesView extends GetView<FavoritesController> {
   Widget _buildItemsList() {
     return Obx(() {
       if (controller.isFetchingItems.value && controller.favoriteItems.isEmpty) {
-        return const Center(child: AppLoader());
+        return ListView.builder(
+          padding: const EdgeInsets.only(top: 16),
+          itemCount: 3,
+          itemBuilder: (_, __) => const FavoriteItemCardShimmer(),
+        );
       }
       
       if (controller.favoriteItems.isEmpty) {
@@ -115,7 +119,11 @@ class FavoritesView extends GetView<FavoritesController> {
   Widget _buildRestaurantsList() {
     return Obx(() {
       if (controller.isFetchingRestaurants.value && controller.favoriteRestaurants.isEmpty) {
-        return const Center(child: AppLoader());
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: 3,
+          itemBuilder: (_, __) => const RestaurantCardShimmer(),
+        );
       }
 
       if (controller.favoriteRestaurants.isEmpty) {

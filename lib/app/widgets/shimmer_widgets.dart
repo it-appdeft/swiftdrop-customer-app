@@ -158,12 +158,12 @@ class MenuItemCardShimmer extends StatelessWidget {
       baseColor: AppShimmer.baseColor,
       highlightColor: AppShimmer.highlightColor,
       child: Container(
-        height: 160,
+        height: 140,
         margin: const EdgeInsets.only(bottom: 24),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _block(width: 154, height: 144, radius: 12),
+            _block(width: 128, height: 119, radius: 10),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -181,6 +181,82 @@ class MenuItemCardShimmer extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class FavoriteItemCardShimmer extends StatelessWidget {
+  const FavoriteItemCardShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+      decoration: BoxDecoration(
+        color: AppColors.offWhite,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppShimmer.text(width: 140, height: 16),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          AppShimmer.rect(width: 16, height: 16),
+                          const SizedBox(width: 4),
+                          AppShimmer.text(width: 150, height: 12),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                AppShimmer.rect(width: 50, height: 22, radius: 11),
+              ],
+            ),
+          ),
+          const Divider(
+            height: 33,
+            thickness: 1,
+            color: AppColors.lightSurfaceBorder,
+            indent: 12,
+            endIndent: 12,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20, left: 12, right: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppShimmer.rect(width: 128, height: 119, radius: 10),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppShimmer.rect(width: 16, height: 16),
+                      const SizedBox(height: 4),
+                      AppShimmer.text(height: 16),
+                      const SizedBox(height: 4),
+                      AppShimmer.text(width: 60, height: 14),
+                      const SizedBox(height: 4),
+                      AppShimmer.rect(width: 52, height: 22, radius: 11),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

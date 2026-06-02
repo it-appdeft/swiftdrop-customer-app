@@ -30,13 +30,17 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
 
                 Obx(() {
                   final isSearching = controller.searchQuery.value.isNotEmpty;
+                  if (controller.isLoading.value) {
+                    return _buildItemList();
+                  }
                   if (!isSearching) {
                     return _buildItemList();
                   }
 
-                  final hasResults = controller.recommended.isNotEmpty || controller.categories.isNotEmpty;
+                  final matchingIds = controller.recommended.map((e) => e.id).toSet();
+                  final resultCount = matchingIds.length;
 
-                  if (!hasResults && !controller.isLoading.value) {
+                  if (resultCount == 0 && !controller.isLoading.value) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       child: NoDataWidget(
@@ -52,7 +56,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                         child: Text(
-                          'Results for "${controller.searchQuery.value}" (${controller.recommended.length + controller.categories.fold(0, (sum, c) => sum + c.items.length)})',
+                          'Results for "${controller.searchQuery.value}" ($resultCount)',
                           style: GoogleFonts.inter(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -223,7 +227,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                     ),
                   ],
                 ),
-                child: controller.isLoading.value
+                child: (controller.isLoading.value && info == null)
                     ? _buildHeaderCardShimmer()
                     : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

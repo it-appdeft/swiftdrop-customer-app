@@ -5,21 +5,41 @@ class CartItem {
   final String id;
   final int menuItemId;
   final String name;
+  final String? description;
   final String? addons;
+  final bool isVeg;
   final double price;
   final RxInt quantity;
   final String? image;
   final RxBool isExpanded = false.obs;
+  final List<ModifierGroupModel> modifierGroups;
 
   CartItem({
     required this.id,
     required this.menuItemId,
     required this.name,
+    this.description,
     this.addons,
+    this.isVeg = true,
     required this.price,
     int qty = 1,
     this.image,
+    this.modifierGroups = const [],
   }) : quantity = qty.obs;
+
+  bool get hasModifiers => modifierGroups.isNotEmpty;
+
+  Map<String, dynamic> toMap({int? restaurantId}) => {
+        'id': menuItemId,
+        'cart_item_id': id,
+        'name': name,
+        'description': description,
+        'price': price.toStringAsFixed(2),
+        'isVeg': isVeg,
+        'image': image,
+        'modifier_groups': modifierGroups,
+        'restaurant_id': restaurantId,
+      };
 }
 
 class CartController extends BaseController {
@@ -32,7 +52,7 @@ class CartController extends BaseController {
   // API-sourced cart state
   final quantities = <int, int>{}.obs; // menuItemId → quantity
   final loadingItems = <int>{}.obs; // menuItemId → loading state
-  final loadingButtons = <String>{}.obs; // "menuItemId-plus" or "menuItemId-minus"
+  final loadingButtons = <String>{}.obs; // "cartItemId-plus" or "cartItemId-minus"
   final cartApiItems = <CartApiItem>[].obs;
   final RxString cartRestaurantName = ''.obs;
   final RxString cartRestaurantLogo = ''.obs;
@@ -81,10 +101,13 @@ class CartController extends BaseController {
           id: item.id.toString(),
           menuItemId: item.menuItemId,
           name: item.name,
+          description: item.description,
           addons: addonsStr,
           price: item.unitPrice,
           qty: item.quantity,
           image: item.imageUrl,
+          isVeg: item.isVeg,
+          modifierGroups: item.modifierGroups,
         ));
       }
       quantities.value = newQty;
@@ -93,7 +116,10 @@ class CartController extends BaseController {
       cartRestaurantName.value = cart.restaurantName ?? '';
       cartRestaurantLogo.value = cart.restaurantLogoUrl ?? '';
       cartItemCount.value = cart.itemCount;
-      if (cart.restaurantId != null) cartRestaurantId.value = cart.restaurantId!;
+      if (cart.restaurantId != null) {
+        cartRestaurantId.value = cart.restaurantId!;
+        _enrichCartItemsWithGroups();
+      }
       
       _checkEmptyAndPop();
     }
@@ -160,12 +186,15 @@ class CartController extends BaseController {
           id: item.id.toString(),
           menuItemId: item.menuItemId,
           name: item.name,
+          description: item.description,
           addons: item.modifiers.isNotEmpty
               ? item.modifiers.map((m) => m.optionName).join(', ')
               : null,
           price: item.unitPrice,
           qty: item.quantity,
           image: item.imageUrl,
+          isVeg: item.isVeg,
+          modifierGroups: item.modifierGroups,
         ));
       }
       quantities.value = newQty;
@@ -174,7 +203,10 @@ class CartController extends BaseController {
       cartItemCount.value = newQty.values.fold(0, (sum, q) => sum + q);
       cartRestaurantName.value = data.restaurantName ?? cartRestaurantName.value;
       cartRestaurantLogo.value = data.restaurantLogoUrl ?? cartRestaurantLogo.value;
-      if (data.restaurantId != null) cartRestaurantId.value = data.restaurantId!;
+      if (data.restaurantId != null) {
+        cartRestaurantId.value = data.restaurantId!;
+        _enrichCartItemsWithGroups();
+      }
 
       // Sync cooking request
       final instructions = data.specialInstructions;
@@ -196,6 +228,45 @@ class CartController extends BaseController {
       
       _checkEmptyAndPop();
     }
+  }
+
+  Future<void> _enrichCartItemsWithGroups() async {
+    if (cartRestaurantId.value == 0) return;
+    try {
+      final repo = RestaurantDetailRepository();
+      final result = await repo.getRestaurantDetail(cartRestaurantId.value);
+      if (result.success && result.data != null) {
+        final allMenuItems = <int, MenuItemModel>{};
+        for (var cat in result.data!.categories) {
+          for (var item in cat.items) {
+            allMenuItems[item.id] = item;
+          }
+        }
+        for (var item in result.data!.recommended) {
+          allMenuItems[item.id] = item;
+        }
+
+        final updatedItems = items.map((cartItem) {
+          final menuItem = allMenuItems[cartItem.menuItemId];
+          if (menuItem != null && cartItem.modifierGroups.isEmpty) {
+            return CartItem(
+              id: cartItem.id,
+              menuItemId: cartItem.menuItemId,
+              name: cartItem.name,
+              description: cartItem.description ?? menuItem.description,
+              addons: cartItem.addons,
+              price: cartItem.price,
+              qty: cartItem.quantity.value,
+              image: cartItem.image ?? menuItem.imageUrl,
+              isVeg: menuItem.isVeg,
+              modifierGroups: menuItem.modifierGroups,
+            );
+          }
+          return cartItem;
+        }).toList();
+        items.assignAll(updatedItems);
+      }
+    } catch (_) {}
   }
 
   double get itemTotal =>
@@ -236,9 +307,7 @@ class CartController extends BaseController {
 
   Future<void> updateCartItemQty(int cartItemId, int newQty,
       {int? menuItemId, String? buttonType}) async {
-    final loadingKey = (menuItemId != null && buttonType != null)
-        ? "$menuItemId-$buttonType"
-        : null;
+    final loadingKey = buttonType != null ? "$cartItemId-$buttonType" : null;
 
     if (loadingKey != null) loadingButtons.add(loadingKey);
     if (menuItemId != null) loadingItems.add(menuItemId);
@@ -257,9 +326,7 @@ class CartController extends BaseController {
 
   Future<void> deleteCartItem(int cartItemId,
       {int? menuItemId, String? buttonType}) async {
-    final loadingKey = (menuItemId != null && buttonType != null)
-        ? "$menuItemId-$buttonType"
-        : null;
+    final loadingKey = buttonType != null ? "$cartItemId-$buttonType" : null;
 
     if (loadingKey != null) loadingButtons.add(loadingKey);
     if (menuItemId != null) loadingItems.add(menuItemId);
