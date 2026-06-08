@@ -35,6 +35,8 @@ import '../modules/notifications/bindings/notifications_binding.dart';
 import '../modules/notifications/views/notifications_view.dart';
 import '../modules/onboarding/bindings/onboarding_binding.dart';
 import '../modules/onboarding/views/onboarding_view.dart';
+import '../modules/order_details/bindings/order_details_binding.dart';
+import '../modules/order_details/views/order_details_view.dart';
 import '../modules/order_history/bindings/order_history_binding.dart';
 import '../modules/order_history/views/order_history_view.dart';
 import '../modules/order_tracking/bindings/order_tracking_binding.dart';
@@ -247,6 +249,12 @@ class AppPages {
     GetPage(
       name: AppRoutes.orderSuccess,
       page: () => const OrderSuccessView(),
+    ),
+    GetPage(
+      name: AppRoutes.orderDetails,
+      page: () => const OrderDetailsView(),
+      binding: OrderDetailsBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
     ),
   ];
 }

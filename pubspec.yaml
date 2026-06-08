@@ -29,6 +29,7 @@ dependencies:
   country_picker: ^2.0.27
   cupertino_icons: ^1.0.8
   image_picker: ^1.0.7
+  flutter_rating_stars: ^1.1.0
 
 dev_dependencies:
   flutter_test:

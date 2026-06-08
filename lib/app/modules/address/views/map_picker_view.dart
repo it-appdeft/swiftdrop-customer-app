@@ -215,12 +215,7 @@ class MapPickerView extends GetView<MapPickerController> {
       final name = controller.locationName.value;
       final address = controller.locationAddress.value;
 
-      if (name.isEmpty) {
-        return Text(
-          'Move the map to select location',
-          style: AppTextStyles.pMedium.copyWith(color: AppColors.lightSurfaceSubtitle),
-        );
-      }
+      if (name.isEmpty) return const SizedBox(height: 24);
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

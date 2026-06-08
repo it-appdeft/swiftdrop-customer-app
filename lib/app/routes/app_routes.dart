@@ -35,4 +35,5 @@ abstract class AppRoutes {
   static const String coupons = '/coupons';
   static const String favorites = '/favorites';
   static const String orderSuccess = '/order-success';
+  static const String orderDetails = '/order-details';
 }

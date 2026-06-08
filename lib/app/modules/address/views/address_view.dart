@@ -221,8 +221,23 @@ class AddressView extends GetView<AddressController> {
               }
               if (permission == LocationPermission.whileInUse ||
                   permission == LocationPermission.always) {
-                controller.startAdd();
-                Get.toNamed(AppRoutes.mapPicker);
+                AppOverlayLoader.show();
+                try {
+                  final position = await Geolocator.getCurrentPosition(
+                    desiredAccuracy: LocationAccuracy.medium,
+                  );
+                  controller.startAdd();
+                  // Hide BEFORE navigating — hide() calls Get.back() which would
+                  // pop the map-picker if called after Get.toNamed().
+                  AppOverlayLoader.hide();
+                  Get.toNamed(AppRoutes.mapPicker, arguments: {
+                    'lat': position.latitude,
+                    'lng': position.longitude,
+                  });
+                } catch (_) {
+                  AppOverlayLoader.hide();
+                  AppUtils.showError('Unable to get GPS location. Please try again.');
+                }
               } else {
                 AppUtils.showLocationPermissionDialog();
               }

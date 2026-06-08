@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:dio/dio.dart';
 import 'package:swiftdrop_customer_app/export.dart';
-import '../../home/controllers/home_controller.dart';
 import '../../cart/controllers/cart_controller.dart';
 import 'delivery_address_controller.dart' show PlacePrediction;
 
@@ -44,6 +42,19 @@ class AddressController extends BaseController {
     loadAddresses();
     searchFocusNode.addListener(_onFocusChanged);
     queryController.addListener(_onQueryChanged);
+  }
+
+  @override
+  void onReady() {
+    super.onReady();
+    final args = Get.arguments;
+    if (args is Map && args['permissionDenied'] == true) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        AppUtils.showLocationPermissionDeniedDialog(
+          onEnterManual: () {},
+        );
+      });
+    }
   }
 
   void _onFocusChanged() {
@@ -267,10 +278,23 @@ class AddressController extends BaseController {
 
     savedAddresses.value = savedAddresses.map((a) => a.copyWith(isSelected: a.id == id)).toList();
 
+    AddressModel? selected;
     try {
-      final selected = savedAddresses.firstWhere((a) => a.id == id);
+      selected = savedAddresses.firstWhere((a) => a.id == id);
       await AuthService.to.saveSelectedAddress(selected);
     } catch (_) {}
+
+    if (selected != null) {
+      final display = [selected.addressLine1, selected.city]
+          .where((s) => s.isNotEmpty)
+          .join(', ');
+      final applied = await LocationService.to.selectLocation(
+        lat: selected.lat,
+        lng: selected.lng,
+        label: display.isNotEmpty ? display : selected.label,
+      );
+      if (!applied) return;
+    }
 
     if (Get.key.currentState?.canPop() ?? false) {
       Get.back();
@@ -349,12 +373,6 @@ class AddressController extends BaseController {
       final isNewAddress = _editingAddressId == null;
       _editingAddressId = null;
       await loadAddresses();
-
-      try {
-        final home = Get.find<HomeController>();
-        final display = [addressLine1, city].where((s) => s.isNotEmpty).join(', ');
-        if (display.isNotEmpty) home.currentAddress.value = display;
-      } catch (_) {}
 
       if (isNewAddress && result.data != null) {
         try {

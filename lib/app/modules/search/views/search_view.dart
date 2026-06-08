@@ -446,6 +446,7 @@ class _SearchResultsList extends GetView<SearchTabController> {
             return RestaurantWithItems(
               data: list[i],
               searchQuery: controller.searchQuery.value,
+              onFavoriteTap: () => controller.toggleRestaurantFavorite(list[i]['id']),
             );
           },
         );

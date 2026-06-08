@@ -125,6 +125,112 @@ class AppUtils {
     return '${(diff.inDays / 7).floor()}w ago';
   }
 
+  static void showLocationPermissionDeniedDialog({
+    required VoidCallback onEnterManual,
+    VoidCallback? onCancel,
+  }) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Location Permission Denied',
+                style: AppTextStyles.h6.copyWith(color: AppColors.lightSurfaceDarkText),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'We cannot load the map without location access. Please enable location permissions or enter your address manually.',
+                style: AppTextStyles.pSmall.copyWith(color: AppColors.lightSurfaceSubtitle),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    onEnterManual();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Enter Manual Location',
+                    style: AppTextStyles.pSmallSemiBold.copyWith(color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Get.back();
+                          onCancel?.call();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.lightSurfaceDisabled),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: AppTextStyles.pSmallSemiBold.copyWith(
+                            color: AppColors.lightSurfaceDarkText,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Get.back();
+                          Geolocator.openAppSettings();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Open Settings',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.pSmallSemiBold.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
   static void showLocationPermissionDialog() {
     Get.dialog(
       Dialog(

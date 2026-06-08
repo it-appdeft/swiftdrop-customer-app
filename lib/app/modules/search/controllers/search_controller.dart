@@ -95,6 +95,8 @@ class SearchTabController extends BaseController {
       highestRated: _highestRatedActive,
       page: 1,
       isItems: isItems,
+      lat: LocationService.to.lat,
+      lng: LocationService.to.lng,
     );
     isSearching.value = false;
 
@@ -130,6 +132,8 @@ class SearchTabController extends BaseController {
       highestRated: _highestRatedActive,
       page: page,
       isItems: isItems,
+      lat: LocationService.to.lat,
+      lng: LocationService.to.lng,
     );
     isLoadingMore.value = false;
 

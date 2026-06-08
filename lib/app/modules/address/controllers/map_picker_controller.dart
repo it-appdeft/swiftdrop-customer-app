@@ -52,7 +52,16 @@ class MapPickerController extends GetxController {
       _lastCamera = CameraPosition(target: LatLng(lat, lng), zoom: 16.0);
       _skipNextGeocode = true;
       _hasInitialCoords = true;
+      // No address data passed (e.g. "Use Current Location") — geocode immediately
+      // so the address shows on load without the user having to move the map.
+      if (locationName.value.isEmpty) {
+        _reverseGeocode(lat, lng);
+      }
     }
+
+    // Show spinner from the start when there is no address to display yet,
+    // covering both the immediate-geocode path and the GPS-animation path.
+    if (locationName.value.isEmpty) isGeocoding.value = true;
 
     initialCameraPosition = _lastCamera;
   }
@@ -79,128 +88,19 @@ class MapPickerController extends GetxController {
   }
 
   void _showPermissionDeniedDialog() {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Location Permission Denied',
-                style: GoogleFonts.inter(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.lightSurfaceDarkText,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'We cannot load the map without location access. Please enable location permissions or enter your address manually.',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.lightSurfaceSubtitle,
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    Get.back();
-                    final result = await Get.toNamed(
-                      AppRoutes.deliveryAddress,
-                      arguments: {'fromMapPicker': true},
-                    );
-                    if (result != null && result is Map) {
-                      setLocationFromSearch(Map<String, dynamic>.from(result));
-                    } else {
-                      _showPermissionDeniedDialog();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Enter Manual Location',
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 44,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Get.back();
-                          Get.back();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.lightSurfaceDisabled),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.lightSurfaceDarkText,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: SizedBox(
-                      height: 44,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Get.back();
-                          Geolocator.openAppSettings();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Open Settings',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-      barrierDismissible: false,
+    AppUtils.showLocationPermissionDeniedDialog(
+      onEnterManual: () async {
+        final result = await Get.toNamed(
+          AppRoutes.deliveryAddress,
+          arguments: {'fromMapPicker': true},
+        );
+        if (result != null && result is Map) {
+          setLocationFromSearch(Map<String, dynamic>.from(result));
+        } else {
+          _showPermissionDeniedDialog();
+        }
+      },
+      onCancel: Get.back,
     );
   }
 

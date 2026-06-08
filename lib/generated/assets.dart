@@ -32,6 +32,9 @@ class $AssetsImagesGen {
   final AssetGenImage alertIcon = const AssetGenImage(
     'assets/images/alertIcon.png',
   );
+  final AssetGenImage alertUnavailable = const AssetGenImage(
+    'assets/images/alertUnavailable.png',
+  );
   final AssetGenImage back = const AssetGenImage('assets/images/back.png');
   final AssetGenImage cartMinus = const AssetGenImage(
     'assets/images/cartMinus.png',
@@ -63,11 +66,20 @@ class $AssetsImagesGen {
   final AssetGenImage delivered = const AssetGenImage(
     'assets/images/delivered.png',
   );
+  final AssetGenImage deliveryPartner = const AssetGenImage(
+    'assets/images/deliveryPartner.png',
+  );
+  final AssetGenImage emptyStar = const AssetGenImage(
+    'assets/images/emptyStar.png',
+  );
   final AssetGenImage favourite = const AssetGenImage(
     'assets/images/favourite.png',
   );
   final AssetGenImage favouriteAdded = const AssetGenImage(
     'assets/images/favouriteAdded.png',
+  );
+  final AssetGenImage filledStart = const AssetGenImage(
+    'assets/images/filledStart.png',
   );
   final AssetGenImage heartUnfilled = const AssetGenImage(
     'assets/images/heartUnfilled.png',
@@ -160,6 +172,9 @@ class $AssetsImagesGen {
     'assets/images/searchUnselected.png',
   );
   final AssetGenImage share = const AssetGenImage('assets/images/share.png');
+  final AssetGenImage storeImage = const AssetGenImage(
+    'assets/images/storeImage.png',
+  );
   final AssetGenImage timeIcon = const AssetGenImage(
     'assets/images/timeIcon.png',
   );

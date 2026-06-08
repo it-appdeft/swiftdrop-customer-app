@@ -12,6 +12,7 @@ class CartItem {
   final RxInt quantity;
   final String? image;
   final RxBool isExpanded = false.obs;
+  final bool isAvailable;
   final List<ModifierGroupModel> modifierGroups;
 
   CartItem({
@@ -24,6 +25,7 @@ class CartItem {
     required this.price,
     int qty = 1,
     this.image,
+    this.isAvailable = true,
     this.modifierGroups = const [],
   }) : quantity = qty.obs;
 
@@ -83,7 +85,9 @@ class CartController extends BaseController {
     cookingRequestController.addListener(() {
       cookingRequestTemp.value = cookingRequestController.text;
     });
-    Future.wait([fetchCart(), fetchCheckout()]);
+    if (AuthService.to.isAuthenticated) {
+      Future.wait([fetchCart(), fetchCheckout()]);
+    }
   }
 
   Future<void> fetchCart() async {

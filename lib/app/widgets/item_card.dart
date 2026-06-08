@@ -5,6 +5,8 @@ import '../modules/restaurant_detail/controllers/restaurant_detail_controller.da
 import '../modules/restaurant_detail/views/product_detail_bottom_sheet.dart';
 import '../modules/restaurant_detail/views/product_addons_sheet.dart';
 
+import '../modules/restaurant_detail/views/your_customizations_sheet.dart';
+
 class ItemCard extends StatefulWidget {
   final Map<String, dynamic> item;
   final bool showFavorite;
@@ -106,8 +108,7 @@ class _ItemCardState extends State<ItemCard> {
           GestureDetector(
             onTap: () {
               if (_hasModifiers) {
-                final mods = _cart?.getModifiersForItem(_itemId);
-                showProductAddonsSheet(widget.item, existingModifiers: mods);
+                showYourCustomizationsSheet(widget.item);
               } else {
                 cart.incrementCartItem(_itemId);
               }
@@ -166,7 +167,12 @@ class _ItemCardState extends State<ItemCard> {
           if (_checkRestaurantConflict()) return;
 
           if (_hasModifiers) {
-            showProductDetailBottomSheet(widget.item);
+            final cart = _cart;
+            if (cart != null && (cart.quantities[_itemId] ?? 0) > 0) {
+              showYourCustomizationsSheet(widget.item);
+            } else {
+              showProductDetailBottomSheet(widget.item);
+            }
           } else {
             final cart = _cart;
             if (cart != null) {
@@ -337,17 +343,41 @@ class _ItemCardState extends State<ItemCard> {
   }
 }
 
-class RestaurantWithItems extends StatelessWidget {
+class RestaurantWithItems extends StatefulWidget {
   final Map<String, dynamic> data;
   final String? searchQuery;
-  const RestaurantWithItems({super.key, required this.data, this.searchQuery});
+  final VoidCallback? onFavoriteTap;
+  const RestaurantWithItems({super.key, required this.data, this.searchQuery, this.onFavoriteTap});
+
+  @override
+  State<RestaurantWithItems> createState() => _RestaurantWithItemsState();
+}
+
+class _RestaurantWithItemsState extends State<RestaurantWithItems> {
+  late bool _isFavourited;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFavourited = widget.data['is_favorited'] ?? false;
+  }
+
+  @override
+  void didUpdateWidget(covariant RestaurantWithItems oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.data['is_favorited'] != oldWidget.data['is_favorited']) {
+      setState(() {
+        _isFavourited = widget.data['is_favorited'] ?? false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: {
-            'id': data['id'],
-            'q': searchQuery ?? '',
+            'id': widget.data['id'],
+            'q': widget.searchQuery ?? '',
           }),
       behavior: HitTestBehavior.opaque,
       child: Container(
@@ -367,7 +397,7 @@ class RestaurantWithItems extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          data['name'] ?? '',
+                          widget.data['name'] ?? '',
                           style: GoogleFonts.inter(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -380,7 +410,7 @@ class RestaurantWithItems extends StatelessWidget {
                             Assets.images.timeIcon.image(width: 16, height: 16),
                             const SizedBox(width: 4),
                             Text(
-                              data['time'] ?? '20-30 min',
+                              widget.data['time'] ?? '20-30 min',
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -391,7 +421,7 @@ class RestaurantWithItems extends StatelessWidget {
                             Container(width: 1, height: 12, color: const Color(0xFFCFD1DC)),
                             const SizedBox(width: 8),
                             Text(
-                              data['distance'] ?? '4.9 mi',
+                              widget.data['distance'] ?? '4.9 mi',
                               style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -403,6 +433,16 @@ class RestaurantWithItems extends StatelessWidget {
                       ],
                     ),
                   ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() => _isFavourited = !_isFavourited);
+                      widget.onFavoriteTap?.call();
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: (_isFavourited ? Assets.images.favouriteAdded : Assets.images.favourite)
+                        .image(width: 24, height: 24),
+                  ),
+                  const SizedBox(width: 12),
                   Assets.images.rightIcon.image(width: 24, height: 24),
                 ],
               ),
@@ -412,10 +452,10 @@ class RestaurantWithItems extends StatelessWidget {
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 36),
-                itemCount: (data['items'] as List?)?.length ?? 0,
+                itemCount: (widget.data['items'] as List?)?.length ?? 0,
                 itemBuilder: (context, index) {
-                  final item = Map<String, dynamic>.from(data['items'][index]);
-                  item['restaurant_id'] = data['id'];
+                  final item = Map<String, dynamic>.from(widget.data['items'][index]);
+                  item['restaurant_id'] = widget.data['id'];
                   return ItemCard(item: item);
                 },
               ),

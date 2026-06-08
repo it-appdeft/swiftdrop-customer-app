@@ -3,7 +3,9 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../restaurant_detail/controllers/restaurant_detail_controller.dart';
 import '../../restaurant_detail/views/product_addons_sheet.dart';
 import '../../restaurant_detail/views/restaurant_detail_view.dart';
+import '../../restaurant_detail/views/your_customizations_sheet.dart';
 import '../controllers/cart_controller.dart';
+import 'repeat_last_sheet.dart';
 
 class CartView extends GetView<CartController> {
   const CartView({super.key});
@@ -18,8 +20,10 @@ class CartView extends GetView<CartController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildUnavailableWarning(),
+            const SizedBox(height: 16),
             _buildDeliveryAddress(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             _buildItemsSection(context),
             const SizedBox(height: 16),
             _buildCouponSection(),
@@ -53,6 +57,34 @@ class CartView extends GetView<CartController> {
               color: AppColors.lightSurfaceDarkText,
             ),
           )),
+    );
+  }
+
+  Widget _buildUnavailableWarning() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE9E5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Assets.images.alertUnavailable.image(width: 24, height: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Some items from your previous order are unavailable. Please review your cart.',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -190,7 +222,10 @@ class CartView extends GetView<CartController> {
                     color: AppColors.lightSurfaceBorder,
                     thickness: 1,
                   ),
-                  itemBuilder: (context, index) => _buildCartItem(controller.items[index]),
+                  itemBuilder: (context, index) => _buildCartItem(
+                    controller.items[index],
+                    isDummyUnavailable: index == 1,
+                  ),
                 );
               }),
               const SizedBox(height: 16),
@@ -207,7 +242,9 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  Widget _buildCartItem(CartItem item) {
+  Widget _buildCartItem(CartItem item, {bool isDummyUnavailable = false}) {
+    final bool available = item.isAvailable && !isDummyUnavailable;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -233,7 +270,17 @@ class CartView extends GetView<CartController> {
                   color: AppColors.lightSurfaceDarkText,
                 ),
               ),
-              if (item.addons != null) ...[
+              if (!available) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'This item is currently unavailable',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceSubtitle,
+                  ),
+                ),
+              ] else if (item.addons != null) ...[
                 const SizedBox(height: 4),
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -289,21 +336,46 @@ class CartView extends GetView<CartController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '£${item.price.toStringAsFixed(2)}',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.lightSurfaceLabel,
+                  if (available)
+                    Text(
+                      '£${item.price.toStringAsFixed(2)}',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.lightSurfaceLabel,
+                      ),
                     ),
-                  ),
-                  _buildQuantitySelector(item),
+                  if (available)
+                    _buildQuantitySelector(item)
+                  else
+                    _buildRemoveButton(item),
                 ],
               ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildRemoveButton(CartItem item) {
+    return GestureDetector(
+      onTap: () => controller.deleteCartItem(int.parse(item.id)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFFFE9E5)),
+        ),
+        child: Text(
+          'Remove',
+          style: GoogleFonts.inter(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: AppColors.error,
+          ),
+        ),
+      ),
     );
   }
 
@@ -340,10 +412,9 @@ class CartView extends GetView<CartController> {
               Assets.images.cartPlus,
               () {
                 if (item.hasModifiers) {
-                  final cartApiItem = controller.cartApiItems.firstWhereOrNull((i) => i.id.toString() == item.id);
-                  showProductAddonsSheet(
+                  showRepeatLastSheet(
                     item.toMap(restaurantId: controller.cartRestaurantId.value),
-                    existingModifiers: cartApiItem?.modifiers,
+                    onRepeat: () => controller.addItem(item.id),
                   );
                 } else {
                   controller.addItem(item.id);
@@ -644,18 +715,6 @@ class CartView extends GetView<CartController> {
                         color: AppColors.lightSurfaceDarkText,
                       ),
                     ),
-                    if (applied != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          'View all coupons',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.lightSurfaceSubtitle,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),

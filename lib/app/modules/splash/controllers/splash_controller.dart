@@ -4,6 +4,7 @@ import 'package:swiftdrop_customer_app/export.dart';
 
 class SplashController extends BaseController {
   Timer? _timer;
+  bool _hasNavigated = false;
 
   @override
   void onInit() {
@@ -19,7 +20,10 @@ class SplashController extends BaseController {
   }
 
   void _navigate() {
-    if (isClosed) return;
+    if (isClosed || _hasNavigated) return;
+    // Guard: if another controller instance already navigated away from splash, do nothing.
+    if (Get.currentRoute != AppRoutes.splash) return;
+    _hasNavigated = true;
 
     final isLoggedIn = AuthService.to.isAuthenticated;
     if (isLoggedIn) {

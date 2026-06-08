@@ -19,10 +19,16 @@ class HomeRepository {
     }
   }
 
-  Future<ApiResponse<List<RestaurantModel>>> getTopPicks({int? foodItemId}) async {
+  Future<ApiResponse<List<RestaurantModel>>> getTopPicks({
+    int? foodItemId,
+    double? lat,
+    double? lng,
+  }) async {
     try {
       final params = <String, dynamic>{};
       if (foodItemId != null) params['food_item_id'] = foodItemId;
+      if (lat != null) params['latitude'] = lat;
+      if (lng != null) params['longitude'] = lng;
       final response = await _dio.get(
         ApiEndpoints.customerTopPicks,
         queryParameters: params.isEmpty ? null : params,
@@ -39,10 +45,14 @@ class HomeRepository {
   Future<ApiResponse<RestaurantsPageModel>> getRestaurants({
     int page = 1,
     int? foodItemId,
+    double? lat,
+    double? lng,
   }) async {
     try {
       final params = <String, dynamic>{'page': page};
       if (foodItemId != null) params['search'] = foodItemId;
+      if (lat != null) params['latitude'] = lat;
+      if (lng != null) params['longitude'] = lng;
       final response = await _dio.get(
         ApiEndpoints.customerRestaurants,
         queryParameters: params,
@@ -61,11 +71,15 @@ class HomeRepository {
     bool highestRated = false,
     int page = 1,
     bool isItems = false,
+    double? lat,
+    double? lng,
   }) async {
     try {
       final params = <String, dynamic>{'search': q, 'page': page};
       if (offers) params['offers'] = 1;
       if (highestRated) params['highest_rated'] = 1;
+      if (lat != null) params['latitude'] = lat;
+      if (lng != null) params['longitude'] = lng;
 
       final endpoint = isItems
           ? ApiEndpoints.customerSearchItems

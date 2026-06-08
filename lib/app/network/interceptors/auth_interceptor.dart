@@ -17,7 +17,18 @@ class AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
-      Get.offAllNamed(AppRoutes.login);
+      const _authRoutes = {
+        AppRoutes.splash,
+        AppRoutes.onboarding,
+        AppRoutes.login,
+        AppRoutes.otp,
+        AppRoutes.register,
+        AppRoutes.registerSteps,
+        AppRoutes.verificationPending,
+      };
+      if (!_authRoutes.contains(Get.currentRoute)) {
+        Get.offAllNamed(AppRoutes.login);
+      }
     }
     handler.next(err);
   }

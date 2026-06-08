@@ -1,4 +1,3 @@
-import 'package:geolocator/geolocator.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 
 class HomeController extends BaseController {
@@ -50,33 +49,17 @@ class HomeController extends BaseController {
     bannerPageController.addListener(_onBannerPage);
     scrollController = ScrollController();
     scrollController.addListener(_onScroll);
-    _syncSelectedAddress(AuthService.to.selectedAddress.value);
-    ever(AuthService.to.selectedAddress, _syncSelectedAddress);
+    currentAddress.value = LocationService.to.displayAddress.value;
+    // Display label updates (e.g. reverse geocode) — update bar only, no reload
+    ever(LocationService.to.displayAddress, (val) => currentAddress.value = val);
+    // Coordinate changes — trigger dashboard reload
+    ever(LocationService.to.locationKey, _onCoordsChanged);
     _initFlow();
   }
 
-  void _syncSelectedAddress(AddressModel? addr) {
-    if (addr == null) {
-      currentAddress.value = 'Select Location';
-      return;
-    }
-    final display = [addr.addressLine1, addr.city]
-        .where((s) => s.isNotEmpty)
-        .join(', ');
-    if (display.isNotEmpty) {
-      final oldAddress = currentAddress.value;
-      currentAddress.value = display;
-      
-      // If we already had an address and it changed, refresh everything
-      if (oldAddress != 'Select Location' && oldAddress != display) {
-        refresh();
-      } 
-      // If we didn't have an address (Select Location) but now we do, 
-      // and the dashboard is empty, load it.
-      else if (oldAddress == 'Select Location' && _isInitialized && restaurants.isEmpty) {
-        _loadDashboard();
-      }
-    }
+  void _onCoordsChanged(String key) {
+    if (!_isInitialized || key.isEmpty) return;
+    refresh();
   }
 
   void _onBannerPage() {
@@ -86,26 +69,25 @@ class HomeController extends BaseController {
   }
 
   Future<void> _initFlow() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.whileInUse ||
-        permission == LocationPermission.always) {
-      await _loadDashboard();
-    } else {
+    final hasLoc = await LocationService.to.initLocation();
+    if (!hasLoc) {
       Get.toNamed(AppRoutes.address, arguments: {'permissionDenied': true});
+      _isInitialized = true;
+      return;
     }
+    await _loadDashboard();
     _isInitialized = true;
   }
 
   Future<void> _loadDashboard() async {
     if (isLoading.value) return;
+    final lat = LocationService.to.lat;
+    final lng = LocationService.to.lng;
     await runAsync(() async {
       final results = await Future.wait<dynamic>([
         _repo.getFoodItems(),
-        _repo.getTopPicks(),
-        _repo.getRestaurants(page: 1, foodItemId: _selectedFoodItemId),
+        _repo.getTopPicks(foodItemId: _selectedFoodItemId, lat: lat, lng: lng),
+        _repo.getRestaurants(page: 1, foodItemId: _selectedFoodItemId, lat: lat, lng: lng),
       ]);
 
       final foodResult = results[0] as ApiResponse<List<FoodItemModel>>;
@@ -128,8 +110,15 @@ class HomeController extends BaseController {
   }
 
   Future<void> _reloadRestaurants() async {
+    final lat = LocationService.to.lat;
+    final lng = LocationService.to.lng;
     await runAsync(() async {
-      final result = await _repo.getRestaurants(page: 1, foodItemId: _selectedFoodItemId);
+      final result = await _repo.getRestaurants(
+        page: 1,
+        foodItemId: _selectedFoodItemId,
+        lat: lat,
+        lng: lng,
+      );
       if (result.success && result.data != null) {
         final page = result.data!;
         restaurants.value = page.restaurants;
@@ -140,8 +129,10 @@ class HomeController extends BaseController {
   }
 
   Future<void> _reloadTopPicks() async {
+    final lat = LocationService.to.lat;
+    final lng = LocationService.to.lng;
     topPickRestaurants.clear();
-    final result = await _repo.getTopPicks(foodItemId: _selectedFoodItemId);
+    final result = await _repo.getTopPicks(foodItemId: _selectedFoodItemId, lat: lat, lng: lng);
     if (result.success && result.data != null) {
       topPickRestaurants.value = result.data!;
     }
@@ -151,9 +142,13 @@ class HomeController extends BaseController {
     if (isLoadingMore.value || !hasMoreRestaurants.value) return;
     isLoadingMore.value = true;
     try {
+      final lat = LocationService.to.lat;
+      final lng = LocationService.to.lng;
       final result = await _repo.getRestaurants(
         page: _restaurantsPage + 1,
         foodItemId: _selectedFoodItemId,
+        lat: lat,
+        lng: lng,
       );
       if (result.success && result.data != null) {
         final page = result.data!;
