@@ -967,28 +967,41 @@ class CartView extends GetView<CartController> {
   }
 
   Widget _buildPlaceOrderButton() {
-    return Container(
-      color: AppColors.white,
-      padding: EdgeInsets.only(bottom: MediaQuery.of(Get.context!).padding.bottom),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
+    return Obx(() {
+      final checkout = controller.checkoutData.value;
+      final bool isOpen = checkout?.isOpenNow ?? true;
+      final bool isAccepting = checkout?.isAcceptingOrders ?? true;
+      final bool canOrder = isOpen && isAccepting;
+
+      String label = 'Place Order';
+      if (!isOpen) {
+        label = 'Restaurant Closed';
+      } else if (!isAccepting) {
+        label = 'Not Accepting Orders';
+      }
+
+      return Container(
+        color: AppColors.white,
+        padding: EdgeInsets.only(bottom: MediaQuery.of(Get.context!).padding.bottom),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -5),
+              ),
+            ],
+          ),
+          child: AppButton(
+            label: label,
+            onTap: canOrder ? () => controller.placeOrder() : null,
+            backgroundColor: canOrder ? AppColors.primary : AppColors.greyButton,
+          ),
         ),
-        child: AppButton(
-          label: 'Place Order',
-          onTap: () {
-            controller.placeOrder();
-          },
-        ),
-      ),
-    );
+      );
+    });
   }
 }

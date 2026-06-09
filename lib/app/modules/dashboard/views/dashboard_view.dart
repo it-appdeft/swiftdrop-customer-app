@@ -6,6 +6,7 @@ import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
 import '../../../themes/app_text_styles.dart';
+import '../../../widgets/active_orders_floating_bar.dart';
 import '../../../widgets/cart_floating_bar.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../../home/views/home_view.dart';
@@ -49,18 +50,29 @@ class DashboardView extends GetView<DashboardController> {
                 index: controller.currentIndex.value,
                 children: _pages,
               )),
-          // Floating bar overlays content, positioned 12 px above the rounded nav.
-          // navTotalHeight - 12 places the green container's bottom 12 px above
-          // the rounded container's top (accounting for the bar's 16 px margin).
+          
+          // Order floating bar (lower priority or stacked below cart if both exist?)
+          // Usually Active Order is more critical.
           Obx(() {
-            if (cartController.cartItemCount.value == 0) {
-              return const SizedBox.shrink();
-            }
+            final hasCart = cartController.cartItemCount.value > 0;
+            final hasActiveOrders = controller.activeOrders.isNotEmpty;
+            
+            if (!hasCart && !hasActiveOrders) return const SizedBox.shrink();
+
             return Positioned(
               left: 0,
               right: 0,
-              bottom: navTotalHeight - 12,
-              child: const CartFloatingBar(addSafeArea: false),
+              bottom: navTotalHeight - 4,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasActiveOrders) ...[
+                    const ActiveOrdersFloatingBar(),
+                    if (hasCart) const SizedBox(height: 16),
+                  ],
+                  if (hasCart) const CartFloatingBar(addSafeArea: false),
+                ],
+              ),
             );
           }),
         ],

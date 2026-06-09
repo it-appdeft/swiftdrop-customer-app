@@ -82,6 +82,8 @@ class CheckoutModel {
   final String? restaurantName;
   final String? restaurantArea;
   final String? restaurantLogoUrl;
+  final bool isAcceptingOrders;
+  final bool isOpenNow;
   final List<AddressModel> addresses;
   final String? selectedAddressId;
   final bool inRange;
@@ -101,6 +103,8 @@ class CheckoutModel {
     this.restaurantName,
     this.restaurantArea,
     this.restaurantLogoUrl,
+    this.isAcceptingOrders = true,
+    this.isOpenNow = true,
     required this.addresses,
     this.selectedAddressId,
     required this.inRange,
@@ -146,6 +150,8 @@ class CheckoutModel {
       restaurantName: restaurant?['name'] as String?,
       restaurantArea: restaurant?['area'] as String?,
       restaurantLogoUrl: restaurant?['logo_url'] as String?,
+      isAcceptingOrders: restaurant?['is_accepting_orders'] as bool? ?? true,
+      isOpenNow: restaurant?['is_open_now'] as bool? ?? true,
       addresses: addresses,
       selectedAddressId: json['selected_address_id']?.toString(),
       inRange: json['in_range'] as bool? ?? false,

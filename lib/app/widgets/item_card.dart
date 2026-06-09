@@ -346,8 +346,15 @@ class _ItemCardState extends State<ItemCard> {
 class RestaurantWithItems extends StatefulWidget {
   final Map<String, dynamic> data;
   final String? searchQuery;
+  final bool showFavorite;
   final VoidCallback? onFavoriteTap;
-  const RestaurantWithItems({super.key, required this.data, this.searchQuery, this.onFavoriteTap});
+  const RestaurantWithItems({
+    super.key,
+    required this.data,
+    this.searchQuery,
+    this.showFavorite = true,
+    this.onFavoriteTap,
+  });
 
   @override
   State<RestaurantWithItems> createState() => _RestaurantWithItemsState();
@@ -374,6 +381,10 @@ class _RestaurantWithItemsState extends State<RestaurantWithItems> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isOpenNow = widget.data['is_open_now'] ?? true;
+    final bool isAcceptingOrders = widget.data['is_accepting_orders'] ?? true;
+    final bool isClosed = !isOpenNow || !isAcceptingOrders;
+
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: {
             'id': widget.data['id'],
@@ -385,83 +396,113 @@ class _RestaurantWithItemsState extends State<RestaurantWithItems> {
         decoration: const BoxDecoration(
           color: AppColors.offWhite,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(32, 12, 28, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.data['name'] ?? '',
-                          style: GoogleFonts.inter(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF0B243A),
+        child: Opacity(
+          opacity: isClosed ? 0.6 : 1.0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(32, 12, 28, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.data['name'] ?? '',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF0B243A),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (isClosed) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'CLOSED',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Assets.images.timeIcon.image(width: 16, height: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.data['time'] ?? '20-30 min',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.lightSurfaceSubtitle,
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Assets.images.timeIcon.image(width: 16, height: 16),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.data['time'] ?? '20-30 min',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.lightSurfaceSubtitle,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(width: 1, height: 12, color: const Color(0xFFCFD1DC)),
-                            const SizedBox(width: 8),
-                            Text(
-                              widget.data['distance'] ?? '4.9 mi',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.lightSurfaceSubtitle,
+                              const SizedBox(width: 8),
+                              Container(width: 1, height: 12, color: const Color(0xFFCFD1DC)),
+                              const SizedBox(width: 8),
+                              Text(
+                                widget.data['distance'] ?? '4.9 mi',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.lightSurfaceSubtitle,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() => _isFavourited = !_isFavourited);
-                      widget.onFavoriteTap?.call();
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: (_isFavourited ? Assets.images.favouriteAdded : Assets.images.favourite)
-                        .image(width: 24, height: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Assets.images.rightIcon.image(width: 24, height: 24),
-                ],
+                    if (widget.showFavorite) ...[
+                      GestureDetector(
+                        onTap: () {
+                          setState(() => _isFavourited = !_isFavourited);
+                          widget.onFavoriteTap?.call();
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: (_isFavourited ? Assets.images.favouriteAdded : Assets.images.favourite)
+                            .image(width: 24, height: 24),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Assets.images.rightIcon.image(width: 24, height: 24),
+                  ],
+                ),
               ),
-            ),
-            SizedBox(
-              height: 160,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 36),
-                itemCount: (widget.data['items'] as List?)?.length ?? 0,
-                itemBuilder: (context, index) {
-                  final item = Map<String, dynamic>.from(widget.data['items'][index]);
-                  item['restaurant_id'] = widget.data['id'];
-                  return ItemCard(item: item);
-                },
+              SizedBox(
+                height: 160,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 36),
+                  itemCount: (widget.data['items'] as List?)?.length ?? 0,
+                  itemBuilder: (context, index) {
+                    final item = Map<String, dynamic>.from(widget.data['items'][index]);
+                    item['restaurant_id'] = widget.data['id'];
+                    return ItemCard(item: item);
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-          ],
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
       ),
     );

@@ -41,6 +41,16 @@ class _RestaurantCardState extends State<RestaurantCard> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isOpenNow = widget.restaurant['is_open_now'] ?? true;
+    final bool isAcceptingOrders = widget.restaurant['is_accepting_orders'] ?? true;
+    final bool isClosed = !isOpenNow || !isAcceptingOrders;
+
+    String openAt = widget.restaurant['opens_at'] ?? '1:00 PM';
+    final todayHours = widget.restaurant['today_hours'];
+    if (todayHours != null && todayHours['open_from'] != null) {
+      openAt = todayHours['open_from'];
+    }
+
     return GestureDetector(
       onTap: () => Get.toNamed(AppRoutes.restaurantDetail, arguments: {
             'id': widget.restaurant['id'],
@@ -107,6 +117,51 @@ class _RestaurantCardState extends State<RestaurantCard> {
                           fontWeight: FontWeight.w500,
                           color: AppColors.white,
                         ),
+                      ),
+                    ),
+                  ),
+                if (isClosed)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            height: 40,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                width: 2,
+                              ),
+                            ),
+                            child: const Text(
+                              'CLOSED',
+                              style: TextStyle(
+                                fontFamily: 'Fonts/Paragraph',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Opens at $openAt',
+                            style: const TextStyle(
+                              fontFamily: 'Fonts/Paragraph',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

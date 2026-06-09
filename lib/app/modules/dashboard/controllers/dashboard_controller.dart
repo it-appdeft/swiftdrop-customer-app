@@ -1,23 +1,50 @@
 import 'package:flutter/widgets.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:get/get.dart';
-import '../../../base/base_controller.dart';
-import '../../../routes/app_routes.dart';
-import '../../../utils/app_logger.dart';
+import 'package:swiftdrop_customer_app/export.dart';
 
 class DashboardController extends BaseController with WidgetsBindingObserver {
   final RxInt currentIndex = 0.obs;
+  final RxList<OrderModel> activeOrders = <OrderModel>[].obs;
+  final _orderRepo = OrderRepository();
 
   @override
   void onInit() {
     super.onInit();
     WidgetsBinding.instance.addObserver(this);
+    fetchActiveOrders();
+  }
+
+  Future<void> fetchActiveOrders() async {
+    final result = await _orderRepo.getActiveOrders();
+    if (result.success && result.data != null) {
+      activeOrders.assignAll(result.data!);
+    }
+
+    // For testing: ensuring we have exactly ONE mock order to see how it looks
+    if (activeOrders.isEmpty) {
+      activeOrders.add(
+        OrderModel(
+          id: 'mock_1',
+          orderNumber: 'SD-999001',
+          status: 'picked_up',
+          pickupAddress: 'The Marble Grill, High Street',
+          deliveryAddress: 'Your Home',
+          items: [],
+          totalAmount: 15.0,
+          deliveryFee: 2.0,
+          distance: 1.5,
+          estimatedTime: 12,
+          createdAt: DateTime.now(),
+        ),
+      );
+    }
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _checkPermissionOnResume();
+      fetchActiveOrders();
     }
   }
 

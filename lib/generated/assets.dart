@@ -35,6 +35,9 @@ class $AssetsImagesGen {
   final AssetGenImage alertUnavailable = const AssetGenImage(
     'assets/images/alertUnavailable.png',
   );
+  final AssetGenImage assigningPartner = const AssetGenImage(
+    'assets/images/assigningPartner.png',
+  );
   final AssetGenImage back = const AssetGenImage('assets/images/back.png');
   final AssetGenImage cartMinus = const AssetGenImage(
     'assets/images/cartMinus.png',
@@ -69,6 +72,9 @@ class $AssetsImagesGen {
   final AssetGenImage deliveryPartner = const AssetGenImage(
     'assets/images/deliveryPartner.png',
   );
+  final AssetGenImage dummyMapImage = const AssetGenImage(
+    'assets/images/dummyMapImage.png',
+  );
   final AssetGenImage emptyStar = const AssetGenImage(
     'assets/images/emptyStar.png',
   );
@@ -80,6 +86,9 @@ class $AssetsImagesGen {
   );
   final AssetGenImage filledStart = const AssetGenImage(
     'assets/images/filledStart.png',
+  );
+  final AssetGenImage goToSupport = const AssetGenImage(
+    'assets/images/goToSupport.png',
   );
   final AssetGenImage heartUnfilled = const AssetGenImage(
     'assets/images/heartUnfilled.png',
@@ -152,6 +161,9 @@ class $AssetsImagesGen {
   );
   final AssetGenImage recentSearch = const AssetGenImage(
     'assets/images/recentSearch.png',
+  );
+  final AssetGenImage reloadButton = const AssetGenImage(
+    'assets/images/reloadButton.png',
   );
   final AssetGenImage restaurantImage = const AssetGenImage(
     'assets/images/restaurantImage.png',

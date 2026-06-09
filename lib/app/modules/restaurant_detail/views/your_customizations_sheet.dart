@@ -41,32 +41,35 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHeader(),
-          Flexible(
-            child: ListView.separated(
-              shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _mockCustomizations.length,
-              separatorBuilder: (_, __) => const Divider(color: AppColors.lightSurfaceBorder, height: 32),
-              itemBuilder: (context, index) => _buildCustomizationItem(_mockCustomizations[index]),
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: _mockCustomizations.length,
+                separatorBuilder: (_, __) => const Divider(color: AppColors.lightSurfaceBorder, height: 32),
+                itemBuilder: (context, index) => _buildCustomizationItem(_mockCustomizations[index]),
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
-          _buildAddNewButton(),
-          if (_hasChanges) _buildConfirmButton(),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
-        ],
+            const SizedBox(height: 24),
+            _buildAddNewButton(),
+            if (_hasChanges) _buildConfirmButton(),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
+          ],
+        ),
       ),
     );
   }

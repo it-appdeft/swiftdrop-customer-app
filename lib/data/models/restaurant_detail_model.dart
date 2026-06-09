@@ -163,12 +163,12 @@ class RestaurantDetailInfoModel {
   final String? description;
   final bool isTopRated;
   final bool isFavorited;
+  final bool isAcceptingOrders;
+  final bool isOpenNow;
   final String? shareUrl;
   final int? deliveryMinutesMin;
   final int? deliveryMinutesMax;
-  final bool? todayIsOpen;
-  final String? todayOpenFrom;
-  final String? todayOpenTo;
+  final TodayHoursModel? todayHours;
   final String? hoursSummary;
 
   const RestaurantDetailInfoModel({
@@ -186,18 +186,17 @@ class RestaurantDetailInfoModel {
     this.description,
     required this.isTopRated,
     required this.isFavorited,
+    this.isAcceptingOrders = true,
+    this.isOpenNow = true,
     this.shareUrl,
     this.deliveryMinutesMin,
     this.deliveryMinutesMax,
-    this.todayIsOpen,
-    this.todayOpenFrom,
-    this.todayOpenTo,
+    this.todayHours,
     this.hoursSummary,
   });
 
   factory RestaurantDetailInfoModel.fromJson(Map<String, dynamic> json) {
     final storeInfo = json['store_info'] as Map<String, dynamic>?;
-    final today = storeInfo?['today'] as Map<String, dynamic>?;
     return RestaurantDetailInfoModel(
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
@@ -213,12 +212,16 @@ class RestaurantDetailInfoModel {
       description: json['description'] as String?,
       isTopRated: json['is_top_rated'] as bool? ?? false,
       isFavorited: json['is_favorited'] as bool? ?? false,
+      isAcceptingOrders: json['is_accepting_orders'] as bool? ?? true,
+      isOpenNow: json['is_open_now'] as bool? ?? true,
       shareUrl: json['share_url'] as String?,
       deliveryMinutesMin: (storeInfo?['delivery_minutes_min'] as num?)?.toInt(),
       deliveryMinutesMax: (storeInfo?['delivery_minutes_max'] as num?)?.toInt(),
-      todayIsOpen: today?['is_open'] as bool?,
-      todayOpenFrom: today?['open_from'] as String?,
-      todayOpenTo: today?['open_to'] as String?,
+      todayHours: storeInfo?['today_hours'] != null
+          ? TodayHoursModel.fromJson(storeInfo?['today_hours'] as Map<String, dynamic>)
+          : (storeInfo?['today'] != null 
+              ? TodayHoursModel.fromJson(storeInfo?['today'] as Map<String, dynamic>)
+              : null),
       hoursSummary: storeInfo?['hours_summary'] as String?,
     );
   }

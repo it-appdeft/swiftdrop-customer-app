@@ -1,3 +1,5 @@
+import 'restaurant_detail_model.dart';
+
 class PaginationMeta {
   final int currentPage;
   final int lastPage;
@@ -66,6 +68,9 @@ class RestaurantModel {
   final int totalReviews;
   final double distanceMiles;
   final bool isFavorited;
+  final bool isAcceptingOrders;
+  final bool isOpenNow;
+  final TodayHoursModel? todayHours;
   final List<SearchDishModel>? items;
 
   const RestaurantModel({
@@ -82,6 +87,9 @@ class RestaurantModel {
     required this.totalReviews,
     required this.distanceMiles,
     this.isFavorited = false,
+    this.isAcceptingOrders = true,
+    this.isOpenNow = true,
+    this.todayHours,
     this.items,
   });
 
@@ -99,6 +107,9 @@ class RestaurantModel {
         totalReviews: totalReviews,
         distanceMiles: distanceMiles,
         isFavorited: isFavorited ?? this.isFavorited,
+        isAcceptingOrders: isAcceptingOrders,
+        isOpenNow: isOpenNow,
+        todayHours: todayHours,
         items: items ?? this.items,
       );
 
@@ -116,6 +127,11 @@ class RestaurantModel {
         totalReviews: (json['total_reviews'] as num?)?.toInt() ?? 0,
         distanceMiles: (json['distance_miles'] as num?)?.toDouble() ?? 0.0,
         isFavorited: json['is_favorited'] as bool? ?? false,
+        isAcceptingOrders: json['is_accepting_orders'] as bool? ?? true,
+        isOpenNow: json['is_open_now'] as bool? ?? true,
+        todayHours: json['today_hours'] != null
+            ? TodayHoursModel.fromJson(json['today_hours'] as Map<String, dynamic>)
+            : null,
         items: json['items'] != null
             ? (json['items'] as List)
                 .map((e) => SearchDishModel.fromJson(e as Map<String, dynamic>))
@@ -132,6 +148,9 @@ class RestaurantModel {
         'coverUrl': coverUrl,
         'logoUrl': logoUrl,
         'is_favorited': isFavorited,
+        'is_accepting_orders': isAcceptingOrders,
+        'is_open_now': isOpenNow,
+        'today_hours': todayHours?.toJson(),
         'items': items?.map((e) => e.toMap()).toList(),
         'offer': null,
         'badge': null,
@@ -140,6 +159,30 @@ class RestaurantModel {
         'cuisines': cuisines,
         'city': city,
         'total_reviews': totalReviews,
+      };
+}
+
+class TodayHoursModel {
+  final bool isOpen;
+  final String openFrom;
+  final String openTo;
+
+  const TodayHoursModel({
+    required this.isOpen,
+    required this.openFrom,
+    required this.openTo,
+  });
+
+  factory TodayHoursModel.fromJson(Map<String, dynamic> json) => TodayHoursModel(
+        isOpen: json['is_open'] as bool? ?? false,
+        openFrom: json['open_from'] as String? ?? '',
+        openTo: json['open_to'] as String? ?? '',
+      );
+
+  Map<String, dynamic> toJson() => {
+        'is_open': isOpen,
+        'open_from': openFrom,
+        'open_to': openTo,
       };
 }
 
@@ -254,6 +297,7 @@ class SearchDishModel {
   final double rating;
   final String? imageUrl;
   final bool isVeg;
+  final List<ModifierGroupModel> modifierGroups;
 
   const SearchDishModel({
     required this.id,
@@ -263,6 +307,7 @@ class SearchDishModel {
     required this.rating,
     this.imageUrl,
     this.isVeg = false,
+    this.modifierGroups = const [],
   });
 
   factory SearchDishModel.fromJson(Map<String, dynamic> json) => SearchDishModel(
@@ -273,6 +318,9 @@ class SearchDishModel {
         rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
         imageUrl: json['image_url'] as String?,
         isVeg: json['is_veg'] as bool? ?? false,
+        modifierGroups: (json['modifier_groups'] as List? ?? [])
+            .map((e) => ModifierGroupModel.fromJson(e as Map<String, dynamic>))
+            .toList(),
       );
 
   Map<String, dynamic> toMap() => {
@@ -283,6 +331,7 @@ class SearchDishModel {
         'rating': rating.toStringAsFixed(1),
         'image': imageUrl,
         'is_veg': isVeg,
+        'modifier_groups': modifierGroups,
       };
 }
 

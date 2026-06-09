@@ -24,8 +24,8 @@ class StoreInfoContent extends StatelessWidget {
       final distance = info?.distanceMiles != null
           ? '${info!.distanceMiles!.toStringAsFixed(1)} mi'
           : '--';
-      final openLabel = info?.todayOpenTo != null
-          ? 'Open until ${info!.todayOpenTo}'
+      final openLabel = info?.todayHours?.openTo != null
+          ? 'Open until ${info!.todayHours!.openTo}'
           : '--';
       final hoursSummary = info?.hoursSummary ?? '--';
 
@@ -54,7 +54,7 @@ class StoreInfoContent extends StatelessWidget {
                         fontSize: 20,
                         fontWeight: FontWeight.w400,
                         color: AppColors.lightSurfaceDarkText,
-                        height: 1.2,
+
                       ),
                     ),
                     GestureDetector(

@@ -1,9 +1,11 @@
 import 'dart:ui';
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../../cart/controllers/cart_controller.dart';
 import '../controllers/restaurant_detail_controller.dart';
 import 'product_detail_bottom_sheet.dart';
 import 'store_info_bottom_sheet.dart';
+import 'your_customizations_sheet.dart';
 
 class RestaurantDetailView extends GetView<RestaurantDetailController> {
   final bool isSheet;
@@ -76,7 +78,14 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                                       item: itemMap,
                                       isHorizontal: false,
                                       showFavorite: true,
-                                      onTap: () => showProductDetailBottomSheet(itemMap),
+                                      onTap: () {
+                                        final cart = Get.find<CartController>();
+                                        if (item.modifierGroups.isNotEmpty && (cart.quantities[item.id] ?? 0) > 0) {
+                                          showYourCustomizationsSheet(itemMap);
+                                        } else {
+                                          showProductDetailBottomSheet(itemMap);
+                                        }
+                                      },
                                       onFavoriteTap: () => controller.toggleItemFavorite(item.id),
                                     );
                                 })
@@ -98,6 +107,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
             ),
           ),
           _buildStickyHeader(context),
+          _buildClosedOverlay(),
           if (!isSheet)
             Obx(() => controller.showCartFloatingBar.value
                 ? const Positioned(
@@ -110,6 +120,68 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
         ],
       ),
     );
+  }
+
+  Widget _buildClosedOverlay() {
+    return Obx(() {
+      final info = controller.restaurantInfo.value;
+      if (info == null) return const SizedBox.shrink();
+
+      final bool isOpenNow = info.isOpenNow;
+      final bool isAcceptingOrders = info.isAcceptingOrders;
+      final bool isClosed = !isOpenNow || !isAcceptingOrders;
+
+      if (!isClosed) return const SizedBox.shrink();
+
+      String openAt = '1:00 PM';
+      if (info.todayHours != null) {
+        openAt = info.todayHours!.openFrom;
+      }
+
+      return Positioned.fill(
+        child: Container(
+          color: Colors.black.withValues(alpha: 0.4),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Text(
+                    'CLOSED',
+                    style: TextStyle(
+                      fontFamily: 'Fonts/Paragraph',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Opens at $openAt',
+                  style: const TextStyle(
+                    fontFamily: 'Fonts/Paragraph',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildStickyHeader(BuildContext context) {
@@ -621,7 +693,14 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                                 item: itemMap,
                                 isHorizontal: false,
                                 showFavorite: true,
-                                onTap: () => showProductDetailBottomSheet(itemMap),
+                                onTap: () {
+                                  final cart = Get.find<CartController>();
+                                  if (item.modifierGroups.isNotEmpty && (cart.quantities[item.id] ?? 0) > 0) {
+                                    showYourCustomizationsSheet(itemMap);
+                                  } else {
+                                    showProductDetailBottomSheet(itemMap);
+                                  }
+                                },
                                 onFavoriteTap: () => controller.toggleItemFavorite(item.id),
                               );
                             })

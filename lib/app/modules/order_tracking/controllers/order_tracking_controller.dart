@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../../data/repositories/order_repository.dart';
 import '../../../base/base_controller.dart';
+import '../../../utils/app_utils.dart';
 
 class OrderTrackingController extends BaseController {
   final OrderRepository _repo;
@@ -23,5 +24,21 @@ class OrderTrackingController extends BaseController {
         order.value = result.data;
       }
     });
+  }
+
+  Future<void> cancelOrder(String orderId) async {
+    // Dialog will be shown from the view
+    // Adding a small delay to ensure the bottom sheet is visible to the user
+    await Future.delayed(const Duration(seconds: 1));
+    
+    final result = await _repo.cancelOrder(orderId);
+    if (result.success) {
+      Get.back(); // Close cancellation bottom sheet
+      AppUtils.showSuccess('order cancelled successfully');
+      loadOrder(orderId); // Refresh order status
+    } else {
+      Get.back();
+      AppUtils.showError(result.message ?? 'Failed to cancel order');
+    }
   }
 }
