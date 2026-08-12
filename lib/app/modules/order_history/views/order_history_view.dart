@@ -115,7 +115,7 @@ class _OrderCard extends StatelessWidget {
     final dateStr = DateFormat('MMMM d, h:mm a').format(order.createdAt);
 
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.orderDetails, arguments: order),
+      onTap: () => Get.toNamed(AppRoutes.orderDelivered, arguments: order),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 20),
@@ -235,13 +235,13 @@ class _OrderCard extends StatelessWidget {
               thickness: 1,
               color: AppColors.lightSurfaceBorder,
             ),
-            AppButton(
+            /*AppButton(
               label: 'Reorder',
               onTap: () {},
               height: 44,
               backgroundColor: AppColors.primary,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 16),*/
             if (isFailed) ...[
               Row(
                 children: [

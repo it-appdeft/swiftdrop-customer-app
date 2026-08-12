@@ -36,4 +36,5 @@ abstract class AppRoutes {
   static const String favorites = '/favorites';
   static const String orderSuccess = '/order-success';
   static const String orderDetails = '/order-details';
+  static const String orderDelivered = '/order-delivered';
 }

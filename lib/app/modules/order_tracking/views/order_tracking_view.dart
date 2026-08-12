@@ -39,7 +39,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
 
         return Column(
           children: [
-            _Header(order: order, restaurantName: restaurantName),
+            _Header(order: order, restaurantName: restaurantName, forceStatus: 'picked_up'),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -52,7 +52,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                           _DeliveryCodeSection(code: '5236'),
                           const SizedBox(height: 16),
                           _DeliveryPartnerSection(
-                            isAssigning: order.status.toLowerCase() != 'picked_up',
+                            isAssigning: false,
                             partnerName: 'James Bride',
                             partnerStats: '230 Order delivered',
                             rating: 4.8,
@@ -109,8 +109,9 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
 class _Header extends StatelessWidget {
   final dynamic order;
   final String restaurantName;
+  final String? forceStatus;
 
-  const _Header({required this.order, required this.restaurantName});
+  const _Header({required this.order, required this.restaurantName, this.forceStatus});
 
   @override
   Widget build(BuildContext context) {
@@ -118,7 +119,7 @@ class _Header extends StatelessWidget {
     String statusSubtitle = 'Food preparation will begin shortly';
     double progress = 0.2;
 
-    switch (order.status.toLowerCase()) {
+    switch (forceStatus?.toLowerCase() ?? order.status.toLowerCase()) {
       case 'pending':
         statusTitle = 'Awaiting Confirmation';
         statusSubtitle = '';
@@ -130,7 +131,7 @@ class _Header extends StatelessWidget {
         progress = 0.2;
         break;
       case 'preparing':
-        statusTitle = 'Preparing Your Order';
+        statusTitle = 'Order placed';
         statusSubtitle = 'Arriving in ${order.estimatedTime} mins';
         progress = 0.4;
         break;
@@ -282,7 +283,7 @@ class _DeliveryCodeSection extends StatelessWidget {
           Text(
             'Delivery Code',
             style: GoogleFonts.inter(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
               color: const Color(0xFF0B243A),
             ),
@@ -396,7 +397,7 @@ class _DeliveryPartnerSection extends StatelessWidget {
                         rating?.toString() ?? '0.0',
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w400,
                           color: const Color(0xFF0B243A),
                         ),
                       ),

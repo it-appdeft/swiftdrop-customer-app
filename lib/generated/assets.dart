@@ -146,6 +146,9 @@ class $AssetsImagesGen {
   final AssetGenImage onbording3 = const AssetGenImage(
     'assets/images/onbording3.png',
   );
+  final AssetGenImage orderDelivered = const AssetGenImage(
+    'assets/images/orderDelivered.png',
+  );
   final AssetGenImage otherLocation = const AssetGenImage(
     'assets/images/otherLocation.png',
   );
