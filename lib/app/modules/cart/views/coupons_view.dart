@@ -32,7 +32,7 @@ class CouponsView extends GetView<CartController> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: Text('No coupons available at the moment.'),
+                  child: Text(AppStrings.noCouponsAvailable),
                 ),
               )
             else
@@ -315,7 +315,12 @@ class CouponsView extends GetView<CartController> {
               else
                 const SizedBox.shrink(),
               GestureDetector(
-                onTap: coupon.eligible ? () => controller.applyCouponApi(coupon.id) : null,
+                onTap: coupon.eligible
+                    ? () {
+                        AppUtils.haptic();
+                        controller.applyCouponApi(coupon.id);
+                      }
+                    : null,
                 behavior: HitTestBehavior.opaque,
                 child: Text(
                   'Apply',

@@ -57,6 +57,8 @@ class AppColors {
   static const Color navyMedium        = Color(0xFF3C5061);
   static const Color iconDark          = Color(0xFF292D32);
   static const Color shadowLight       = Color(0x14000000);
+  static const Color cardBorder        = Color(0xFFEBECEF);
+  static const Color divider           = Color(0xFFF0F1F5);
 
   // Promo banner backgrounds
   static const Color bannerPink        = Color(0xFFFFE2EA);

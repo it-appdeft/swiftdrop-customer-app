@@ -55,18 +55,24 @@ class FavoritesView extends GetView<FavoritesController> {
                   children: [
                     Expanded(
                       child: AppTabItem(
-                        label: 'Items',
+                        label: AppStrings.categories,
                         isSelected: controller.selectedTabIndex.value == 0,
-                        onTap: () => controller.onTabChanged(0),
+                        onTap: () {
+                          AppUtils.haptic();
+                          controller.onTabChanged(0);
+                        },
                         expand: true,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: AppTabItem(
-                        label: 'Restaurants',
+                        label: AppStrings.popularRestaurants,
                         isSelected: controller.selectedTabIndex.value == 1,
-                        onTap: () => controller.onTabChanged(1),
+                        onTap: () {
+                          AppUtils.haptic();
+                          controller.onTabChanged(1);
+                        },
                         expand: true,
                       ),
                     ),
@@ -103,8 +109,12 @@ class FavoritesView extends GetView<FavoritesController> {
           final item = controller.favoriteItems[index];
           return FavoriteItemCard(
             item: item,
-            onFavoriteTap: () => controller.toggleItemFavorite(item['id']),
+            onFavoriteTap: () {
+              AppUtils.haptic();
+              controller.toggleItemFavorite(item['id']);
+            },
             onTap: () {
+              AppUtils.haptic();
               final restaurantId = (item['restaurant'] as Map?)?['id'];
               if (restaurantId != null) {
                 Get.toNamed(AppRoutes.restaurantDetail, arguments: {'id': restaurantId});

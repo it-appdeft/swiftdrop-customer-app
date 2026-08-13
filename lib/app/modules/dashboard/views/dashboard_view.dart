@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../../../../export.dart';
 import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../widgets/active_orders_floating_bar.dart';
 import '../../../widgets/cart_floating_bar.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../../home/views/home_view.dart';
@@ -55,7 +54,9 @@ class DashboardView extends GetView<DashboardController> {
           // Usually Active Order is more critical.
           Obx(() {
             final hasCart = cartController.cartItemCount.value > 0;
-            final hasActiveOrders = controller.activeOrders.isNotEmpty;
+            // Active orders bar commented out per request so it does not display unneeded order bar
+            // final hasActiveOrders = controller.activeOrders.isNotEmpty;
+            const hasActiveOrders = false;
             
             if (!hasCart && !hasActiveOrders) return const SizedBox.shrink();
 
@@ -66,10 +67,11 @@ class DashboardView extends GetView<DashboardController> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (hasActiveOrders) ...[
-                    const ActiveOrdersFloatingBar(),
-                    if (hasCart) const SizedBox(height: 16),
-                  ],
+                  // ActiveOrdersFloatingBar hidden for now
+                  // if (hasActiveOrders) ...[
+                  //   const ActiveOrdersFloatingBar(),
+                  //   if (hasCart) const SizedBox(height: 16),
+                  // ],
                   if (hasCart) const CartFloatingBar(addSafeArea: false),
                 ],
               ),
@@ -95,8 +97,6 @@ class _BottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom ;
     
-    // Calculate padding: for iOS (where bottomPadding > 0), we reduce it by 20px
-    // to bring it down as requested. For Android (where it's "perfect"), we keep it as is.
     double finalBottomPadding;
     if (GetPlatform.isIOS && bottomPadding > 0) {
       finalBottomPadding = (bottomPadding - 8).clamp(0.0, double.infinity);
@@ -133,7 +133,7 @@ class _BottomNav extends StatelessWidget {
                 child: _NavItem(
                   icon: Assets.images.homeUnselected,
                   activeIcon: Assets.images.homeSelected,
-                  label: 'Home',
+                  label: AppStrings.navHome,
                   index: 0,
                   currentIndex: currentIndex,
                   onTap: onTap,
@@ -144,7 +144,7 @@ class _BottomNav extends StatelessWidget {
                 child: _NavItem(
                   icon: Assets.images.searchUnselected,
                   activeIcon: Assets.images.searchSelected,
-                  label: 'Search',
+                  label: AppStrings.navSearch,
                   index: 1,
                   currentIndex: currentIndex,
                   onTap: onTap,
@@ -155,7 +155,7 @@ class _BottomNav extends StatelessWidget {
                 child: _NavItem(
                   icon: Assets.images.historyUnselected,
                   activeIcon: Assets.images.historySelcted,
-                  label: 'History',
+                  label: AppStrings.navHistory,
                   index: 2,
                   currentIndex: currentIndex,
                   onTap: onTap,
@@ -166,7 +166,7 @@ class _BottomNav extends StatelessWidget {
                 child: _NavItem(
                   icon: Assets.images.profileUnselcetd,
                   activeIcon: Assets.images.profileSelected,
-                  label: 'Account',
+                  label: AppStrings.navAccount,
                   index: 3,
                   currentIndex: currentIndex,
                   onTap: onTap,
@@ -204,7 +204,10 @@ class _NavItem extends StatelessWidget {
     final color = isActive ? AppColors.primary : AppColors.white;
 
     return GestureDetector(
-      onTap: () => onTap(index),
+      onTap: () {
+        AppUtils.haptic();
+        onTap(index);
+      },
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         height: double.infinity,

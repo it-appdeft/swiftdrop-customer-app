@@ -58,7 +58,10 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           GestureDetector(
-            onTap: () => cart.decrementCartItem(_itemId),
+            onTap: () {
+              AppUtils.haptic();
+              cart.decrementCartItem(_itemId);
+            },
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -77,6 +80,7 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
+              AppUtils.haptic();
               if (_hasModifiers) {
                 final mods = _cart?.getModifiersForItem(_itemId);
                 showProductAddonsSheet(widget.item, existingModifiers: mods);
@@ -93,6 +97,32 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
         ],
       );
     });
+  }
+
+  bool _isRestaurantClosed() {
+    try {
+      final bool? itemIsOpen = widget.item['is_open_now'] as bool?;
+      final bool? itemIsAccepting = widget.item['is_accepting_orders'] as bool?;
+      if (itemIsOpen != null || itemIsAccepting != null) {
+        final isOpenNow = itemIsOpen ?? true;
+        final isAccepting = itemIsAccepting ?? true;
+        if (!isOpenNow || !isAccepting) return true;
+      }
+
+      final info = Get.find<RestaurantDetailController>().restaurantInfo.value;
+      if (info != null && (!info.isOpenNow || !info.isAcceptingOrders)) {
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  bool get _isItemAvailable {
+    final dynamic raw = widget.item['is_available'] ?? widget.item['available'];
+    if (raw is bool) return raw;
+    if (raw is num) return raw == 1;
+    if (raw is String) return raw == '1' || raw.toLowerCase() == 'true';
+    return true;
   }
 
   Widget _buildAddButton() {
@@ -112,6 +142,15 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
       }
       return GestureDetector(
         onTap: () {
+          AppUtils.haptic();
+          if (!_isItemAvailable) {
+            AppUtils.showError("This item is currently unavailable.");
+            return;
+          }
+          if (_isRestaurantClosed()) {
+            AppUtils.showError("This restaurant is currently closed for ordering.");
+            return;
+          }
           if (_hasModifiers) {
             showProductAddonsSheet(widget.item);
           } else {
@@ -134,11 +173,11 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
         behavior: HitTestBehavior.opaque,
         child: Center(
           child: Text(
-            'ADD',
+            _isItemAvailable ? 'ADD' : 'UNAVAILABLE',
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.primary,
+              color: _isItemAvailable ? AppColors.primary : const Color(0xFF9CA3AF),
             ),
           ),
         ),

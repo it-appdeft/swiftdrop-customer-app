@@ -1,17 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_decorations.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../utils/app_utils.dart';
-import '../../../widgets/app_button.dart';
-import '../../../widgets/empty_state_widget.dart';
-import '../../../widgets/error_state_widget.dart';
-import '../../../widgets/shimmer_widgets.dart';
-import '../../../widgets/status_badge.dart';
-import '../../../../data/models/transaction_model.dart';
+import '../../../../export.dart';
+
 import '../controllers/wallet_controller.dart';
 
 class WalletView extends GetView<WalletController> {
@@ -22,7 +10,7 @@ class WalletView extends GetView<WalletController> {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        title: Text('Wallet', style: AppTextStyles.h6),
+        title: Text(AppStrings.wallet, style: AppTextStyles.h6),
         automaticallyImplyLeading: false,
       ),
       body: Obx(() {
@@ -63,25 +51,36 @@ class _BalanceCard extends GetView<WalletController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Wallet Balance',
-            style: AppTextStyles.pSmall.copyWith(color: AppColors.white.withOpacity(0.8)),
+            AppStrings.walletBalance,
+            style: AppTextStyles.pSmall.copyWith(
+              color: AppColors.white.withOpacity(0.8),
+            ),
           ),
           const SizedBox(height: AppDimensions.gapSm),
-          Obx(() => Text(
-                AppUtils.formatCurrency(controller.balance.value),
-                style: AppTextStyles.amountLg.copyWith(color: AppColors.white),
-              )),
+          Obx(
+            () => Text(
+              AppUtils.formatCurrency(controller.balance.value),
+              style: AppTextStyles.amountLg.copyWith(color: AppColors.white),
+            ),
+          ),
           const SizedBox(height: AppDimensions.gapXl),
           Row(
             children: [
               Expanded(
                 child: AppButton(
-                  label: 'Add Money',
-                  onTap: () => _showAddFundsSheet(),
+                  label: AppStrings.addMoneyToWallet,
+                  onTap: () {
+                    AppUtils.haptic();
+                    _showAddFundsSheet();
+                  },
                   backgroundColor: AppColors.white,
                   textColor: AppColors.primary,
                   height: 44,
-                  prefixIcon: const Icon(Icons.add, color: AppColors.primary, size: 18),
+                  prefixIcon: const Icon(
+                    Icons.add,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
                 ),
               ),
             ],
@@ -100,7 +99,7 @@ class _BalanceCard extends GetView<WalletController> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Add money to wallet', style: AppTextStyles.h6),
+            Text(AppStrings.addMoneyToWallet, style: AppTextStyles.h6),
             const SizedBox(height: AppDimensions.gapXl),
             GridView.builder(
               shrinkWrap: true,
@@ -141,8 +140,12 @@ class _TransactionList extends GetView<WalletController> {
       }
 
       return ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
-        itemCount: controller.transactions.length + (controller.isLoadingMore.value ? 1 : 0),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingMd,
+        ),
+        itemCount:
+            controller.transactions.length +
+            (controller.isLoadingMore.value ? 1 : 0),
         itemBuilder: (_, index) {
           if (index == controller.transactions.length) {
             return const Padding(
@@ -151,7 +154,10 @@ class _TransactionList extends GetView<WalletController> {
                 child: SizedBox(
                   width: 24,
                   height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
                 ),
               ),
             );
@@ -180,7 +186,9 @@ class _TransactionTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: (transaction.isCredit ? AppColors.success : AppColors.error).withOpacity(0.15),
+              color:
+                  (transaction.isCredit ? AppColors.success : AppColors.error)
+                      .withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -194,7 +202,10 @@ class _TransactionTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(transaction.description, style: AppTextStyles.pSmallSemiBold),
+                Text(
+                  transaction.description,
+                  style: AppTextStyles.pSmallSemiBold,
+                ),
                 const SizedBox(height: 2),
                 Text(
                   AppUtils.timeAgo(transaction.createdAt),
@@ -209,7 +220,9 @@ class _TransactionTile extends StatelessWidget {
               Text(
                 '${transaction.isCredit ? '+' : '-'}${AppUtils.formatCurrency(transaction.amount)}',
                 style: AppTextStyles.pSmallSemiBold.copyWith(
-                  color: transaction.isCredit ? AppColors.success : AppColors.error,
+                  color: transaction.isCredit
+                      ? AppColors.success
+                      : AppColors.error,
                 ),
               ),
               const SizedBox(height: 2),

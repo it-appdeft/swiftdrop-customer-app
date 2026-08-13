@@ -37,3 +37,21 @@ class Responsive {
   static double clamp(double value, double min, double max) =>
       value.clamp(min, max);
 }
+
+/// GetX / ScreenUtil style responsive extensions on num (.h, .w, .sp, .r, .p)
+extension ResponsiveNumExtension on num {
+  /// Responsive height scaled relative to baseline (812px)
+  double get h => (Responsive.height * (toDouble() / 812.0)).clamp(toDouble() * 0.8, toDouble() * 1.3);
+
+  /// Responsive width scaled relative to baseline (375px)
+  double get w => (Responsive.width * (toDouble() / 375.0)).clamp(toDouble() * 0.8, toDouble() * 1.3);
+
+  /// Scaled font or icon size
+  double get sp => Responsive.sp(toDouble());
+
+  /// Scaled radius
+  double get r => (Responsive.width * (toDouble() / 375.0)).clamp(toDouble() * 0.8, toDouble() * 1.2);
+
+  /// Scaled padding
+  double get p => (Responsive.width * (toDouble() / 375.0)).clamp(toDouble() * 0.8, toDouble() * 1.2);
+}

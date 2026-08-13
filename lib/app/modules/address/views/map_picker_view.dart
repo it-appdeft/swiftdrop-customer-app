@@ -8,6 +8,7 @@ class MapPickerView extends GetView<MapPickerController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.white,
       body: Stack(
         children: [
           Obx(() {
@@ -22,7 +23,7 @@ class MapPickerView extends GetView<MapPickerController> {
               onCameraMove: controller.onCameraMove,
               onCameraIdle: controller.onCameraIdle,
               myLocationEnabled: locationAllowed,
-              myLocationButtonEnabled: locationAllowed,
+              myLocationButtonEnabled: false, // We use custom floating button
               zoomControlsEnabled: false,
               mapToolbarEnabled: false,
             );
@@ -33,20 +34,54 @@ class MapPickerView extends GetView<MapPickerController> {
                 (!controller.isPermissionDenied.value ||
                     controller.hasManualLocation.value);
             if (!showPin) return const SizedBox.shrink();
-            return const Align(
+            return Align(
               alignment: Alignment.center,
               child: Padding(
-                padding: EdgeInsets.only(bottom: 40),
-                child: Icon(Icons.location_on, color: AppColors.primary, size: 48),
+                padding: const EdgeInsets.only(bottom: 36),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.35),
+                            blurRadius: 10,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.location_on_rounded,
+                        color: AppColors.white,
+                        size: 32,
+                      ),
+                    ),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }),
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 11),
+                const SizedBox(height: 12),
                 _buildSearchBar(),
                 const Spacer(),
+                _buildMyLocationButton(),
+                const SizedBox(height: 12),
                 _buildDeliveryCard(),
               ],
             ),
@@ -64,13 +99,26 @@ class MapPickerView extends GetView<MapPickerController> {
           GestureDetector(
             onTap: () => Get.back(),
             behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: Assets.images.back.image(width: 24, height: 24),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Assets.images.back.image(width: 20, height: 20),
+              ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
           Expanded(
             child: GestureDetector(
               onTap: () async {
@@ -83,29 +131,33 @@ class MapPickerView extends GetView<MapPickerController> {
                 }
               },
               child: Container(
-                height: 52,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black.withOpacity(0.08),
                       blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
-                    Assets.images.homeSearchIcon.image(width: 24, height: 24),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Search address, area, landmark..',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.lightSurfaceSubtitle,
+                    Assets.images.homeSearchIcon.image(width: 20, height: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Search address, area, landmark...',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.lightSurfaceSubtitle,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -118,17 +170,53 @@ class MapPickerView extends GetView<MapPickerController> {
     );
   }
 
+  Widget _buildMyLocationButton() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16),
+        child: GestureDetector(
+          onTap: () {
+            AppUtils.haptic();
+            controller.recenterMap();
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.my_location_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDeliveryCard() {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, -5),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
@@ -137,42 +225,60 @@ class MapPickerView extends GetView<MapPickerController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 32,
+            height: 36,
             width: double.infinity,
             decoration: const BoxDecoration(
               color: AppColors.offWhite,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             ),
             alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              'Order will be delivered here',
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w400,
-                color: AppColors.lightSurfaceDarkText,
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  AppStrings.orderDeliveredHere,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.lightSurfaceDarkText,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Assets.images.locationIcon.image(width: 24, height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Assets.images.locationIcon.image(width: 20, height: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(child: _buildLocationText()),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
                 AppButton(
-                  label: 'Confirm & Proceed',
+                  label: AppStrings.confirmAndProceed,
                   onTap: () => Get.toNamed(
                     AppRoutes.addressDetails,
                     arguments: {
@@ -186,7 +292,7 @@ class MapPickerView extends GetView<MapPickerController> {
                   ),
                   backgroundColor: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
-                  height: 56,
+                  height: 52,
                 ),
               ],
             ),
@@ -222,22 +328,27 @@ class MapPickerView extends GetView<MapPickerController> {
         children: [
           Text(
             name,
-            style: const TextStyle(
-              fontFamily: 'Helvetica Neue',
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: AppColors.black,
+            style: GoogleFonts.inter(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.lightSurfaceDarkText,
               height: 1.2,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           if (address.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               address,
-              style: AppTextStyles.pSmall.copyWith(
-                color: AppColors.lightSurfaceSubtitle,
+              style: GoogleFonts.inter(
+                fontSize: 13,
                 fontWeight: FontWeight.w400,
+                color: AppColors.lightSurfaceSubtitle,
+                height: 1.3,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],

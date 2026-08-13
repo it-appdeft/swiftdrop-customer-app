@@ -1,11 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../widgets/app_button.dart';
-import '../../../widgets/app_text_field.dart';
+
+import '../../../../export.dart';
+
 import '../controllers/checkout_controller.dart';
 
 class CheckoutView extends GetView<CheckoutController> {
@@ -16,10 +11,13 @@ class CheckoutView extends GetView<CheckoutController> {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        title: Text('Checkout', style: AppTextStyles.h6),
+        title: Text(AppStrings.checkout, style: AppTextStyles.h6),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Get.back(),
+          onPressed: () {
+            AppUtils.haptic();
+            Get.back();
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -28,7 +26,7 @@ class CheckoutView extends GetView<CheckoutController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Delivery address', style: AppTextStyles.pMediumSemiBold),
+            Text(AppStrings.deliveryAddress, style: AppTextStyles.pMediumSemiBold),
             const SizedBox(height: AppDimensions.gapMd),
             AppTextField(
               controller: controller.addressController,
@@ -38,7 +36,7 @@ class CheckoutView extends GetView<CheckoutController> {
               textInputAction: TextInputAction.done,
             ),
             const SizedBox(height: AppDimensions.gapXl),
-            Text('Payment method', style: AppTextStyles.pMediumSemiBold),
+            Text(AppStrings.paymentMethod, style: AppTextStyles.pMediumSemiBold),
             const SizedBox(height: AppDimensions.gapMd),
             _PaymentOption(
               value: 'wallet',
@@ -55,7 +53,7 @@ class CheckoutView extends GetView<CheckoutController> {
             ),
             const SizedBox(height: AppDimensions.sp40),
             Obx(() => AppButton(
-                  label: 'Place Order',
+                  label: AppStrings.placeOrder,
                   onTap: controller.placeOrder,
                   isLoading: controller.isLoading.value,
                 )),
@@ -85,7 +83,10 @@ class _PaymentOption extends GetView<CheckoutController> {
     return Obx(() {
       final isSelected = controller.selectedPayment.value == value;
       return GestureDetector(
-        onTap: () => controller.selectPayment(value),
+        onTap: () {
+          AppUtils.haptic();
+          controller.selectPayment(value);
+        },
         child: Container(
           padding: const EdgeInsets.all(AppDimensions.paddingMd),
           decoration: BoxDecoration(

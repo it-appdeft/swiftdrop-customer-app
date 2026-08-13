@@ -24,6 +24,7 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context),
+                _buildClosedNoticeBanner(),
                 const SizedBox(height: 24),
                 _buildSearchBar(),
                 const SizedBox(height: 28),
@@ -107,7 +108,6 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
             ),
           ),
           _buildStickyHeader(context),
-          _buildClosedOverlay(),
           if (!isSheet)
             Obx(() => controller.showCartFloatingBar.value
                 ? const Positioned(
@@ -122,7 +122,26 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
     );
   }
 
-  Widget _buildClosedOverlay() {
+  String _formatTimeString(String timeStr) {
+    if (timeStr.isEmpty) return '';
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        int hour = int.parse(parts[0]);
+        final minute = parts[1];
+        final ampm = hour >= 12 ? 'PM' : 'AM';
+        if (hour == 0) {
+          hour = 12;
+        } else if (hour > 12) {
+          hour -= 12;
+        }
+        return '$hour:$minute $ampm';
+      }
+    } catch (_) {}
+    return timeStr;
+  }
+
+  Widget _buildClosedNoticeBanner() {
     return Obx(() {
       final info = controller.restaurantInfo.value;
       if (info == null) return const SizedBox.shrink();
@@ -133,52 +152,43 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
 
       if (!isClosed) return const SizedBox.shrink();
 
-      String openAt = '1:00 PM';
-      if (info.todayHours != null) {
-        openAt = info.todayHours!.openFrom;
+      String timeText = '';
+      if (info.todayHours != null && info.todayHours!.openFrom.isNotEmpty) {
+        final formattedOpen = _formatTimeString(info.todayHours!.openFrom);
+        final formattedClose = _formatTimeString(info.todayHours!.openTo);
+        if (formattedOpen.isNotEmpty && formattedClose.isNotEmpty) {
+          timeText = ' (Hours: $formattedOpen - $formattedClose)';
+        } else if (formattedOpen.isNotEmpty) {
+          timeText = ' (Opens at $formattedOpen)';
+        }
+      } else if (info.hoursSummary != null && info.hoursSummary!.isNotEmpty) {
+        timeText = ' (${info.hoursSummary})';
       }
 
-      return Positioned.fill(
-        child: Container(
-          color: Colors.black.withValues(alpha: 0.4),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      width: 2,
-                    ),
-                  ),
-                  child: const Text(
-                    'CLOSED',
-                    style: TextStyle(
-                      fontFamily: 'Fonts/Paragraph',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                    ),
-                  ),
+      return Container(
+        width: double.infinity,
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline, color: AppColors.error, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Currently closed$timeText. Menu is available for viewing only.',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.error,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Opens at $openAt',
-                  style: const TextStyle(
-                    fontFamily: 'Fonts/Paragraph',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       );
     });
@@ -266,6 +276,8 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
   Widget _buildHeader(BuildContext context) {
     return Obx(() {
       final info = controller.restaurantInfo.value;
+      final bool isClosed = info != null && (!info.isOpenNow || !info.isAcceptingOrders);
+
       return Stack(
         children: [
           // Image is Positioned so it doesn't drive Stack height
@@ -273,12 +285,58 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
             top: 0,
             left: 0,
             right: 0,
-            child: AppImage(
-              path: info?.coverUrl,
-              width: double.infinity,
-              height: 330,
-              fit: BoxFit.cover,
-            ),
+            child: (controller.isLoading.value && info == null)
+                ? AppShimmer.rect(
+                    width: double.infinity,
+                    height: 330,
+                    radius: 0,
+                  )
+                : Stack(
+                    children: [
+                      AppImage(
+                        path: info?.coverUrl,
+                        width: double.infinity,
+                        height: 330,
+                        fit: BoxFit.cover,
+                      ),
+                      if (isClosed)
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.black.withValues(alpha: 0.45),
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 60),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.3),
+                                        blurRadius: 10,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    'CLOSED NOW',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.white,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
           ),
           // Column drives Stack height: 256px transparent gap + card grows downward
           Column(

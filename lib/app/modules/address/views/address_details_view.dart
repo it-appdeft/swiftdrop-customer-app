@@ -96,7 +96,7 @@ class AddressDetailsView extends GetView<AddressController> {
           Padding(
             padding: EdgeInsets.fromLTRB(30, 10, 30, 20 + MediaQuery.of(context).padding.bottom),
             child: Obx(() => AppButton(
-              label: 'Save Address',
+              label: AppStrings.save,
               onTap: controller.isSaving.value
                   ? null
                   : () => controller.saveAddress(
@@ -246,7 +246,10 @@ class AddressDetailsView extends GetView<AddressController> {
     return Obx(() {
       final isSelected = controller.selectedAddressType.value == type;
       return GestureDetector(
-        onTap: () => controller.setAddressType(type),
+        onTap: () {
+          AppUtils.haptic();
+          controller.setAddressType(type);
+        },
         child: Container(
           height: 48,
           decoration: BoxDecoration(

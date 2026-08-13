@@ -397,6 +397,27 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                       }
 
                       try {
+                        final bool? itemIsOpen = widget.item['is_open_now'] as bool?;
+                        final bool? itemIsAccepting = widget.item['is_accepting_orders'] as bool?;
+                        bool isClosed = false;
+                        if (itemIsOpen != null || itemIsAccepting != null) {
+                          if (!(itemIsOpen ?? true) || !(itemIsAccepting ?? true)) {
+                            isClosed = true;
+                          }
+                        } else {
+                          final info = Get.find<RestaurantDetailController>().restaurantInfo.value;
+                          if (info != null && (!info.isOpenNow || !info.isAcceptingOrders)) {
+                            isClosed = true;
+                          }
+                        }
+                        if (isClosed) {
+                          setState(() => _isAddingToCart = false);
+                          AppUtils.showError("This restaurant is currently closed for ordering.");
+                          return;
+                        }
+                      } catch (_) {}
+
+                      try {
                         int? rId = widget.item['restaurant_id'] as int?;
                         if (rId == null) {
                           try {

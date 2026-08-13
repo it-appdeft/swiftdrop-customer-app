@@ -1,14 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../utils/app_utils.dart';
-import '../../../widgets/empty_state_widget.dart';
-import '../../../widgets/error_state_widget.dart';
-import '../../../widgets/shimmer_widgets.dart';
-import '../../../../data/models/notification_model.dart';
+
+import '../../../../export.dart';
+
 import '../controllers/notifications_controller.dart';
 
 class NotificationsView extends GetView<NotificationsController> {
@@ -19,13 +11,16 @@ class NotificationsView extends GetView<NotificationsController> {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        title: Text('Notifications', style: AppTextStyles.h6),
+        title: Text(AppStrings.notifications, style: AppTextStyles.h6),
         automaticallyImplyLeading: false,
         actions: [
           Obx(() {
             if (controller.unreadCount.value == 0) return const SizedBox.shrink();
             return TextButton(
-              onPressed: controller.markAllAsRead,
+              onPressed: () {
+                AppUtils.haptic();
+                controller.markAllAsRead();
+              },
               child: Text(
                 'Mark all read',
                 style: AppTextStyles.pXSmall.copyWith(color: AppColors.primary),
@@ -57,7 +52,10 @@ class NotificationsView extends GetView<NotificationsController> {
             final notif = controller.notifications[index];
             return _NotifTile(
               notification: notif,
-              onTap: () => controller.markAsRead(notif.id),
+              onTap: () {
+                AppUtils.haptic();
+                controller.markAsRead(notif.id);
+              },
             );
           },
         );

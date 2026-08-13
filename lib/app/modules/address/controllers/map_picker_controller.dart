@@ -272,6 +272,10 @@ class MapPickerController extends GetxController {
     }
   }
 
+  Future<void> recenterMap() async {
+    await _goToCurrentLocation();
+  }
+
   Future<void> _goToCurrentLocation() async {
     try {
       final pos = await Geolocator.getCurrentPosition(

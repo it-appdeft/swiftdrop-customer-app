@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
+import '../../../../export.dart';
 import '../../../../generated/assets.dart';
+import '../../../../data/models/order_model.dart';
 import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../widgets/app_button.dart';
@@ -14,83 +16,105 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  _buildDeliveredAtCard(),
-                  const SizedBox(height: 16),
-                  _buildRateRestaurantCard(),
-                  const SizedBox(height: 16),
-                  _buildRateFoodCard(),
-                  const SizedBox(height: 16),
-                  _buildRateDeliveryCard(),
-                  const SizedBox(height: 24),
-                  _buildSupportButton(),
-                  const SizedBox(height: 24),
-                  AppButton(
-                    label: 'Submit',
-                    onTap: controller.submitFeedback,
-                    backgroundColor: AppColors.primary,
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: controller.backToHome,
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.primary),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+      backgroundColor: AppColors.white,
+      body: Obx(() {
+        final order = controller.order.value;
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildDeliveredAtCard(order),
+                    const SizedBox(height: 16),
+                    _buildRateRestaurantCard(order),
+                    const SizedBox(height: 16),
+                    _buildRateFoodCard(order),
+                    const SizedBox(height: 16),
+                    _buildRateDeliveryCard(),
+                    const SizedBox(height: 20),
+                    _buildSupportButton(),
+                    const SizedBox(height: 24),
+                    AppButton(
+                      label: 'Submit Feedback',
+                      onTap: controller.submitFeedback,
+                      backgroundColor: AppColors.primary,
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          AppUtils.haptic();
+                          controller.backToHome();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(
+                            color: AppColors.primary,
+                            width: 1.5,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        'Back To Home',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.primary,
+                        child: Text(
+                          'Back To Home',
+                          style: GoogleFonts.inter(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
-                ],
+                    const SizedBox(height: 42),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      color: AppColors.primary,
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 10,
-        bottom: 32,
+        top: MediaQuery.of(context).padding.top + 8,
+        bottom: 28,
       ),
       child: Column(
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-              onPressed: () => Get.back(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () => Get.back(),
+              ),
             ),
           ),
-          Assets.images.orderDelivered.image(width: 88, height: 88),
-          const SizedBox(height: 16),
+          Assets.images.orderDelivered.image(width: 84, height: 84),
+          const SizedBox(height: 14),
           Text(
-            'Order Delivered',
+            AppStrings.orderDelivered,
             style: GoogleFonts.inter(
               fontSize: 22,
               fontWeight: FontWeight.w700,
@@ -99,7 +123,7 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Hope you enjoy your meal.',
+            'Hope you enjoyed your meal.',
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -111,37 +135,57 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
     );
   }
 
-  Widget _buildDeliveredAtCard() {
+  Widget _buildDeliveredAtCard(OrderModel? order) {
+    final addressText = order?.deliveryAddress.isNotEmpty == true
+        ? order!.deliveryAddress
+        : '4521 Emerald Valley, Block B, Suite 104, Green Park, CA 90210';
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.offWhite,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Assets.images.locationIcon.image(width: 24, height: 24),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Assets.images.locationIcon.image(width: 20, height: 20),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Delivered At',
+                  AppStrings.deliveredAt,
                   style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF0B243A),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.lightSurfaceDarkText,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '4521 Emerald Valley, Block B, Suite 104, Green Park, CA 90210',
+                  addressText,
                   style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: const Color(0xFF868AA5),
+                    fontSize: 13,
+                    color: AppColors.lightSurfaceSubtitle,
                     fontWeight: FontWeight.w400,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -152,30 +196,50 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
     );
   }
 
-  Widget _buildRateRestaurantCard() {
+  Widget _buildRateRestaurantCard(OrderModel? order) {
+    final restaurantName =
+        order?.pickupAddress.split(',').first ?? 'The Marble Grill';
+    final restaurantCategory = order?.pickupAddress.contains(',') == true
+        ? order!.pickupAddress
+              .substring(order.pickupAddress.indexOf(',') + 1)
+              .trim()
+        : 'Italian & Pizza';
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.offWhite,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Rate the Restaurant',
+            AppStrings.rateRestaurant,
             style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF0B243A),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.lightSurfaceDarkText,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Assets.images.restaurantImage.image(width: 48, height: 48, fit: BoxFit.cover),
+                child: Assets.images.restaurantImage.image(
+                  width: 44,
+                  height: 44,
+                  fit: BoxFit.cover,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -183,20 +247,25 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'The Marble Grill',
+                      restaurantName,
                       style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF0B243A),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.lightSurfaceDarkText,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      'Italian & Pizza',
+                      restaurantCategory,
                       style: GoogleFonts.inter(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w400,
-                        color: const Color(0xFF64748B),
+                        color: AppColors.lightSurfaceSubtitle,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -209,12 +278,22 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
     );
   }
 
-  Widget _buildRateFoodCard() {
+  Widget _buildRateFoodCard(OrderModel? order) {
+    final items = order?.items ?? [];
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.offWhite,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,15 +301,26 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
           Text(
             'Rate the Food',
             style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF0B243A),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.lightSurfaceDarkText,
             ),
           ),
-          const SizedBox(height: 16),
-          _buildFoodItemRow('Margherita Pizza', 'Giant Slice x1'),
-          const SizedBox(height: 16),
-          _buildFoodItemRow('Sweet Corn Pizza', 'Regular x1'),
+          const SizedBox(height: 14),
+          if (items.isEmpty) ...[
+            _buildFoodItemRow('Margherita Pizza', 'Giant Slice x1'),
+            const SizedBox(height: 14),
+            _buildFoodItemRow('Sweet Corn Pizza', 'Regular x1'),
+          ] else ...[
+            ...items.asMap().entries.map((entry) {
+              final item = entry.value;
+              final isLast = entry.key == items.length - 1;
+              return Padding(
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+                child: _buildFoodItemRow(item.name, 'Qty: x${item.quantity}'),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -241,7 +331,11 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Assets.images.restaurantImage.image(width: 48, height: 48, fit: BoxFit.cover),
+          child: Assets.images.restaurantImage.image(
+            width: 42,
+            height: 42,
+            fit: BoxFit.cover,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -253,15 +347,18 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF0B243A),
+                  color: AppColors.lightSurfaceDarkText,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: GoogleFonts.inter(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: const Color(0xFF64748B),
+                  color: AppColors.lightSurfaceSubtitle,
                 ),
               ),
             ],
@@ -276,57 +373,66 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF2F2E9)),
+        border: Border.all(color: AppColors.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Rate your delivery',
+            'Rate your delivery partner',
             style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF0B243A),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.lightSurfaceDarkText,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Row(
             children: [
               const CircleAvatar(
-                radius: 24,
-                backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=james'),
+                radius: 22,
+                backgroundImage: NetworkImage(
+                  'https://i.pravatar.cc/150?u=james',
+                ),
               ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: _StarRating(size: 28, spacing: 8),
-              ),
+              const SizedBox(width: 14),
+              const Expanded(child: _StarRating(size: 26, spacing: 6)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Container(
-            height: 108,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            height: 96,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: AppColors.offWhite,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.lightSurfaceBorder),
             ),
             child: TextField(
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: const Color(0xFF0B243A),
+                color: AppColors.lightSurfaceDarkText,
               ),
               decoration: InputDecoration(
                 hintText: 'Any feedback for your courier?',
                 hintStyle: GoogleFonts.inter(
                   fontSize: 14,
-                  color: const Color(0xFF868AA5),
+                  color: AppColors.lightSurfaceSubtitle,
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 filled: false,
+                isDense: true,
               ),
               maxLines: null,
             ),
@@ -338,53 +444,63 @@ class OrderDeliveredView extends GetView<OrderDeliveredController> {
 
   Widget _buildSupportButton() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.offWhite,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.lightSurfaceBorder),
       ),
       child: Row(
         children: [
-          Assets.images.goToSupport.image(width: 24, height: 24),
+          Assets.images.goToSupport.image(width: 22, height: 22),
           const SizedBox(width: 12),
           Text(
             'Go to Support',
             style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF0B243A),
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: AppColors.lightSurfaceDarkText,
             ),
           ),
           const Spacer(),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black),
+          const Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 14,
+            color: AppColors.lightSurfaceSubtitle,
+          ),
         ],
       ),
     );
   }
 }
 
-class _StarRating extends StatelessWidget {
+class _StarRating extends StatefulWidget {
   final double size;
   final double spacing;
   const _StarRating({required this.size, this.spacing = 2});
 
   @override
+  State<_StarRating> createState() => _StarRatingState();
+}
+
+class _StarRatingState extends State<_StarRating> {
+  double _rating = 4.0;
+
+  @override
   Widget build(BuildContext context) {
     return RatingStars(
-      value: 1,
-      onValueChanged: (v) {},
-      starBuilder: (index, color) => (color == AppColors.warning
-              ? Assets.images.filledStart
-              : Assets.images.emptyStar)
-          .image(
-        width: size,
-        height: size,
-      ),
+      value: _rating,
+      onValueChanged: (v) => setState(() => _rating = v),
+      starBuilder: (index, color) =>
+          (color == AppColors.warning
+                  ? Assets.images.filledStart
+                  : Assets.images.emptyStar)
+              .image(width: widget.size, height: widget.size),
       starCount: 5,
-      starSize: size,
+      starSize: widget.size,
       valueLabelVisibility: false,
-      starSpacing: spacing,
-      starOffColor: const Color(0xffe4e8ef),
+      starSpacing: widget.spacing,
+      starOffColor: AppColors.lightSurfaceBorder,
       starColor: AppColors.warning,
     );
   }

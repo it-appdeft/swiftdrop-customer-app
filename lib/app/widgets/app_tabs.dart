@@ -29,7 +29,10 @@ class AppTabItem extends StatelessWidget {
     );
 
     Widget content = GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Column(
         mainAxisSize: MainAxisSize.min,

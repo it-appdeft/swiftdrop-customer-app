@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:swiftdrop_customer_app/export.dart';
 
 class HomeController extends BaseController {
@@ -19,6 +20,8 @@ class HomeController extends BaseController {
   int _restaurantsPage = 1;
   int? _selectedFoodItemId;
   bool _isInitialized = false;
+  static const int _bannerCount = 3;
+  Timer? _bannerTimer;
 
   void selectCategory(int index, int foodItemId) {
     if (selectedCategoryIndex.value == index) {
@@ -69,13 +72,19 @@ class HomeController extends BaseController {
   }
 
   Future<void> _initFlow() async {
+    // Show shimmer immediately while GPS location is being fetched
+    isLoading.value = true;
     final hasLoc = await LocationService.to.initLocation();
     if (!hasLoc) {
+      isLoading.value = false;
       Get.toNamed(AppRoutes.address, arguments: {'permissionDenied': true});
       _isInitialized = true;
       return;
     }
+    // Reset isLoading before calling _loadDashboard so its guard doesn't block
+    isLoading.value = false;
     await _loadDashboard();
+    _startBannerAutoScroll();
     _isInitialized = true;
   }
 
@@ -179,18 +188,39 @@ class HomeController extends BaseController {
     }
   }
 
+  void _startBannerAutoScroll() {
+    _bannerTimer?.cancel();
+    _bannerTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!bannerPageController.hasClients) return;
+      final nextPage = (currentBannerPage.value + 1) % _bannerCount;
+      bannerPageController.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _stopBannerAutoScroll() {
+    _bannerTimer?.cancel();
+    _bannerTimer = null;
+  }
+
   @override
   Future<void> refresh() async {
+    _stopBannerAutoScroll();
     _selectedFoodItemId = null;
     selectedCategoryIndex.value = -1;
     restaurants.clear();
     topPickRestaurants.clear();
     hasMoreRestaurants.value = false;
     await _loadDashboard();
+    _startBannerAutoScroll();
   }
 
   @override
   void onClose() {
+    _stopBannerAutoScroll();
     bannerPageController.removeListener(_onBannerPage);
     bannerPageController.dispose();
     scrollController.removeListener(_onScroll);

@@ -88,7 +88,10 @@ class _ItemCardState extends State<ItemCard> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           GestureDetector(
-            onTap: () => cart.decrementCartItem(_itemId),
+            onTap: () {
+              AppUtils.haptic();
+              cart.decrementCartItem(_itemId);
+            },
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -107,6 +110,7 @@ class _ItemCardState extends State<ItemCard> {
           const SizedBox(width: 8),
           GestureDetector(
             onTap: () {
+              AppUtils.haptic();
               if (_hasModifiers) {
                 showYourCustomizationsSheet(widget.item);
               } else {
@@ -147,6 +151,32 @@ class _ItemCardState extends State<ItemCard> {
     return false;
   }
 
+  bool _isRestaurantClosed() {
+    try {
+      final bool? itemIsOpen = widget.item['is_open_now'] as bool?;
+      final bool? itemIsAccepting = widget.item['is_accepting_orders'] as bool?;
+      if (itemIsOpen != null || itemIsAccepting != null) {
+        final isOpenNow = itemIsOpen ?? true;
+        final isAccepting = itemIsAccepting ?? true;
+        if (!isOpenNow || !isAccepting) return true;
+      }
+
+      final info = Get.find<RestaurantDetailController>().restaurantInfo.value;
+      if (info != null && (!info.isOpenNow || !info.isAcceptingOrders)) {
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  bool get _isItemAvailable {
+    final dynamic raw = widget.item['is_available'] ?? widget.item['available'];
+    if (raw is bool) return raw;
+    if (raw is num) return raw == 1;
+    if (raw is String) return raw == '1' || raw.toLowerCase() == 'true';
+    return true;
+  }
+
   Widget _buildAddButton() {
     return Obx(() {
       final isLoading = _cart?.loadingItems.contains(_itemId) ?? false;
@@ -164,6 +194,15 @@ class _ItemCardState extends State<ItemCard> {
       }
       return GestureDetector(
         onTap: () {
+          AppUtils.haptic();
+          if (!_isItemAvailable) {
+            AppUtils.showError("This item is currently unavailable.");
+            return;
+          }
+          if (_isRestaurantClosed()) {
+            AppUtils.showError("This restaurant is currently closed for ordering.");
+            return;
+          }
           if (_checkRestaurantConflict()) return;
 
           if (_hasModifiers) {
@@ -198,11 +237,11 @@ class _ItemCardState extends State<ItemCard> {
         behavior: HitTestBehavior.opaque,
         child: Center(
           child: Text(
-            'ADD',
+            _isItemAvailable ? 'ADD' : 'UNAVAILABLE',
             style: GoogleFonts.inter(
-              fontSize: widget.isHorizontal ? 16 : 14,
+              fontSize: widget.isHorizontal ? 14 : 12,
               fontWeight: widget.isHorizontal ? FontWeight.w500 : FontWeight.w600,
-              color: AppColors.primary,
+              color: _isItemAvailable ? AppColors.primary : AppColors.lightSurfaceSubtitle,
             ),
           ),
         ),
@@ -213,22 +252,43 @@ class _ItemCardState extends State<ItemCard> {
   @override
   Widget build(BuildContext context) {
     final cart = _cart;
+    final isAvailable = _isItemAvailable;
 
-    final addOrCounter = Container(
-      height: widget.isHorizontal ? 36 : 32,
-      width: 112,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.primary.withOpacity(0.5)),
-      ),
-      child: cart == null
-          ? _buildAddButton()
-          : Obx(() {
-              final qty = cart.quantities[_itemId] ?? 0;
-              return qty == 0 ? _buildAddButton() : _buildCounter(cart, qty);
-            }),
-    );
+    final addOrCounter = !isAvailable
+        ? Container(
+            height: widget.isHorizontal ? 36.h : 32.h,
+            width: 112.w,
+            decoration: BoxDecoration(
+              color: AppColors.offWhite,
+              borderRadius: BorderRadius.circular(8.r),
+              border: Border.all(color: AppColors.lightSurfaceBorder),
+            ),
+            child: Center(
+              child: Text(
+                'UNAVAILABLE',
+                style: GoogleFonts.inter(
+                  fontSize: widget.isHorizontal ? 11.sp : 10.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.lightSurfaceSubtitle,
+                ),
+              ),
+            ),
+          )
+        : Container(
+            height: widget.isHorizontal ? 36.h : 32.h,
+            width: 112.w,
+            decoration: BoxDecoration(
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.primary.withOpacity(0.5)),
+            ),
+            child: cart == null
+                ? _buildAddButton()
+                : Obx(() {
+                    final qty = cart.quantities[_itemId] ?? 0;
+                    return qty == 0 ? _buildAddButton() : _buildCounter(cart, qty);
+                  }),
+          );
 
     final imageStack = Stack(
       clipBehavior: Clip.none,
@@ -265,35 +325,35 @@ class _ItemCardState extends State<ItemCard> {
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4.h),
         Text(
           widget.item['name'] ?? '',
           style: GoogleFonts.inter(
-            fontSize: 16,
+            fontSize: 16.sp,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF0B243A),
+            color: AppColors.lightSurfaceDarkText,
             height: widget.isHorizontal ? 24 / 16 : null,
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4.h),
         Text(
           '£${widget.item['price']}',
           style: GoogleFonts.inter(
-            fontSize: 14,
+            fontSize: 14.sp,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFF595D70),
+            color: AppColors.lightSurfaceLabel,
           ),
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: 4.h),
         IntrinsicWidth(
           child: Container(
-            height: 22,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            height: 22.h,
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(11),
-              border: Border.all(color: const Color(0xFF85929D)),
+              borderRadius: BorderRadius.circular(11.r),
+              border: Border.all(color: AppColors.navyMuted200),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -415,53 +475,53 @@ class _RestaurantWithItemsState extends State<RestaurantWithItems> {
                                 child: Text(
                                   widget.data['name'] ?? '',
                                   style: GoogleFonts.inter(
-                                    fontSize: 18,
+                                    fontSize: 18.sp,
                                     fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF0B243A),
+                                    color: AppColors.lightSurfaceDarkText,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               if (isClosed) ...[
-                                const SizedBox(width: 8),
+                                SizedBox(width: 8.w),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
                                   decoration: BoxDecoration(
                                     color: AppColors.error,
-                                    borderRadius: BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(4.r),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'CLOSED',
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: 10.sp,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                     ),
                                   ),
                                 ),
                               ],
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4.h),
                           Row(
                             children: [
-                              Assets.images.timeIcon.image(width: 16, height: 16),
-                              const SizedBox(width: 4),
+                              Assets.images.timeIcon.image(width: 16.w, height: 16.h),
+                              SizedBox(width: 4.w),
                               Text(
                                 widget.data['time'] ?? '20-30 min',
                                 style: GoogleFonts.inter(
-                                  fontSize: 12,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.lightSurfaceSubtitle,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Container(width: 1, height: 12, color: const Color(0xFFCFD1DC)),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8.w),
+                              Container(width: 1.w, height: 12.h, color: AppColors.lightSurfaceBorder),
+                              SizedBox(width: 8.w),
                               Text(
                                 widget.data['distance'] ?? '4.9 mi',
                                 style: GoogleFonts.inter(
-                                  fontSize: 12,
+                                  fontSize: 12.sp,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.lightSurfaceSubtitle,
                                 ),
@@ -496,6 +556,8 @@ class _RestaurantWithItemsState extends State<RestaurantWithItems> {
                   itemBuilder: (context, index) {
                     final item = Map<String, dynamic>.from(widget.data['items'][index]);
                     item['restaurant_id'] = widget.data['id'];
+                    item['is_open_now'] = isOpenNow;
+                    item['is_accepting_orders'] = isAcceptingOrders;
                     return ItemCard(item: item);
                   },
                 ),
@@ -546,22 +608,22 @@ class FavoriteItemCard extends StatelessWidget {
                       Text(
                         restaurant['name']?.toString() ?? 'The Marble Grill',
                         style: GoogleFonts.inter(
-                          fontSize: 18,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF0B243A),
+                          color: AppColors.lightSurfaceDarkText,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4.h),
                       Row(
                         children: [
-                          Assets.images.timeIcon.image(width: 16, height: 16),
-                          const SizedBox(width: 4),
+                          Assets.images.timeIcon.image(width: 16.w, height: 16.h),
+                          SizedBox(width: 4.w),
                           Text(
                             '${restaurant['time'] ?? restaurant['delivery_time'] ?? '25-35'} (min) Delivery Time',
                             style: GoogleFonts.inter(
-                              fontSize: 12,
+                              fontSize: 12.sp,
                               fontWeight: FontWeight.w400,
                               color: AppColors.lightSurfaceSubtitle,
                             ),
@@ -572,11 +634,11 @@ class FavoriteItemCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(11),
-                    border: Border.all(color: const Color(0xFF85929D)),
+                    color: AppColors.transparent,
+                    borderRadius: BorderRadius.circular(11.r),
+                    border: Border.all(color: AppColors.navyMuted200),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,

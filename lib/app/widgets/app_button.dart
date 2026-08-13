@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../export.dart';
-import '../themes/app_colors.dart';
-import '../themes/app_dimensions.dart';
-import '../themes/app_radius.dart';
-import '../themes/app_text_styles.dart';
 
 class AppButton extends StatelessWidget {
   final String label;
@@ -41,7 +38,12 @@ class AppButton extends StatelessWidget {
       height: height,
       child: isOutlined
           ? OutlinedButton(
-              onPressed: isLoading ? null : onTap,
+              onPressed: isLoading
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      onTap?.call();
+                    },
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: bg),
                 foregroundColor: bg,
@@ -52,7 +54,12 @@ class AppButton extends StatelessWidget {
               child: _buildChild(bg),
             )
           : ElevatedButton(
-              onPressed: isLoading ? null : onTap,
+              onPressed: isLoading
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      onTap?.call();
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: bg,
                 foregroundColor: fg,

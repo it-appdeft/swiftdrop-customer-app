@@ -11,12 +11,12 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.buttonLabel,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
-            const SizedBox(height: 11),
+            const SizedBox(height: 12),
             _buildSearchBar(),
             const SizedBox(height: 16),
             Expanded(
@@ -34,7 +34,12 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
                 }
 
                 return ListView.builder(
-                  padding: EdgeInsets.fromLTRB(16, 0, 16, Get.find<CartController>().cartItemCount.value > 0 ? 120 : 20),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    0,
+                    16,
+                    Get.find<CartController>().cartItemCount.value > 0 ? 120 : 20,
+                  ),
                   itemCount: orders.length,
                   itemBuilder: (context, index) {
                     return _OrderCard(order: orders[index], index: index);
@@ -50,13 +55,13 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      padding: const EdgeInsets.only(top: 14, bottom: 6),
       child: Center(
         child: Text(
-          'History',
+          AppStrings.orderHistory,
           style: GoogleFonts.inter(
             fontSize: 18,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
             color: AppColors.lightSurfaceDarkText,
           ),
         ),
@@ -71,19 +76,19 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
         onTap: () => Get.find<DashboardController>().changePage(1),
         behavior: HitTestBehavior.opaque,
         child: Container(
-          height: 52,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          height: 48,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: AppColors.offWhite,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.lightSurfaceBorder),
           ),
           child: Row(
             children: [
-              Assets.images.homeSearchIcon.image(width: 24, height: 24),
-              const SizedBox(width: 15),
+              Assets.images.homeSearchIcon.image(width: 20, height: 20),
+              const SizedBox(width: 12),
               Text(
-                'Search by restaurant or dish',
+                'Search by restaurant or dish...',
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
@@ -105,7 +110,6 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Extracting parts of address or using mock if needed to match design
     final restaurantName = order.pickupAddress.split(',').first;
     final restaurantLocation = order.pickupAddress.contains(',') 
         ? order.pickupAddress.substring(order.pickupAddress.indexOf(',') + 1).trim()
@@ -115,13 +119,24 @@ class _OrderCard extends StatelessWidget {
     final dateStr = DateFormat('MMMM d, h:mm a').format(order.createdAt);
 
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.orderDelivered, arguments: order),
+      onTap: () {
+        AppUtils.haptic();
+        Get.toNamed(AppRoutes.orderDelivered, arguments: order);
+      },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 20),
+        margin: EdgeInsets.only(bottom: 16.h),
+        padding: EdgeInsets.all(16.p),
         decoration: BoxDecoration(
-          color: AppColors.offWhite,
-          borderRadius: BorderRadius.circular(8.0),
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.cardBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,20 +159,21 @@ class _OrderCard extends StatelessWidget {
                     children: [
                       Text(
                         restaurantName,
-                        style: const TextStyle(
-                          fontFamily: 'Fonts/Paragraph', // As specified
+                        style: GoogleFonts.inter(
                           fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.lightSurfaceCusinsSubtitle, // #0B243A
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.lightSurfaceDarkText,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         restaurantLocation,
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.lightSurfaceSubtitle, // #868AA5
+                          color: AppColors.lightSurfaceSubtitle,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -167,62 +183,70 @@ class _OrderCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 if (order.isDelivered && !isFailed)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Assets.images.delivered.image(width: 20, height: 20),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Delivered',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.lightSurfaceDarkText,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Assets.images.delivered.image(width: 16, height: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Delivered',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
               ],
             ),
-            const Divider(
-              height: 33, // 16 top + 16 bottom + 1 thickness approx
-              thickness: 1,
-              color: AppColors.lightSurfaceBorder,
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              child: const Divider(
+                height: 1,
+                thickness: 1,
+                color: AppColors.divider,
+              ),
             ),
             ...order.items.asMap().entries.map((entry) {
               final isLast = entry.key == order.items.length - 1;
               final item = entry.value;
               return Padding(
-                padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
+                padding: EdgeInsets.only(bottom: isLast ? 0 : 10),
                 child: Row(
                   children: [
                     Container(
-                      width: 22,
-                      height: 22,
+                      width: 24,
+                      height: 24,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: AppColors.primaryFaded.withOpacity(0.2), // #8DE1BE with opacity
-                        border: Border.all(color: AppColors.primaryFaded),
-                        borderRadius: BorderRadius.circular(4),
+                        color: AppColors.primary.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         '${item.quantity}x',
-                        style: const TextStyle(
-                          fontSize: 10,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary, // #1BC27D
+                          color: AppColors.primary,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         item.name,
-                        style: const TextStyle(
-                          fontFamily: 'Fonts/Paragraph',
-                          fontSize: 16,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          color: AppColors.lightSurfaceLabel,
+                          color: AppColors.lightSurfaceDarkText,
                         ),
                       ),
                     ),
@@ -230,28 +254,24 @@ class _OrderCard extends StatelessWidget {
                 ),
               );
             }),
-            const Divider(
-              height: 33, // 16 top + 16 bottom + 1 thickness approx
-              thickness: 1,
-              color: AppColors.lightSurfaceBorder,
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.h),
+              child: const Divider(
+                height: 1,
+                thickness: 1,
+                color: AppColors.divider,
+              ),
             ),
-            /*AppButton(
-              label: 'Reorder',
-              onTap: () {},
-              height: 44,
-              backgroundColor: AppColors.primary,
-            ),
-            const SizedBox(height: 16),*/
             if (isFailed) ...[
               Row(
                 children: [
-                  const Icon(Icons.error_outline, color: AppColors.error, size: 14),
-                  const SizedBox(width: 4),
+                  const Icon(Icons.error_outline, color: AppColors.error, size: 16),
+                  const SizedBox(width: 6),
                   Text(
                     'Payment failed',
                     style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.error,
                     ),
                   ),
@@ -259,7 +279,7 @@ class _OrderCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'If any amount is deducted, it will be refunded in 3-5 Working days',
+                'If any amount was deducted, it will be refunded in 3-5 working days.',
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
@@ -267,14 +287,26 @@ class _OrderCard extends StatelessWidget {
                 ),
               ),
             ] else ...[
-              Text(
-                'Ordered $dateStr',
-                style: const TextStyle(
-                  fontFamily: 'Fonts/Paragraph',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.lightSurfaceSubtitle,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Ordered $dateStr',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.lightSurfaceSubtitle,
+                    ),
+                  ),
+                  Text(
+                    '£${order.totalAmount.toStringAsFixed(2)}',
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.lightSurfaceDarkText,
+                    ),
+                  ),
+                ],
               ),
             ],
           ],
@@ -283,4 +315,3 @@ class _OrderCard extends StatelessWidget {
     );
   }
 }
-

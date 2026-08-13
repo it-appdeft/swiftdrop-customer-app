@@ -64,6 +64,7 @@ class MenuItemModel {
   final String? imageUrl;
   final double rating;
   final bool isFavorited;
+  final bool isAvailable;
   final int cartQuantity;
   final bool isInCart;
   final List<ModifierGroupModel> modifierGroups;
@@ -77,6 +78,7 @@ class MenuItemModel {
     this.imageUrl,
     required this.rating,
     required this.isFavorited,
+    this.isAvailable = true,
     this.cartQuantity = 0,
     this.isInCart = false,
     required this.modifierGroups,
@@ -91,6 +93,7 @@ class MenuItemModel {
         imageUrl: json['image_url'] as String?,
         rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
         isFavorited: json['is_favorited'] as bool? ?? false,
+        isAvailable: json['is_available'] as bool? ?? json['available'] as bool? ?? true,
         cartQuantity: (json['cart_quantity'] as num?)?.toInt() ?? 0,
         isInCart: json['is_in_cart'] as bool? ?? false,
         modifierGroups: (json['modifier_groups'] as List? ?? [])
@@ -98,7 +101,7 @@ class MenuItemModel {
             .toList(),
       );
 
-  MenuItemModel copyWith({bool? isFavorited}) => MenuItemModel(
+  MenuItemModel copyWith({bool? isFavorited, bool? isAvailable}) => MenuItemModel(
         id: id,
         name: name,
         description: description,
@@ -107,6 +110,7 @@ class MenuItemModel {
         imageUrl: imageUrl,
         rating: rating,
         isFavorited: isFavorited ?? this.isFavorited,
+        isAvailable: isAvailable ?? this.isAvailable,
         cartQuantity: cartQuantity,
         isInCart: isInCart,
         modifierGroups: modifierGroups,
@@ -121,6 +125,7 @@ class MenuItemModel {
         'image': imageUrl,
         'rating': rating.toStringAsFixed(1),
         'isFavorited': isFavorited,
+        'is_available': isAvailable,
         'cart_quantity': cartQuantity,
         'is_in_cart': isInCart,
         'modifier_groups': modifierGroups,

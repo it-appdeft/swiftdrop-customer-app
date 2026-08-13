@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../export.dart';
 import '../../../themes/app_colors.dart';
 import '../../../themes/app_dimensions.dart';
 import '../../../themes/app_radius.dart';
@@ -20,7 +22,11 @@ class ProfileView extends GetView<ProfileController> {
       appBar: AppBar(
         title: Text(
           'Account',
-          style: AppTextStyles.h6.copyWith(color: AppColors.white),
+          style: GoogleFonts.inter(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.white,
+          ),
         ),
         centerTitle: true,
         automaticallyImplyLeading: false,
@@ -34,7 +40,7 @@ class ProfileView extends GetView<ProfileController> {
             AppDimensions.paddingMd,
             AppDimensions.paddingMd,
             AppDimensions.paddingMd,
-            hasCart ? 200 : 150, // Increased bottom padding if cart view is visible
+            hasCart ? 200 : 150,
           ),
           child: Column(
             children: [
@@ -57,9 +63,15 @@ class _ProfileCard extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     return Obx(() {
       final user = controller.user.value;
-      final initial = user?.name.isNotEmpty == true
-          ? user!.name.substring(0, 1).toUpperCase()
+      final name = user?.name ?? '';
+      final initial = name.isNotEmpty
+          ? name.substring(0, 1).toUpperCase()
           : 'U';
+      final email = user?.email ?? '';
+      final phone = user?.phone ?? '';
+      final subtitle = email.isNotEmpty
+          ? email
+          : AppUtils.formatPhoneDisplay(phone);
 
       return Container(
         padding: const EdgeInsets.symmetric(
@@ -83,7 +95,7 @@ class _ProfileCard extends GetView<ProfileController> {
             Container(
               width: AppDimensions.avatarMd,
               height: AppDimensions.avatarMd,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.lightSurfaceBorder,
                 shape: BoxShape.circle,
               ),
@@ -97,17 +109,25 @@ class _ProfileCard extends GetView<ProfileController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user?.name ?? '',
-                    style: AppTextStyles.pMediumSemiBold.copyWith(
+                    name.isNotEmpty ? name : 'User',
+                    style: GoogleFonts.inter(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.lightSurfaceDarkText,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    user?.email ?? AppUtils.formatPhoneDisplay(user?.phone ?? ''),
-                    style: AppTextStyles.pXSmall.copyWith(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.lightSurfaceSubtitle,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
@@ -115,10 +135,14 @@ class _ProfileCard extends GetView<ProfileController> {
             // Edit icon
             GestureDetector(
               onTap: controller.navigateToEditProfile,
-              child: Icon(
-                Icons.edit_outlined,
-                color: AppColors.primary,
-                size: AppDimensions.iconSm,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  Icons.edit_outlined,
+                  color: AppColors.primary,
+                  size: AppDimensions.iconSm,
+                ),
               ),
             ),
           ],
@@ -138,7 +162,11 @@ class _AvatarContent extends StatelessWidget {
     return Center(
       child: Text(
         initial,
-        style: AppTextStyles.h6.copyWith(color: AppColors.lightSurfaceText),
+        style: GoogleFonts.inter(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: AppColors.lightSurfaceText,
+        ),
       ),
     );
   }
@@ -161,20 +189,42 @@ class _MenuList extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     void comingSoon() => AppUtils.showInfo('Feature coming soon.');
     final items = [
-      _MenuItemData(icon: Icons.location_on_outlined,   label: 'Saved Address',      onTap: controller.navigateToAddress),
-      _MenuItemData(icon: Icons.favorite_border_rounded, label: 'Favorites',          onTap: controller.navigateToFavorites),
-      _MenuItemData(icon: Icons.credit_card_outlined,    label: 'Payments',           onTap: comingSoon),
-      _MenuItemData(icon: Icons.settings_outlined,       label: 'Settings',           onTap: controller.navigateToSettings),
-      _MenuItemData(icon: Icons.privacy_tip_outlined,    label: 'Privacy Policy',     onTap: comingSoon),
-      _MenuItemData(icon: Icons.article_outlined,        label: 'Terms & Conditions', onTap: comingSoon),
-      _MenuItemData(icon: Icons.help_outline_rounded,    label: 'Help',               onTap: comingSoon),
-      _MenuItemData(icon: Icons.logout_rounded,          label: 'Logout',             onTap: controller.logout),
+      _MenuItemData(
+          icon: Icons.location_on_outlined,
+          label: AppStrings.savedAddresses,
+          onTap: controller.navigateToAddress),
+      _MenuItemData(
+          icon: Icons.favorite_border_rounded,
+          label: 'Favorites',
+          onTap: controller.navigateToFavorites),
+      _MenuItemData(
+          icon: Icons.credit_card_outlined,
+          label: 'Payments',
+          onTap: comingSoon),
+      _MenuItemData(
+          icon: Icons.settings_outlined,
+          label: AppStrings.settings,
+          onTap: controller.navigateToSettings),
+      _MenuItemData(
+          icon: Icons.privacy_tip_outlined,
+          label: AppStrings.privacyPolicy,
+          onTap: comingSoon),
+      _MenuItemData(
+          icon: Icons.article_outlined,
+          label: AppStrings.termsConditions,
+          onTap: comingSoon),
+      _MenuItemData(
+          icon: Icons.help_outline_rounded,
+          label: AppStrings.helpCenter,
+          onTap: comingSoon),
+      _MenuItemData(
+          icon: Icons.logout_rounded,
+          label: AppStrings.logout,
+          onTap: controller.logout),
     ];
 
     return Column(
-      children: items
-          .map((item) => _MenuItemCard(data: item))
-          .toList(),
+      children: items.map((item) => _MenuItemCard(data: item)).toList(),
     );
   }
 }
@@ -215,7 +265,10 @@ class _MenuItemCard extends StatelessWidget {
         color: AppColors.transparent,
         borderRadius: AppRadius.md,
         child: InkWell(
-          onTap: data.onTap,
+          onTap: () {
+            AppUtils.haptic();
+            data.onTap?.call();
+          },
           borderRadius: AppRadius.md,
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -233,7 +286,9 @@ class _MenuItemCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     data.label,
-                    style: AppTextStyles.pSmall.copyWith(
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
                       color: AppColors.lightSurfaceDarkText,
                     ),
                   ),

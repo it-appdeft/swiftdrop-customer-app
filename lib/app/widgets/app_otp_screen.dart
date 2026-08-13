@@ -270,6 +270,7 @@ class _ResendBlock extends StatelessWidget {
       }
       return GestureDetector(
         onTap: () {
+          AppUtils.haptic();
           FocusScope.of(context).unfocus();
           onResend();
         },

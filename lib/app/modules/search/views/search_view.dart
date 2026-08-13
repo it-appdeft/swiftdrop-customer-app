@@ -9,54 +9,46 @@ class SearchView extends GetView<SearchTabController> {
 
   @override
   Widget build(BuildContext context) {
-    final cartController = Get.find<CartController>();
-
     return Scaffold(
-      backgroundColor: AppColors.buttonLabel,
+      backgroundColor: AppColors.white,
       body: SafeArea(
-        child: Stack(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-            // _SearchRow is a direct, static child of this Column — never
-            // inside any Obx — so its TextField element is never touched
-            // by reactive rebuilds, keeping focus and keystrokes intact.
-            const SizedBox(height: 11),
+            const SizedBox(height: 12),
             _SearchRow(),
-            // Tabs row: appears with shadow only in results mode.
             Obx(() {
               if (controller.searchQuery.value.isEmpty) return const SizedBox.shrink();
               return Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFEFEFD),
+                margin: const EdgeInsets.only(top: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.shadowLight,
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     _ResultTabs(),
                   ],
                 ),
               );
             }),
-            // Body: recent searches or filter chips + results list.
             Expanded(
               child: Obx(() {
                 if (controller.searchQuery.value.isEmpty) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       _RecentHeader(),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                       Expanded(child: _RecentChipsRow()),
                     ],
                   );
@@ -64,14 +56,9 @@ class SearchView extends GetView<SearchTabController> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 16),
-                        _FilterRow(),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
+                    const SizedBox(height: 14),
+                    _FilterRow(),
+                    const SizedBox(height: 14),
                     Expanded(child: _SearchResultsList()),
                   ],
                 );
@@ -79,9 +66,7 @@ class SearchView extends GetView<SearchTabController> {
             ),
           ],
         ),
-      ],
-    ),
-  ),
+      ),
     );
   }
 }
@@ -96,36 +81,43 @@ class _SearchRow extends GetView<SearchTabController> {
           GestureDetector(
             onTap: () => Get.find<DashboardController>().changePage(0),
             behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: Assets.images.back.image(width: 24, height: 24),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
             child: Container(
-              height: 52,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: AppColors.offWhite,
-                borderRadius: BorderRadius.circular(8),
+                shape: BoxShape.circle,
                 border: Border.all(color: AppColors.lightSurfaceBorder),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Center(
+                child: Assets.images.back.image(width: 20, height: 20),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppColors.offWhite,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.lightSurfaceBorder),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Row(
                 children: [
-                  Assets.images.homeSearchIcon.image(width: 24, height: 24),
-                  const SizedBox(width: 16),
+                  Assets.images.homeSearchIcon.image(width: 20, height: 20),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
                       controller: controller.queryController,
                       onChanged: controller.onQueryChanged,
                       onSubmitted: controller.onSubmit,
                       textInputAction: TextInputAction.search,
-                      cursorColor: AppColors.iconDark,
+                      cursorColor: AppColors.primary,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        fontWeight: FontWeight.w400,
+                        fontWeight: FontWeight.w500,
                         color: AppColors.lightSurfaceDarkText,
                       ),
                       decoration: const InputDecoration(
@@ -134,7 +126,7 @@ class _SearchRow extends GetView<SearchTabController> {
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         enabledBorder: InputBorder.none,
-                        hintText: 'Search restaurant or items',
+                        hintText: 'Search restaurants or dishes...',
                         hintStyle: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -146,12 +138,22 @@ class _SearchRow extends GetView<SearchTabController> {
                   Obx(
                     () => controller.searchQuery.value.isNotEmpty
                         ? GestureDetector(
-                            onTap: controller.clearQuery,
+                            onTap: () {
+                              AppUtils.haptic();
+                              controller.clearQuery();
+                            },
                             behavior: HitTestBehavior.opaque,
-                            child: const Icon(
-                              Icons.close_rounded,
-                              size: 18,
-                              color: AppColors.lightSurfaceSubtitle,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: AppColors.lightSurfaceBorder,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.close_rounded,
+                                size: 14,
+                                color: AppColors.lightSurfaceSubtitle,
+                              ),
                             ),
                           )
                         : const SizedBox.shrink(),
@@ -179,21 +181,30 @@ class _RecentHeader extends GetView<SearchTabController> {
             Text(
               'Recent Searches',
               style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppColors.navyMedium,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.lightSurfaceDarkText,
               ),
             ),
             GestureDetector(
-              onTap: controller.clearRecent,
+              onTap: () {
+                AppUtils.haptic();
+                controller.clearRecent();
+              },
               behavior: HitTestBehavior.opaque,
-              child: Text(
-                'Clear',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.error,
-                ),
+              child: Row(
+                children: [
+                  const Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.error),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Clear all',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -213,15 +224,26 @@ class _RecentChipsRow extends GetView<SearchTabController> {
       if (controller.recentSearches.isEmpty) {
         return Center(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Type something to search!',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.lightSurfaceSubtitle,
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.search_rounded,
+                  size: 48,
+                  color: AppColors.lightSurfaceSubtitle.withOpacity(0.5),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Search for your favorite food & restaurants',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceSubtitle,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -230,7 +252,7 @@ class _RecentChipsRow extends GetView<SearchTabController> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Wrap(
           spacing: 8,
-          runSpacing: 12,
+          runSpacing: 10,
           children: controller.recentSearches
               .map((q) => _RecentChip(label: q, onTap: () => controller.tapRecent(q)))
               .toList(),
@@ -248,25 +270,28 @@ class _RecentChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       child: Container(
-        height: 41,
+        height: 36,
         decoration: BoxDecoration(
           color: AppColors.offWhite,
-          borderRadius: BorderRadius.circular(44),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.lightSurfaceBorder),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Assets.images.recentSearch.image(width: 20, height: 20),
-            const SizedBox(width: 9),
+            const Icon(Icons.history_rounded, size: 16, color: AppColors.lightSurfaceSubtitle),
+            const SizedBox(width: 8),
             Text(
               label,
               style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
                 color: AppColors.lightSurfaceDarkText,
               ),
             ),
@@ -282,19 +307,25 @@ class _ResultTabs extends GetView<SearchTabController> {
   Widget build(BuildContext context) {
     return Obx(() {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
             AppTabItem(
-              label: 'Restaurants',
+              label: AppStrings.popularRestaurants,
               isSelected: controller.selectedTabIndex.value == 0,
-              onTap: () => controller.selectedTabIndex.value = 0,
+              onTap: () {
+                AppUtils.haptic();
+                controller.selectedTabIndex.value = 0;
+              },
             ),
             const SizedBox(width: 16),
             AppTabItem(
-              label: 'Items',
+              label: AppStrings.categories,
               isSelected: controller.selectedTabIndex.value == 1,
-              onTap: () => controller.selectedTabIndex.value = 1,
+              onTap: () {
+                AppUtils.haptic();
+                controller.selectedTabIndex.value = 1;
+              },
             ),
           ],
         ),
@@ -302,9 +333,6 @@ class _ResultTabs extends GetView<SearchTabController> {
     });
   }
 }
-
-// Remove _TabItem class since we now use AppTabItem
-
 
 class _FilterRow extends GetView<SearchTabController> {
   @override
@@ -318,14 +346,20 @@ class _FilterRow extends GetView<SearchTabController> {
               label: 'Offers',
               assetImage: Assets.images.offers,
               isSelected: controller.activeFilters.contains('Offers'),
-              onTap: () => controller.toggleFilter('Offers'),
+              onTap: () {
+                AppUtils.haptic();
+                controller.toggleFilter('Offers');
+              },
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             _FilterChip(
               label: 'Highest rated',
               assetImage: Assets.images.highestRated,
               isSelected: controller.activeFilters.contains('Highest rated'),
-              onTap: () => controller.toggleFilter('Highest rated'),
+              onTap: () {
+                AppUtils.haptic();
+                controller.toggleFilter('Highest rated');
+              },
             ),
           ],
         ),
@@ -345,26 +379,29 @@ class _FilterChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
         height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primary.withOpacity(0.1) : AppColors.offWhite,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? AppColors.primary : AppColors.lightSurfaceBorder,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            assetImage.image(width: 22, height: 22),
-            const SizedBox(width: 8),
+            assetImage.image(width: 18, height: 18),
+            const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.lightSurfaceDarkText,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected ? AppColors.primary : AppColors.lightSurfaceDarkText,
               ),
             ),
           ],
@@ -570,19 +607,19 @@ class _ShimmerRecentChips extends StatelessWidget {
         spacing: 8,
         runSpacing: 12,
         children: _widths.map((w) => Container(
-          height: 41,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: AppColors.offWhite,
-            borderRadius: BorderRadius.circular(44),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.lightSurfaceBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              AppShimmer.circle(size: 20),
-              const SizedBox(width: 9),
-              AppShimmer.text(width: w, height: 14),
+              AppShimmer.circle(size: 16),
+              const SizedBox(width: 8),
+              AppShimmer.text(width: w, height: 12),
             ],
           ),
         )).toList(),

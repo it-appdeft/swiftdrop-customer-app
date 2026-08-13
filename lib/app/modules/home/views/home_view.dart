@@ -32,17 +32,18 @@ class HomeView extends GetView<HomeController> {
                     ),
                     SliverToBoxAdapter(child: _TopPicksSection()),
                     //const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                   // SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
+                    // SliverToBoxAdapter(child: _DiscoverCuisinesSection()),
                     SliverToBoxAdapter(child: _PromoBannerSection()),
                     SliverToBoxAdapter(
                       child: Obx(() {
-                        if (!controller.isLoading.value && controller.restaurants.isEmpty) {
+                        if (!controller.isLoading.value &&
+                            controller.restaurants.isEmpty) {
                           return const SizedBox.shrink();
                         }
                         return Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                          padding: const EdgeInsets.fromLTRB(16, 0, 0, 10),
                           child: SectionHeader(
-                            title: 'All Restaurants',
+                            title: AppStrings.allRestaurants,
                             style: const TextStyle(
                               fontFamily: 'Helvetica Neue',
                               fontSize: 24,
@@ -56,7 +57,8 @@ class HomeView extends GetView<HomeController> {
                     _AllRestaurantsList(),
                     SliverToBoxAdapter(
                       child: Obx(() {
-                        final hasCart = Get.find<CartController>().cartItemCount.value > 0;
+                        final hasCart =
+                            Get.find<CartController>().cartItemCount.value > 0;
                         return SizedBox(height: hasCart ? 80 : 40);
                       }),
                     ),
@@ -79,24 +81,28 @@ class _LocationBar extends GetView<HomeController> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: InkWell(
-        onTap: () => Get.toNamed(AppRoutes.address),
+        onTap: () {
+          AppUtils.haptic();
+          Get.toNamed(AppRoutes.address);
+        },
         child: Row(
-
           children: [
             Assets.images.locationIcon.image(width: 24, height: 24),
             const SizedBox(width: 8),
             SizedBox(
               width: 260,
-              child: Obx(() => Text(
-                    controller.currentAddress.value,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.lightSurfaceNavy,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )),
+              child: Obx(
+                () => Text(
+                  controller.currentAddress.value,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceNavy,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ),
             //const SizedBox(width: 4),
             Assets.images.locationdropIcon.image(width: 24, height: 24),
@@ -115,7 +121,10 @@ class _SearchBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: GestureDetector(
-        onTap: () => Get.find<DashboardController>().changePage(1),
+        onTap: () {
+          AppUtils.haptic();
+          Get.find<DashboardController>().changePage(1);
+        },
         behavior: HitTestBehavior.opaque,
         child: Container(
           height: 52,
@@ -134,7 +143,7 @@ class _SearchBar extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: const Color(0xFF868AA5),
+                  color: AppColors.lightSurfaceSubtitle,
                 ),
               ),
             ],
@@ -154,7 +163,7 @@ class _CategoriesSection extends GetView<HomeController> {
       final items = controller.foodItems;
       if (controller.isLoading.value && items.isEmpty) {
         return SizedBox(
-          height: 108,
+          height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -163,18 +172,20 @@ class _CategoriesSection extends GetView<HomeController> {
           ),
         );
       }
-      if (items.isEmpty) return const SizedBox(height: 108);
+      if (items.isEmpty) return const SizedBox(height: 100);
       return SizedBox(
-        height: 108,
+        height: 100,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           itemCount: items.length,
-          itemBuilder: (_, i) => Obx(() => _CategoryItem(
-                item: items[i],
-                isSelected: controller.selectedCategoryIndex.value == i,
-                onTap: () => controller.selectCategory(i, items[i].id),
-              )),
+          itemBuilder: (_, i) => Obx(
+            () => _CategoryItem(
+              item: items[i],
+              isSelected: controller.selectedCategoryIndex.value == i,
+              onTap: () => controller.selectCategory(i, items[i].id),
+            ),
+          ),
         ),
       );
     });
@@ -185,42 +196,70 @@ class _CategoryItem extends StatelessWidget {
   final FoodItemModel item;
   final bool isSelected;
   final VoidCallback onTap;
-  const _CategoryItem({required this.item, required this.isSelected, required this.onTap});
+  const _CategoryItem({
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 75,
-        margin: const EdgeInsets.only(right: 14),
+        width: 74,
+        margin: const EdgeInsets.only(right: 12),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: const BoxDecoration(color: AppColors.white, shape: BoxShape.circle),
-              clipBehavior: Clip.antiAlias,
-              child: _buildImage(item.imageUrl),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.lightSurfaceBorder,
+                  width: isSelected ? 2.5 : 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.25)
+                        : Colors.black.withValues(alpha: 0.05),
+                    blurRadius: isSelected ? 10 : 6,
+                    spreadRadius: isSelected ? 1 : 0,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: ClipOval(child: _buildImage(item.imageUrl)),
+                ),
+              ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               item.name,
               style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.lightSurfaceSubtitle,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.lightSurfaceSubtitle,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 4),
-            Container(
-              height: 3,
-              width: 72,
-              color: isSelected ? const Color(0xFF198754) : AppColors.transparent,
             ),
           ],
         ),
@@ -229,7 +268,7 @@ class _CategoryItem extends StatelessWidget {
   }
 
   Widget _buildImage(String? path) {
-    return AppImage(path: path, fit: BoxFit.cover);
+    return AppImage(path: path, fit: BoxFit.contain);
   }
 }
 
@@ -245,7 +284,7 @@ class _TopPicksSection extends GetView<HomeController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 1, 16, 12),
               child: Shimmer.fromColors(
                 baseColor: AppShimmer.baseColor,
                 highlightColor: AppShimmer.highlightColor,
@@ -276,10 +315,10 @@ class _TopPicksSection extends GetView<HomeController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 0, 10),
             child: SectionHeader(
-              title: "Top Pick's",
-              onAction: () {},
+              title: AppStrings.topPicks,
+              onAction: () => AppUtils.haptic(),
               style: const TextStyle(
                 fontFamily: 'Helvetica Neue',
                 fontSize: 24,
@@ -307,75 +346,166 @@ class _TopPickCard extends StatelessWidget {
   final RestaurantModel restaurant;
   const _TopPickCard({required this.restaurant});
 
+  String _formatTimeString(String timeStr) {
+    if (timeStr.isEmpty) return '';
+    try {
+      final parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        int hour = int.parse(parts[0]);
+        final minute = parts[1];
+        final ampm = hour >= 12 ? 'PM' : 'AM';
+        if (hour == 0) {
+          hour = 12;
+        } else if (hour > 12) {
+          hour -= 12;
+        }
+        return '$hour:$minute $ampm';
+      }
+    } catch (_) {}
+    return timeStr;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bool isClosed = !restaurant.isOpenNow || !restaurant.isAcceptingOrders;
+    String openAtText = '';
+    if (restaurant.todayHours != null && restaurant.todayHours!.openFrom.isNotEmpty) {
+      final formatted = _formatTimeString(restaurant.todayHours!.openFrom);
+      if (formatted.isNotEmpty) openAtText = 'Opens at $formatted';
+    }
+
     return GestureDetector(
-      onTap: () => Get.toNamed(AppRoutes.restaurantDetail,
-            arguments: {'id': restaurant.id, 'q': ''}),
+      onTap: () {
+        AppUtils.haptic();
+        Get.toNamed(
+          AppRoutes.restaurantDetail,
+          arguments: {'id': restaurant.id, 'q': ''},
+        );
+      },
       child: Container(
         width: 220,
         margin: const EdgeInsets.only(right: 16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: _buildImage(restaurant.coverUrl),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Stack(
               children: [
-                Expanded(
-                  child: Text(
-                    restaurant.name,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.lightSurfaceDarkText,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Row(
-                  children: [
-                    Assets.images.ratingStar.image(width: 16, height: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${restaurant.rating} (${restaurant.totalReviews})',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.lightSurfaceSubtitle,
-                        letterSpacing: 0,
+                _buildImage(restaurant.coverUrl),
+                if (isClosed)
+                  Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withOpacity(0.5),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'CLOSED',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          if (openAtText.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              openAtText,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
               ],
             ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Assets.images.timeIcon.image(width: 15, height: 15),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Text(
-                    '${restaurant.distanceMiles.toStringAsFixed(1)} mi',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.lightSurfaceSubtitle,
-                      height: 16 / 12,
-                      letterSpacing: 0,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      restaurant.name,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isClosed
+                            ? AppColors.lightSurfaceSubtitle
+                            : AppColors.lightSurfaceDarkText,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Row(
+                    children: [
+                      Assets.images.ratingStar.image(width: 14, height: 14),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${restaurant.rating} (${restaurant.totalReviews})',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.lightSurfaceSubtitle,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+              child: Row(
+                children: [
+                  Assets.images.timeIcon.image(width: 14, height: 14),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      '${restaurant.distanceMiles.toStringAsFixed(1)} mi',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.lightSurfaceSubtitle,
+                        height: 16 / 12,
+                        letterSpacing: 0,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -438,21 +568,25 @@ class _PromoBannerSection extends GetView<HomeController> {
           ),
         ),
         const SizedBox(height: 12),
-        Obx(() => Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_banners.length, (i) {
-            final isActive = controller.currentBannerPage.value == i;
-            return Container(
-              width: 6,
-              height: 6,
-              margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
-              decoration: BoxDecoration(
-                color: isActive ? AppColors.primary : AppColors.lightSurfaceDisabled,
-                shape: BoxShape.circle,
-              ),
-            );
-          }),
-        )),
+        Obx(
+          () => Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_banners.length, (i) {
+              final isActive = controller.currentBannerPage.value == i;
+              return Container(
+                width: 6,
+                height: 6,
+                margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? AppColors.primary
+                      : AppColors.lightSurfaceDisabled,
+                  shape: BoxShape.circle,
+                ),
+              );
+            }),
+          ),
+        ),
       ],
     );
   }
@@ -464,8 +598,11 @@ class _BannerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      child: Container(
+    return GestureDetector(
+      onTap: () => AppUtils.haptic(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
         height: 174,
         color: data['bg'] as Color,
         child: Stack(
@@ -519,6 +656,7 @@ class _BannerCard extends StatelessWidget {
           ],
         ),
       ),
+    )
     );
   }
 }
@@ -550,28 +688,27 @@ class _AllRestaurantsList extends GetView<HomeController> {
         return const SliverToBoxAdapter(child: _EmptyHomeState());
       }
 
-      final showLoader = controller.isLoadingMore.value || controller.hasMoreRestaurants.value;
+      final showLoader =
+          controller.isLoadingMore.value || controller.hasMoreRestaurants.value;
 
       return SliverPadding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         sliver: SliverList(
-          delegate: SliverChildBuilderDelegate(
-            (_, i) {
-              if (i == list.length) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: controller.isLoadingMore.value
-                      ? const AppLoader()
-                      : const SizedBox.shrink(),
-                );
-              }
-              return RestaurantCard(
-                restaurant: list[i].toMap(),
-                onFavoriteTap: () => controller.toggleRestaurantFavorite(list[i].id),
+          delegate: SliverChildBuilderDelegate((_, i) {
+            if (i == list.length) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: controller.isLoadingMore.value
+                    ? const AppLoader()
+                    : const SizedBox.shrink(),
               );
-            },
-            childCount: list.length + (showLoader ? 1 : 0),
-          ),
+            }
+            return RestaurantCard(
+              restaurant: list[i].toMap(),
+              onFavoriteTap: () =>
+                  controller.toggleRestaurantFavorite(list[i].id),
+            );
+          }, childCount: list.length + (showLoader ? 1 : 0)),
         ),
       );
     });

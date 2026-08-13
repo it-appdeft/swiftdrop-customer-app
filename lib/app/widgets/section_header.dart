@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:swiftdrop_customer_app/app/utils/app_utils.dart';
 import '../themes/app_colors.dart';
 import '../themes/app_text_styles.dart';
 
@@ -29,7 +30,10 @@ class SectionHeader extends StatelessWidget {
         ),
         if (actionLabel != null && onAction != null)
           GestureDetector(
-            onTap: onAction,
+            onTap: () {
+              AppUtils.haptic();
+              onAction?.call();
+            },
             child: Text(
               actionLabel!,
               style: AppTextStyles.pSmallSemiBold.copyWith(

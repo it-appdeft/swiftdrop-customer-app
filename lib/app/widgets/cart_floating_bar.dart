@@ -80,7 +80,10 @@ class CartFloatingBar extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: onViewCartTap ?? () => Get.toNamed(AppRoutes.cart),
+              onTap: () {
+                AppUtils.haptic();
+                onViewCartTap != null ? onViewCartTap!() : Get.toNamed(AppRoutes.cart);
+              },
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 12),

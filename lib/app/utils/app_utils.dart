@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import '../constants/app_constants.dart';
@@ -9,6 +10,10 @@ import '../widgets/app_button.dart';
 
 class AppUtils {
   AppUtils._();
+
+  static void haptic() {
+    HapticFeedback.lightImpact();
+  }
 
   static String formatCurrency(double amount, {String symbol = '£'}) {
     return '$symbol${amount.toStringAsFixed(2)}';
@@ -104,11 +109,17 @@ class AppUtils {
         content: Text(message, style: AppTextStyles.pMedium),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
+            onPressed: () {
+              haptic();
+              Get.back(result: false);
+            },
             child: Text(cancelText, style: AppTextStyles.pMediumSemiBold.copyWith(color: AppColors.textSecondary)),
           ),
           TextButton(
-            onPressed: () => Get.back(result: true),
+            onPressed: () {
+              haptic();
+              Get.back(result: true);
+            },
             child: Text(confirmText, style: AppTextStyles.pMediumSemiBold.copyWith(color: AppColors.primary)),
           ),
         ],
@@ -154,6 +165,7 @@ class AppUtils {
                 height: 48,
                 child: ElevatedButton(
                   onPressed: () {
+                    haptic();
                     Get.back();
                     onEnterManual();
                   },
@@ -178,6 +190,7 @@ class AppUtils {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
+                          haptic();
                           Get.back();
                           onCancel?.call();
                         },
@@ -202,6 +215,7 @@ class AppUtils {
                       height: 44,
                       child: OutlinedButton(
                         onPressed: () {
+                          haptic();
                           Get.back();
                           Geolocator.openAppSettings();
                         },
@@ -266,6 +280,7 @@ class AppUtils {
               AppButton(
                 label: 'Open Settings',
                 onTap: () {
+                  haptic();
                   Get.back();
                   Geolocator.openAppSettings();
                 },
@@ -274,7 +289,10 @@ class AppUtils {
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => Get.back(),
+                onPressed: () {
+                  haptic();
+                  Get.back();
+                },
                 child: Text(
                   'Cancel',
                   style: AppTextStyles.pSmallMedium.copyWith(

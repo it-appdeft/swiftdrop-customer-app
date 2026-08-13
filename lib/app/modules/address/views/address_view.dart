@@ -67,7 +67,10 @@ class AddressView extends GetView<AddressController> {
         children: [
           if (canPop)
             GestureDetector(
-              onTap: () => Get.back(),
+              onTap: () {
+                AppUtils.haptic();
+                Get.back();
+              },
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
@@ -107,7 +110,7 @@ class AddressView extends GetView<AddressController> {
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         enabledBorder: InputBorder.none,
-                        hintText: 'Search address, area, landmark..',
+                        hintText: AppStrings.searchAddressPlaceholder,
                         hintStyle: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -118,7 +121,10 @@ class AddressView extends GetView<AddressController> {
                   ),
                   Obx(() => controller.isSearchActive.value
                       ? GestureDetector(
-                          onTap: controller.clearSearch,
+                          onTap: () {
+                            AppUtils.haptic();
+                            controller.clearSearch();
+                          },
                           behavior: HitTestBehavior.opaque,
                           child: const Icon(
                             Icons.clear,
@@ -166,7 +172,10 @@ class AddressView extends GetView<AddressController> {
 
   Widget _buildSuggestionTile(PlacePrediction place) {
     return InkWell(
-      onTap: () => controller.selectPlace(place),
+      onTap: () {
+        AppUtils.haptic();
+        controller.selectPlace(place);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -213,8 +222,9 @@ class AddressView extends GetView<AddressController> {
         Expanded(
           child: _buildActionButton(
             icon: Icons.my_location,
-            label: 'Use Current Location',
+            label: AppStrings.useCurrentLocation,
             onTap: () async {
+              AppUtils.haptic();
               LocationPermission permission = await Geolocator.checkPermission();
               if (permission == LocationPermission.denied) {
                 permission = await Geolocator.requestPermission();
@@ -248,8 +258,9 @@ class AddressView extends GetView<AddressController> {
         Expanded(
           child: _buildActionButton(
             icon: Icons.add_circle_outline,
-            label: 'Add New Address',
+            label: AppStrings.addNewAddress,
             onTap: () {
+              AppUtils.haptic();
               controller.startAdd();
               Get.toNamed(AppRoutes.mapPicker);
             },
@@ -366,7 +377,10 @@ class AddressView extends GetView<AddressController> {
 
   Widget _buildAddressTile(AddressModel address) {
     return InkWell(
-      onTap: () => controller.selectAddress(address.id),
+      onTap: () {
+        AppUtils.haptic();
+        controller.selectAddress(address.id);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingLg,
@@ -408,7 +422,10 @@ class AddressView extends GetView<AddressController> {
               ),
             ),
             IconButton(
-              onPressed: () => _showAddressOptions(address),
+              onPressed: () {
+                AppUtils.haptic();
+                _showAddressOptions(address);
+              },
               icon: const Icon(Icons.more_vert, color: AppColors.lightSurfaceSubtitle),
               constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
@@ -432,9 +449,10 @@ class AddressView extends GetView<AddressController> {
           children: [
             ListTile(
               leading: const Icon(Icons.edit_outlined, color: AppColors.lightSurfaceDarkText),
-              title: Text('Edit Address',
+              title: Text(AppStrings.editAddress,
                   style: AppTextStyles.pMedium.copyWith(color: AppColors.lightSurfaceDarkText)),
               onTap: () {
+                AppUtils.haptic();
                 Get.back();
                 controller.startEdit(address);
                 Get.toNamed(AppRoutes.mapPicker, arguments: {
@@ -450,9 +468,10 @@ class AddressView extends GetView<AddressController> {
             const Divider(height: 1, color: AppColors.lightSurfaceBorder),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
-              title: Text('Delete Address',
+              title: Text(AppStrings.deleteAddress,
                   style: AppTextStyles.pMedium.copyWith(color: AppColors.error)),
               onTap: () {
+                AppUtils.haptic();
                 Get.back();
                 _showDeleteConfirmation(address);
               },
@@ -480,7 +499,7 @@ class AddressView extends GetView<AddressController> {
               child: Column(
                 children: [
                   Text(
-                    'Are you sure you want to delete this address?',
+                    AppStrings.deleteAddressConfirm,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Helvetica Neue',
@@ -507,8 +526,9 @@ class AddressView extends GetView<AddressController> {
               children: [
                 Expanded(
                   child: AppButton(
-                    label: 'Yes',
+                    label: AppStrings.yes,
                     onTap: () async {
+                      AppUtils.haptic();
                       Get.back();
                       await controller.deleteAddress(address.id);
                     },
@@ -519,8 +539,11 @@ class AddressView extends GetView<AddressController> {
                 const SizedBox(width: AppDimensions.gapMd),
                 Expanded(
                   child: AppButton(
-                    label: 'No',
-                    onTap: () => Get.back(),
+                    label: AppStrings.no,
+                    onTap: () {
+                      AppUtils.haptic();
+                      Get.back();
+                    },
                     backgroundColor: AppColors.greyButton,
                     textColor: Colors.white,
                     borderRadius: BorderRadius.circular(AppDimensions.radiusSm),

@@ -57,15 +57,18 @@ class LoginView extends GetView<AuthController> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Don't have an account? ",
+                          AppStrings.dontHaveAccount,
                           style: AppTextStyles.pSmall.copyWith(
                             color: AppColors.lightSurfaceHeading,
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => Get.toNamed(AppRoutes.register),
+                          onTap: () {
+                            AppUtils.haptic();
+                            Get.toNamed(AppRoutes.register);
+                          },
                           child: Text(
-                            'Register',
+                            AppStrings.register,
                             style: AppTextStyles.pSmallSemiBold.copyWith(
                               color: AppColors.primary,
                             ),
@@ -100,7 +103,7 @@ class _LoginCard extends GetView<AuthController> {
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
-              'Craving Something',
+              AppStrings.cravingSomething,
               maxLines: 1,
               style: AppTextStyles.h3.copyWith(
                 color: AppColors.lightSurfaceText,
@@ -108,7 +111,7 @@ class _LoginCard extends GetView<AuthController> {
             ),
           ),
           Text(
-            'Delicious?',
+            AppStrings.delicious,
             maxLines: 1,
             style: AppTextStyles.h3.copyWith(color: AppColors.primary),
           ),
@@ -116,7 +119,7 @@ class _LoginCard extends GetView<AuthController> {
           Row(
             children: [
               Text(
-                'Mobile Number ',
+                AppStrings.mobileNumber,
                 style: AppTextStyles.pSmallMedium.copyWith(
                   color: AppColors.lightSurfaceLabel,
                 ),
@@ -156,7 +159,7 @@ class _LoginCard extends GetView<AuthController> {
             );
           }),
           Obx(() => AppButton(
-                label: 'Get OTP',
+                label: AppStrings.getOtp,
                 onTap: controller.isPhoneValid.value
                     ? () {
                         FocusScope.of(context).unfocus();

@@ -8,7 +8,7 @@ class OtpView extends GetView<AuthController> {
   @override
   Widget build(BuildContext context) {
     return AppOtpScreen(
-      appBarTitle: 'OTP Verification',
+      appBarTitle: AppStrings.verifyOtp,
       background: AppColors.white,
       subtitleBuilder: () =>
           'We have sent a verification code\nto ${controller.displayPhone}',
@@ -21,7 +21,7 @@ class OtpView extends GetView<AuthController> {
       onDigitChanged: controller.onOtpDigitChanged,
       onResend: controller.resendOtp,
       onSubmit: controller.verifyOtp,
-      buttonLabel: 'Verify',
+      buttonLabel: AppStrings.verifyOtp,
       beforeLeave: controller.cancelTimer,
     );
   }
