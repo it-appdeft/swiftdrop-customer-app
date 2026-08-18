@@ -230,7 +230,10 @@ class DeliveryAddressView extends GetView<DeliveryAddressController> {
       itemBuilder: (context, index) {
         final place = controller.suggestions[index];
         return InkWell(
-          onTap: () => controller.selectPlace(place),
+          onTap: () {
+            AppUtils.haptic();
+            controller.selectPlace(place);
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(

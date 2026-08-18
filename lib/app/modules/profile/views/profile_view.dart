@@ -1,12 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../../export.dart';
-import '../../../themes/app_colors.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
-import '../../../utils/app_utils.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../controllers/profile_controller.dart';
 
@@ -208,15 +200,20 @@ class _MenuList extends GetView<ProfileController> {
       _MenuItemData(
           icon: Icons.privacy_tip_outlined,
           label: AppStrings.privacyPolicy,
-          onTap: comingSoon),
+          onTap: () => Get.toNamed(AppRoutes.privacyPolicy)),
       _MenuItemData(
           icon: Icons.article_outlined,
           label: AppStrings.termsConditions,
-          onTap: comingSoon),
+          onTap: () => Get.toNamed(AppRoutes.termsConditions)),
       _MenuItemData(
           icon: Icons.help_outline_rounded,
           label: AppStrings.helpCenter,
-          onTap: comingSoon),
+          onTap: () => Get.toNamed(AppRoutes.helpCenter)),
+      _MenuItemData(
+          icon: Icons.delete_outline_rounded,
+          label: 'Delete Account',
+          isDestructive: true,
+          onTap: () => Get.toNamed(AppRoutes.deleteAccountReason)),
       _MenuItemData(
           icon: Icons.logout_rounded,
           label: AppStrings.logout,
@@ -233,11 +230,13 @@ class _MenuItemData {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool isDestructive;
 
   const _MenuItemData({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.isDestructive = false,
   });
 }
 
@@ -248,6 +247,13 @@ class _MenuItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = data.isDestructive
+        ? AppColors.error
+        : AppColors.lightSurfaceDarkText;
+    final iconColor = data.isDestructive
+        ? AppColors.error
+        : AppColors.lightSurfaceSubtitle;
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.gapSm),
       decoration: BoxDecoration(
@@ -267,7 +273,7 @@ class _MenuItemCard extends StatelessWidget {
         child: InkWell(
           onTap: () {
             AppUtils.haptic();
-            data.onTap?.call();
+            data.onTap.call();
           },
           borderRadius: AppRadius.md,
           child: Padding(
@@ -280,7 +286,7 @@ class _MenuItemCard extends StatelessWidget {
                 Icon(
                   data.icon,
                   size: AppDimensions.iconSm,
-                  color: AppColors.lightSurfaceSubtitle,
+                  color: iconColor,
                 ),
                 const SizedBox(width: AppDimensions.gapMd),
                 Expanded(
@@ -288,8 +294,10 @@ class _MenuItemCard extends StatelessWidget {
                     data.label,
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.lightSurfaceDarkText,
+                      fontWeight: data.isDestructive
+                          ? FontWeight.w500
+                          : FontWeight.w400,
+                      color: color,
                     ),
                   ),
                 ),

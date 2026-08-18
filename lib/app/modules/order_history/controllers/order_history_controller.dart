@@ -8,23 +8,13 @@ class OrderHistoryController extends BaseController {
   final OrderRepository _repo;
   OrderHistoryController(this._repo);
 
-  final activeOrders = <OrderModel>[].obs;
   final historyOrders = <OrderModel>[].obs;
   final RxBool hasMoreHistory = true.obs;
   int _historyPage = 1;
 
-  @override
-  void onInit() {
-    super.onInit();
-    loadOrders();
-  }
-
-  Future<void> loadOrders() async {
+  Future<void> loadOrders({bool force = false}) async {
+    if (isLoading.value && !force) return;
     await runAsync(() async {
-      final activeResult = await _repo.getActiveOrders();
-      if (activeResult.success && activeResult.data != null) {
-        activeOrders.value = activeResult.data!;
-      }
       await _loadHistory();
     });
   }

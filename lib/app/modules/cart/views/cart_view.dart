@@ -46,7 +46,10 @@ class CartView extends GetView<CartController> {
       centerTitle: true,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.iconDark, size: 20),
-        onPressed: () => Get.back(),
+        onPressed: () {
+          AppUtils.haptic();
+          Get.back();
+        },
       ),
       title: Obx(() => Text(
             controller.checkoutData.value?.restaurantName ??
@@ -61,31 +64,36 @@ class CartView extends GetView<CartController> {
   }
 
   Widget _buildUnavailableWarning() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFE9E5),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Assets.images.alertUnavailable.image(width: 24, height: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Some items from your previous order are unavailable. Please review your cart.',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.error,
+    return Obx(() {
+      final hasUnavailable = controller.items.any((i) => !i.isAvailable);
+      if (!hasUnavailable) return const SizedBox.shrink();
+
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFE9E5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Assets.images.alertUnavailable.image(width: 24, height: 24, fit: BoxFit.contain),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                AppStrings.itemUnavailableWarning,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.error,
+                ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildDeliveryAddress() {
@@ -95,10 +103,18 @@ class CartView extends GetView<CartController> {
       final hasAddress = selected != null;
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.offWhite,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.lightSurfaceBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: data == null
             ? _buildAddressShimmer()
@@ -108,7 +124,7 @@ class CartView extends GetView<CartController> {
                   children: [
                     Align(
                       alignment: Alignment.topCenter,
-                      child: Assets.images.locationIcon.image(width: 24, height: 24),
+                      child: Assets.images.locationIcon.image(width: 24, height: 24, fit: BoxFit.contain),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -117,18 +133,19 @@ class CartView extends GetView<CartController> {
                         children: [
                           if (hasAddress)
                             Text(
-                              'Delivery to',
+                              AppStrings.deliverTo,
                               style: GoogleFonts.inter(
-                                fontSize: 14,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w400,
                                 color: AppColors.lightSurfaceSubtitle,
                               ),
                             ),
+                          const SizedBox(height: 2),
                           Text(
-                            hasAddress ? selected.address : 'No address is added',
+                            hasAddress ? selected.address : AppStrings.noAddressAdded,
                             style: GoogleFonts.inter(
                               fontSize: 14,
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w500,
                               color: hasAddress ? AppColors.lightSurfaceDarkText : AppColors.error,
                             ),
                             maxLines: 1,
@@ -140,12 +157,15 @@ class CartView extends GetView<CartController> {
                     Align(
                       alignment: Alignment.center,
                       child: GestureDetector(
-                        onTap: () => Get.toNamed(AppRoutes.address)?.then((_) {
-                          controller.fetchCheckout();
-                          controller.fetchCart();
-                        }),
+                        onTap: () {
+                          AppUtils.haptic();
+                          Get.toNamed(AppRoutes.address)?.then((_) {
+                            controller.fetchCheckout();
+                            controller.fetchCart();
+                          });
+                        },
                         child: Text(
-                          hasAddress ? 'Change' : 'Add address',
+                          hasAddress ? AppStrings.change : AppStrings.addAddress,
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -190,21 +210,29 @@ class CartView extends GetView<CartController> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Items In cart',
+            AppStrings.itemsInCart,
             style: GoogleFonts.inter(
               fontSize: 18,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: AppColors.lightSurfaceDarkText,
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.offWhite,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.lightSurfaceBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -218,13 +246,12 @@ class CartView extends GetView<CartController> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: controller.items.length,
                   separatorBuilder: (context, index) => const Divider(
-                    height: 32,
+                    height: 28,
                     color: AppColors.lightSurfaceBorder,
                     thickness: 1,
                   ),
                   itemBuilder: (context, index) => _buildCartItem(
                     controller.items[index],
-                    isDummyUnavailable: index == 1,
                   ),
                 );
               }),
@@ -242,19 +269,23 @@ class CartView extends GetView<CartController> {
     );
   }
 
-  Widget _buildCartItem(CartItem item, {bool isDummyUnavailable = false}) {
-    final bool available = item.isAvailable && !isDummyUnavailable;
+  Widget _buildCartItem(CartItem item) {
+    final bool available = item.isAvailable;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.lightSurfaceBorder, width: 0.5),
+          ),
+          clipBehavior: Clip.antiAlias,
           child: AppImage(
             path: item.image,
-            width: 96,
-            height: 96,
-            fit: BoxFit.cover,
+            width: 80,
+            height: 80,
+            fit: BoxFit.contain,
           ),
         ),
         const SizedBox(width: 12),
@@ -265,28 +296,28 @@ class CartView extends GetView<CartController> {
               Text(
                 item.name,
                 style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.lightSurfaceDarkText,
                 ),
               ),
               if (!available) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'This item is currently unavailable',
+                  AppStrings.itemCurrentlyUnavailable,
                   style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.lightSurfaceSubtitle,
+                    color: AppColors.error,
                   ),
                 ),
-              ] else if (item.addons != null) ...[
+              ] else if (item.addons != null && item.addons!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final text = item.addons ?? '';
                     final style = GoogleFonts.inter(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: AppColors.lightSurfaceSubtitle,
                     );
@@ -300,7 +331,10 @@ class CartView extends GetView<CartController> {
                     final bool canExpand = tp.didExceedMaxLines;
 
                     return Obx(() => GestureDetector(
-                      onTap: canExpand ? () => item.isExpanded.toggle() : null,
+                      onTap: canExpand ? () {
+                        AppUtils.haptic();
+                        item.isExpanded.toggle();
+                      } : null,
                       behavior: HitTestBehavior.opaque,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -340,9 +374,9 @@ class CartView extends GetView<CartController> {
                     Text(
                       '£${item.price.toStringAsFixed(2)}',
                       style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.lightSurfaceLabel,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.lightSurfaceDarkText,
                       ),
                     ),
                   if (available)
@@ -360,7 +394,10 @@ class CartView extends GetView<CartController> {
 
   Widget _buildRemoveButton(CartItem item) {
     return GestureDetector(
-      onTap: () => controller.deleteCartItem(int.parse(item.id)),
+      onTap: () {
+        AppUtils.haptic();
+        controller.deleteCartItem(int.parse(item.id));
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
@@ -368,7 +405,7 @@ class CartView extends GetView<CartController> {
           border: Border.all(color: const Color(0xFFFFE9E5)),
         ),
         child: Text(
-          'Remove',
+          AppStrings.remove,
           style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w400,
@@ -397,7 +434,10 @@ class CartView extends GetView<CartController> {
           children: [
             _buildQtyBtn(
               Assets.images.cartMinus,
-              () => controller.decrementItem(item.id),
+              () {
+                AppUtils.haptic();
+                controller.decrementItem(item.id);
+              },
               isLoading: isMinusLoading,
             ),
             Text(
@@ -411,6 +451,7 @@ class CartView extends GetView<CartController> {
             _buildQtyBtn(
               Assets.images.cartPlus,
               () {
+                AppUtils.haptic();
                 if (item.hasModifiers) {
                   showRepeatLastSheet(
                     item.toMap(restaurantId: controller.cartRestaurantId.value),
@@ -432,7 +473,10 @@ class CartView extends GetView<CartController> {
   Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap,
       {bool isAdd = false, bool isLoading = false}) {
     return GestureDetector(
-      onTap: isLoading ? null : onTap,
+      onTap: isLoading ? null : () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
         padding: const EdgeInsets.all(0),
@@ -471,7 +515,10 @@ class CartView extends GetView<CartController> {
       return Row(
         children: [
           GestureDetector(
-            onTap: () => _openAddItems(context),
+            onTap: () {
+              AppUtils.haptic();
+              _openAddItems(context);
+            },
             child: Container(
               width: 112,
               height: 40,
@@ -487,7 +534,7 @@ class CartView extends GetView<CartController> {
                   const Icon(Icons.add, color: AppColors.lightSurfaceSubtitle, size: 20),
                   const SizedBox(width: 3),
                   Text(
-                    'Add Items',
+                    AppStrings.addItems,
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -501,7 +548,10 @@ class CartView extends GetView<CartController> {
           if (acceptsCooking) ...[
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: controller.toggleCookingRequest,
+            onTap: () {
+              AppUtils.haptic();
+              controller.toggleCookingRequest();
+            },
             child: Container(
               width: cookingWidth,
               height: 40,
@@ -523,7 +573,7 @@ class CartView extends GetView<CartController> {
                   const SizedBox(width: 3),
                   Flexible(
                     child: Text(
-                      'Cooking Requests',
+                      AppStrings.cookingRequests,
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
@@ -536,6 +586,7 @@ class CartView extends GetView<CartController> {
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: () {
+                        AppUtils.haptic();
                         controller.clearCookingRequest();
                       },
                       behavior: HitTestBehavior.opaque,
@@ -577,7 +628,7 @@ class CartView extends GetView<CartController> {
                         color: AppColors.lightSurfaceDarkText,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Type cooking requests',
+                        hintText: AppStrings.typeCookingRequests,
                         hintStyle: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -598,7 +649,12 @@ class CartView extends GetView<CartController> {
                     final canSave = controller.cookingRequestTemp.value.trim().isNotEmpty;
                     final isSaving = controller.isSavingCookingRequest.value;
                     return GestureDetector(
-                      onTap: (canSave && !isSaving) ? controller.saveCookingRequest : null,
+                      onTap: (canSave && !isSaving)
+                          ? () {
+                              AppUtils.haptic();
+                              controller.saveCookingRequest();
+                            }
+                          : null,
                       child: isSaving
                           ? const SizedBox(
                               width: 16,
@@ -609,7 +665,7 @@ class CartView extends GetView<CartController> {
                               ),
                             )
                           : Text(
-                              'Save',
+                              AppStrings.save,
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -641,7 +697,7 @@ class CartView extends GetView<CartController> {
                 borderRadius: BorderRadius.vertical(bottom: Radius.circular(8)),
               ),
               child: Text(
-                'The restaurant will do its best to accommodate your request. However, refunds cannot be issued for unmet special requests.',
+                AppStrings.cookingDisclaimer,
                 style: GoogleFonts.inter(
                   fontSize: 10,
                   fontWeight: FontWeight.w400,
@@ -668,7 +724,10 @@ class CartView extends GetView<CartController> {
               ),
             ),
             GestureDetector(
-              onTap: controller.editCookingRequest,
+              onTap: () {
+                AppUtils.haptic();
+                controller.editCookingRequest();
+              },
               child: Assets.images.cookingUnselected.image(
                 width: 18,
                 height: 18,
@@ -687,18 +746,28 @@ class CartView extends GetView<CartController> {
       final applied = controller.checkoutData.value?.appliedCoupon;
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.offWhite,
+          color: AppColors.white,
           borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.lightSurfaceBorder),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: GestureDetector(
-          onTap: () => Get.toNamed(AppRoutes.coupons),
+          onTap: () {
+            AppUtils.haptic();
+            Get.toNamed(AppRoutes.coupons);
+          },
           behavior: HitTestBehavior.opaque,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Assets.images.couponIcon.image(width: 20, height: 20),
+              Assets.images.couponIcon.image(width: 22, height: 22),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -708,17 +777,17 @@ class CartView extends GetView<CartController> {
                     Text(
                       applied != null
                           ? '${applied.headline} ${applied.code}'
-                          : 'View all coupons',
+                          : AppStrings.viewAllCoupons,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.lightSurfaceDarkText,
                       ),
                     ),
                   ],
                 ),
               ),
-              Assets.images.rightArrow.image(width: 24, height: 24),
+              Assets.images.rightArrow.image(width: 20, height: 20),
             ],
           ),
         ),
@@ -733,21 +802,29 @@ class CartView extends GetView<CartController> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            'Bill Summary',
+            AppStrings.billSummary,
             style: GoogleFonts.inter(
               fontSize: 18,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               color: AppColors.lightSurfaceDarkText,
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.only(top: 24,bottom: 16,left: 12,right: 12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.offWhite,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.lightSurfaceBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Obx(() {
                 if (controller.checkoutData.value == null) {
@@ -755,21 +832,21 @@ class CartView extends GetView<CartController> {
                 }
                 return Column(
                   children: [
-                    _buildBillRow('Item Total', '£${controller.itemTotal.toStringAsFixed(2)}'),
+                    _buildBillRow(AppStrings.itemTotal, '£${controller.itemTotal.toStringAsFixed(2)}'),
                     if (controller.itemDiscount > 0) ...[
                       const SizedBox(height: 8),
-                      _buildBillRow('Item Discount', '-£${controller.itemDiscount.toStringAsFixed(2)}', isDiscount: true),
+                      _buildBillRow(AppStrings.itemDiscount, '-£${controller.itemDiscount.toStringAsFixed(2)}', isDiscount: true),
                     ],
                     const SizedBox(height: 8),
-                    _buildBillRow('Delivery Fee', '£${controller.deliveryFee.value.toStringAsFixed(2)}'),
+                    _buildBillRow(AppStrings.deliveryFee, '£${controller.deliveryFee.value.toStringAsFixed(2)}'),
                     const SizedBox(height: 8),
-                    _buildBillRow('Taxes & Charges', '£${controller.taxesAndCharges.value.toStringAsFixed(2)}'),
+                    _buildBillRow(AppStrings.taxesAndCharges, '£${controller.taxesAndCharges.value.toStringAsFixed(2)}'),
                     const Divider(height: 32, color: AppColors.lightSurfaceBorder, thickness: 1),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'To Pay',
+                          AppStrings.toPay,
                           style: GoogleFonts.inter(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -828,7 +905,7 @@ class CartView extends GetView<CartController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Cancellation policy',
+            AppStrings.cancellationPolicy,
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -839,7 +916,7 @@ class CartView extends GetView<CartController> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Please double-check your orders and address details. Orders are not-refundable once placed.',
+            AppStrings.cancellationPolicySubtitle,
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w400,
@@ -973,11 +1050,11 @@ class CartView extends GetView<CartController> {
       final bool isAccepting = checkout?.isAcceptingOrders ?? true;
       final bool canOrder = isOpen && isAccepting;
 
-      String label = 'Place Order';
+      String label = AppStrings.placeOrder;
       if (!isOpen) {
-        label = 'Restaurant Closed';
+        label = AppStrings.restaurantClosed;
       } else if (!isAccepting) {
-        label = 'Not Accepting Orders';
+        label = AppStrings.notAcceptingOrders;
       }
 
       return Container(
@@ -997,7 +1074,12 @@ class CartView extends GetView<CartController> {
           ),
           child: AppButton(
             label: label,
-            onTap: canOrder ? () => controller.placeOrder() : null,
+            onTap: canOrder
+                ? () {
+                    AppUtils.haptic();
+                    controller.placeOrder();
+                  }
+                : null,
             backgroundColor: canOrder ? AppColors.primary : AppColors.greyButton,
           ),
         ),

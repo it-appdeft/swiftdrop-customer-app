@@ -1,3 +1,6 @@
+import 'package:swiftdrop_customer_app/app/modules/dashboard/controllers/dashboard_controller.dart';
+import 'package:swiftdrop_customer_app/app/modules/order_history/controllers/order_history_controller.dart';
+
 import '../../../../export.dart';
 import '../widgets/coupon_applied_dialog.dart';
 
@@ -494,6 +497,14 @@ class CartController extends BaseController {
     isPlacingOrder.value = false;
 
     if (result.success) {
+      clearCart();
+      OrderRepository.invalidateCache();
+      if (Get.isRegistered<DashboardController>()) {
+        Get.find<DashboardController>().fetchActiveOrders();
+      }
+      if (Get.isRegistered<OrderHistoryController>()) {
+        Get.find<OrderHistoryController>().loadOrders();
+      }
       Get.offAllNamed(AppRoutes.orderSuccess);
     } else {
       AppUtils.showError(result.message.isNotEmpty ? result.message : 'Failed to place order');

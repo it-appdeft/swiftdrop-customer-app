@@ -5,7 +5,12 @@ class RestaurantCard extends StatefulWidget {
   final Map<String, dynamic> restaurant;
   final String? searchQuery;
   final VoidCallback? onFavoriteTap;
-  const RestaurantCard({super.key, required this.restaurant, this.searchQuery, this.onFavoriteTap});
+  const RestaurantCard({
+    super.key,
+    required this.restaurant,
+    this.searchQuery,
+    this.onFavoriteTap,
+  });
 
   @override
   State<RestaurantCard> createState() => _RestaurantCardState();
@@ -23,7 +28,8 @@ class _RestaurantCardState extends State<RestaurantCard> {
   @override
   void didUpdateWidget(covariant RestaurantCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.restaurant['is_favorited'] != oldWidget.restaurant['is_favorited']) {
+    if (widget.restaurant['is_favorited'] !=
+        oldWidget.restaurant['is_favorited']) {
       setState(() {
         _isFavourited = widget.restaurant['is_favorited'] ?? false;
       });
@@ -42,7 +48,8 @@ class _RestaurantCardState extends State<RestaurantCard> {
   @override
   Widget build(BuildContext context) {
     final bool isOpenNow = widget.restaurant['is_open_now'] ?? true;
-    final bool isAcceptingOrders = widget.restaurant['is_accepting_orders'] ?? true;
+    final bool isAcceptingOrders =
+        widget.restaurant['is_accepting_orders'] ?? true;
     final bool isClosed = !isOpenNow || !isAcceptingOrders;
 
     String formatTime(String timeStr) {
@@ -66,7 +73,9 @@ class _RestaurantCardState extends State<RestaurantCard> {
 
     String openAtText = '';
     final todayHours = widget.restaurant['today_hours'];
-    if (todayHours != null && todayHours['open_from'] != null && todayHours['open_from'].toString().isNotEmpty) {
+    if (todayHours != null &&
+        todayHours['open_from'] != null &&
+        todayHours['open_from'].toString().isNotEmpty) {
       final formatted = formatTime(todayHours['open_from'].toString());
       if (formatted.isNotEmpty) openAtText = 'Opens at $formatted';
     } else if (widget.restaurant['opens_at'] != null) {
@@ -77,10 +86,13 @@ class _RestaurantCardState extends State<RestaurantCard> {
     return GestureDetector(
       onTap: () {
         AppUtils.haptic();
-        Get.toNamed(AppRoutes.restaurantDetail, arguments: {
-          'id': widget.restaurant['id'],
-          'q': widget.searchQuery ?? '',
-        });
+        Get.toNamed(
+          AppRoutes.restaurantDetail,
+          arguments: {
+            'id': widget.restaurant['id'],
+            'q': widget.searchQuery ?? '',
+          },
+        );
       },
       behavior: HitTestBehavior.opaque,
       child: Container(
@@ -94,6 +106,8 @@ class _RestaurantCardState extends State<RestaurantCard> {
                   borderRadius: BorderRadius.circular(8),
                   child: _buildImage(
                     widget.restaurant['coverUrl'] as String? ??
+                        widget.restaurant['cover_url'] as String? ??
+                        widget.restaurant['logo_url'] as String? ??
                         widget.restaurant['image'] as String?,
                   ),
                 ),
@@ -103,7 +117,10 @@ class _RestaurantCardState extends State<RestaurantCard> {
                   child: Container(
                     width: 60,
                     height: 26,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.offWhite,
                       borderRadius: BorderRadius.circular(13),
@@ -126,18 +143,24 @@ class _RestaurantCardState extends State<RestaurantCard> {
                     ),
                   ),
                 ),
-                if (widget.restaurant['offer'] != null || widget.restaurant['badge'] != null)
+                if (widget.restaurant['offer'] != null ||
+                    widget.restaurant['badge'] != null)
                   Positioned(
                     bottom: 16.h,
                     left: 10.w,
                     child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 6.h,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.error,
                         borderRadius: BorderRadius.circular(15.r),
                       ),
                       child: Text(
-                        (widget.restaurant['offer'] ?? widget.restaurant['badge']).toString(),
+                        (widget.restaurant['offer'] ??
+                                widget.restaurant['badge'])
+                            .toString(),
                         style: GoogleFonts.inter(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
@@ -158,7 +181,10 @@ class _RestaurantCardState extends State<RestaurantCard> {
                         children: [
                           Container(
                             height: 40.h,
-                            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 8.h),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 24.w,
+                              vertical: 8.h,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.error,
                               borderRadius: BorderRadius.circular(20.r),
@@ -219,8 +245,11 @@ class _RestaurantCardState extends State<RestaurantCard> {
                     widget.onFavoriteTap?.call();
                   },
                   behavior: HitTestBehavior.opaque,
-                  child: (_isFavourited ? Assets.images.favouriteAdded : Assets.images.favourite)
-                      .image(width: 24.w, height: 24.h),
+                  child:
+                      (_isFavourited
+                              ? Assets.images.favouriteAdded
+                              : Assets.images.favourite)
+                          .image(width: 24.w, height: 24.h),
                 ),
               ],
             ),
@@ -241,7 +270,11 @@ class _RestaurantCardState extends State<RestaurantCard> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(width: 9.w),
-                Container(width: 0.5, height: 19.5.h, color: AppColors.lightSurfaceBorder),
+                Container(
+                  width: 0.5,
+                  height: 19.5.h,
+                  color: AppColors.lightSurfaceBorder,
+                ),
                 SizedBox(width: 9.w),
                 Expanded(
                   child: Text(

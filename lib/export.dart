@@ -22,6 +22,7 @@ export 'app/themes/app_theme.dart';
 
 export 'app/utils/app_logger.dart';
 export 'app/utils/app_utils.dart';
+export 'app/utils/map_marker_factory.dart';
 export 'app/utils/responsive.dart';
 
 export 'app/base/base_controller.dart';
@@ -32,6 +33,7 @@ export 'app/routes/app_pages.dart';
 export 'app/services/auth_service.dart';
 export 'app/services/connectivity_service.dart';
 export 'app/services/location_service.dart';
+export 'app/services/map_route_service.dart';
 export 'app/services/notification_service.dart';
 export 'app/services/storage_service.dart';
 
@@ -65,6 +67,7 @@ export 'app/widgets/section_header.dart';
 export 'app/widgets/shimmer_widgets.dart';
 export 'app/widgets/status_badge.dart';
 export 'app/widgets/cart_floating_bar.dart';
+export 'app/widgets/active_orders_floating_bar.dart';
 export 'app/widgets/app_tabs.dart';
 
 export 'data/models/address_model.dart';
@@ -95,3 +98,15 @@ export 'data/repositories/order_repository.dart';
 export 'data/repositories/profile_repository.dart';
 export 'data/repositories/favorites_repository.dart';
 export 'data/repositories/restaurant_detail_repository.dart';
+
+export 'app/modules/privacy_policy/bindings/privacy_policy_binding.dart';
+export 'app/modules/privacy_policy/controllers/privacy_policy_controller.dart';
+export 'app/modules/privacy_policy/views/privacy_policy_view.dart';
+
+export 'app/modules/terms_conditions/bindings/terms_conditions_binding.dart';
+export 'app/modules/terms_conditions/controllers/terms_conditions_controller.dart';
+export 'app/modules/terms_conditions/views/terms_conditions_view.dart';
+
+export 'app/modules/help_center/bindings/help_center_binding.dart';
+export 'app/modules/help_center/controllers/help_center_controller.dart';
+export 'app/modules/help_center/views/help_center_view.dart';

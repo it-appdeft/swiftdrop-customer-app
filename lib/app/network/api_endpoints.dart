@@ -16,11 +16,14 @@ class ApiEndpoints {
       '/customer/profile/delete/initiate';
   static const String deletionReasons = '/deletion-reasons';
 
-  static const String activeOrders = '/user/orders/active';
-  static const String orderHistory = '/user/orders/history';
-  static const String orderDetail = '/user/orders';
-  static const String placeOrder = '/user/orders/place';
-  static const String cancelOrder = '/user/orders/cancel';
+  static const String customerProfileOrders = '/customer/profile/orders';
+  static const String activeOrders = '/customer/orders/active';
+  static const String orderHistory = '/customer/profile/orders';
+  static const String orderDetail = '/customer/profile/orders';
+  static String orderTracking(String orderId) =>
+      '/customer/orders/$orderId/status';
+  static const String placeOrder = '/customer/checkout';
+  static const String cancelOrder = '/customer/profile/orders';
 
   static const String walletBalance = '/user/wallet/balance';
   static const String transactions = '/user/transactions';
@@ -59,4 +62,7 @@ class ApiEndpoints {
   static const String restaurantDetail = '/restaurants';
   static const String categories = '/categories';
   static const String searchRestaurants = '/restaurants/search';
+  static const String termsAndConditions = '/legal/terms-and-conditions';
+  static const String privacyPolicy = '/legal/privacy-policy';
+  static const String createTicket = '/support-tickets';
 }

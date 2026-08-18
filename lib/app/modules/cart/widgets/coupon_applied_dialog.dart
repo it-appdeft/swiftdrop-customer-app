@@ -134,6 +134,7 @@ class CouponAppliedDialog extends StatelessWidget {
             AppButton(
               label: 'Yah!',
               onTap: () {
+                AppUtils.haptic();
                 Get.back(); // Close Dialog
                 Get.back(); // Go back from CouponsView to CartView
               },

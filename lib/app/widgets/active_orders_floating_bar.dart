@@ -51,12 +51,20 @@ class _ActiveOrdersFloatingBarState extends State<ActiveOrdersFloatingBar> {
     });
   }
 
+  int _calculateRemainingMinutes(OrderModel order) {
+    final totalEst = order.estimatedTime > 0 ? order.estimatedTime : 25;
+    final elapsedMinutes = DateTime.now().difference(order.createdAt).inMinutes;
+    final remaining = totalEst - elapsedMinutes;
+    return remaining.clamp(1, totalEst);
+  }
+
   Widget _buildOrderCard(OrderModel order) {
-    // Extract restaurant name from pickupAddress (usually "Name, Address...")
-    final restaurantName = order.pickupAddress.split(',').first;
+    final restaurantName = order.displayRestaurantName;
+    final remainingMinutes = _calculateRemainingMinutes(order);
 
     return GestureDetector(
       onTap: () {
+        AppUtils.haptic();
         Get.toNamed(AppRoutes.orderTracking, arguments: {'orderId': order.id});
       },
       child: Container(
@@ -66,7 +74,7 @@ class _ActiveOrdersFloatingBarState extends State<ActiveOrdersFloatingBar> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withValues(alpha: 0.12),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -132,7 +140,7 @@ class _ActiveOrdersFloatingBarState extends State<ActiveOrdersFloatingBar> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${order.estimatedTime} min',
+                    '$remainingMinutes min',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -183,14 +191,19 @@ class _ActiveOrdersFloatingBarState extends State<ActiveOrdersFloatingBar> {
 
   String _getStatusText(String status) {
     switch (status.toLowerCase()) {
+      case 'placed':
       case 'pending':
-        return 'Order is being prepared';
+        return 'Order Placed';
       case 'accepted':
-        return 'Order is confirmed';
+      case 'confirmed':
+      case 'preparing':
+        return 'Preparing your order';
       case 'picked_up':
-        return 'Your Order is on the way';
+      case 'out_for_delivery':
+      case 'on_the_way':
+        return 'Order on the way';
       default:
-        return 'Your Order is in progress';
+        return 'Order in progress';
     }
   }
 

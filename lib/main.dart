@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'export.dart';
@@ -39,7 +40,13 @@ class SwiftDropApp extends StatelessWidget {
       transitionDuration: const Duration(milliseconds: 280),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
-        child: child!,
+        child: SafeArea(
+          top: Platform.isIOS,
+          bottom: Platform.isAndroid,
+          left: false,
+          right: false,
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }

@@ -54,9 +54,7 @@ class DashboardView extends GetView<DashboardController> {
           // Usually Active Order is more critical.
           Obx(() {
             final hasCart = cartController.cartItemCount.value > 0;
-            // Active orders bar commented out per request so it does not display unneeded order bar
-            // final hasActiveOrders = controller.activeOrders.isNotEmpty;
-            const hasActiveOrders = false;
+            final hasActiveOrders = controller.activeOrders.isNotEmpty;
             
             if (!hasCart && !hasActiveOrders) return const SizedBox.shrink();
 
@@ -67,11 +65,10 @@ class DashboardView extends GetView<DashboardController> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ActiveOrdersFloatingBar hidden for now
-                  // if (hasActiveOrders) ...[
-                  //   const ActiveOrdersFloatingBar(),
-                  //   if (hasCart) const SizedBox(height: 16),
-                  // ],
+                  if (hasActiveOrders) ...[
+                    const ActiveOrdersFloatingBar(),
+                    if (hasCart) const SizedBox(height: 12),
+                  ],
                   if (hasCart) const CartFloatingBar(addSafeArea: false),
                 ],
               ),

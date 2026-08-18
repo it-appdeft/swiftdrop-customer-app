@@ -1,10 +1,48 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../controllers/cart_controller.dart';
-import '../widgets/coupon_applied_dialog.dart';
 
-class CouponsView extends GetView<CartController> {
+class CouponsView extends StatefulWidget {
   const CouponsView({super.key});
+
+  @override
+  State<CouponsView> createState() => _CouponsViewState();
+}
+
+class _CouponsViewState extends State<CouponsView> {
+  final TextEditingController _promoCodeController = TextEditingController();
+  final CartController controller = Get.find<CartController>();
+
+  @override
+  void dispose() {
+    _promoCodeController.dispose();
+    super.dispose();
+  }
+
+  void _onApplyPromoCode() {
+    AppUtils.haptic();
+    final codeText = _promoCodeController.text.trim();
+    if (codeText.isEmpty) {
+      AppUtils.showError('Please enter a promo code');
+      return;
+    }
+
+    final coupons = controller.checkoutData.value?.availableCoupons ?? [];
+    final matched = coupons.firstWhereOrNull(
+      (c) => c.code.toLowerCase() == codeText.toLowerCase(),
+    );
+
+    if (matched != null) {
+      if (!matched.eligible) {
+        final req = matched.minOrderValue != null ? ' (Min. order £${matched.minOrderValue})' : '';
+        AppUtils.showError('Coupon "${matched.code}" is not eligible for your current cart amount$req.');
+        return;
+      }
+      controller.applyCouponApi(matched.id);
+    } else {
+      AppUtils.showError('Invalid promo code. Please select from available offers below.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +53,12 @@ class CouponsView extends GetView<CartController> {
         final coupons = controller.checkoutData.value?.availableCoupons ?? [];
 
         return ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           children: [
             _buildPromoCodeInput(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Text(
-              'More Offers',
+              AppStrings.moreOffers,
               style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -32,7 +70,10 @@ class CouponsView extends GetView<CartController> {
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: Text(AppStrings.noCouponsAvailable),
+                  child: Text(
+                    AppStrings.noCouponsAvailable,
+                    style: TextStyle(color: AppColors.lightSurfaceSubtitle),
+                  ),
                 ),
               )
             else
@@ -57,12 +98,14 @@ class CouponsView extends GetView<CartController> {
       elevation: 0,
       centerTitle: true,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new,
-            color: AppColors.iconDark, size: 20),
-        onPressed: () => Get.back(),
+        icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.iconDark, size: 20),
+        onPressed: () {
+          AppUtils.haptic();
+          Get.back();
+        },
       ),
       title: Text(
-        'Apply Coupons',
+        AppStrings.applyCoupons,
         style: GoogleFonts.inter(
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -74,49 +117,61 @@ class CouponsView extends GetView<CartController> {
 
   Widget _buildPromoCodeInput() {
     return Container(
-      height: 48,
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF2F2E9), width: 1),
+        border: Border.all(color: AppColors.lightSurfaceBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Row(
         children: [
-          const SizedBox(width: 12),
+          Assets.images.couponIcon.image(width: 22, height: 22, fit: BoxFit.contain),
+          const SizedBox(width: 10),
           Expanded(
             child: TextField(
+              controller: _promoCodeController,
+              textCapitalization: TextCapitalization.characters,
               style: GoogleFonts.inter(
                 fontSize: 14,
-                fontWeight: FontWeight.w400,
+                fontWeight: FontWeight.w600,
                 color: AppColors.lightSurfaceDarkText,
+                letterSpacing: 0.5,
               ),
               decoration: InputDecoration(
-                hintText: 'Enter Promo Code',
+                hintText: AppStrings.enterPromoCode,
                 hintStyle: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: const Color(0xFFADB5BD),
+                  letterSpacing: 0,
                 ),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
                 isCollapsed: true,
                 filled: false,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: _onApplyPromoCode,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.white,
               elevation: 0,
-              minimumSize: const Size(80, 36),
+              minimumSize: const Size(76, 38),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
             ),
             child: Text(
               'Apply',
@@ -132,11 +187,20 @@ class CouponsView extends GetView<CartController> {
   }
 
   Widget _buildExclusiveCoupon(BuildContext context, CheckoutCoupon coupon) {
+    final bool isApplied = controller.checkoutData.value?.appliedCoupon?.id == coupon.id;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFFE53915),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE53915).withValues(alpha: 0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
         image: DecorationImage(
           image: Assets.images.onbording1.provider(),
           fit: BoxFit.cover,
@@ -144,85 +208,118 @@ class CouponsView extends GetView<CartController> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.stars_rounded, color: Colors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    coupon.title ?? 'EXCLUSIVE OFFER',
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.stars_rounded, color: Colors.white, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        coupon.title ?? AppStrings.exclusiveOffer,
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    coupon.code,
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                       color: Colors.white,
+                      letterSpacing: 0.8,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Text(
               coupon.headline,
               style: GoogleFonts.inter(
-                fontSize: 48,
-                fontWeight: FontWeight.w700,
+                fontSize: 38,
+                fontWeight: FontWeight.w800,
                 color: Colors.white,
                 height: 1.0,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              coupon.description ?? '',
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                height: 1.2,
+            if (coupon.description != null && coupon.description!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                coupon.description!,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  height: 1.2,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
+            ],
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  coupon.validUntil != null
-                      ? 'Valid until ${coupon.validUntil}'
-                      : 'Valid for limited time',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white.withValues(alpha: 0.8),
+                Expanded(
+                  child: Text(
+                    coupon.validUntil != null
+                        ? 'Valid until ${coupon.validUntil}'
+                        : 'Valid for limited time',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: coupon.eligible ? () => controller.applyCouponApi(coupon.id) : null,
+                  onPressed: (coupon.eligible && !isApplied)
+                      ? () {
+                          AppUtils.haptic();
+                          controller.applyCouponApi(coupon.id);
+                        }
+                      : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.white.withOpacity(coupon.eligible ? 1.0 : 0.6),
-                    foregroundColor: const Color(0xFFE53915).withOpacity(coupon.eligible ? 1.0 : 0.6),
+                    backgroundColor: isApplied
+                        ? Colors.white.withValues(alpha: 0.8)
+                        : Colors.white,
+                    foregroundColor: const Color(0xFFE53915),
                     elevation: 0,
-                    minimumSize: const Size(100, 44),
+                    minimumSize: const Size(100, 38),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                   ),
                   child: Text(
-                    'Apply Now',
+                    isApplied ? 'Applied' : AppStrings.applyNow,
                     style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -235,12 +332,22 @@ class CouponsView extends GetView<CartController> {
   }
 
   Widget _buildStandardCoupon(BuildContext context, CheckoutCoupon coupon) {
+    final bool isApplied = controller.checkoutData.value?.appliedCoupon?.id == coupon.id;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FB),
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.lightSurfaceBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,78 +363,97 @@ class CouponsView extends GetView<CartController> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Assets.images.offers.image(
-                  width: 24,
-                  height: 24,
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
                   color: AppColors.primary,
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE9ECEF)),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Text(
                   coupon.code,
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF6C757D),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                    letterSpacing: 0.8,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Text(
-            coupon.title ?? coupon.headline,
+            coupon.headline,
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.lightSurfaceDarkText,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            coupon.description ?? '',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF868AA5),
-              height: 1.4,
+          if (coupon.description != null && coupon.description!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              coupon.description!,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: AppColors.lightSurfaceSubtitle,
+                height: 1.35,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
+          ],
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: AppColors.lightSurfaceBorder, thickness: 1),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (coupon.minOrderValue != null)
-                Text(
-                  'Valid on orders > £${coupon.minOrderValue}',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFFE53935),
-                  ),
-                )
-              else
-                const SizedBox.shrink(),
-              GestureDetector(
-                onTap: coupon.eligible
+              Expanded(
+                child: coupon.minOrderValue != null
+                    ? Text(
+                        'Min. order £${coupon.minOrderValue}',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: coupon.eligible ? AppColors.lightSurfaceSubtitle : AppColors.error,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
+              ),
+              ElevatedButton(
+                onPressed: (coupon.eligible && !isApplied)
                     ? () {
                         AppUtils.haptic();
                         controller.applyCouponApi(coupon.id);
                       }
                     : null,
-                behavior: HitTestBehavior.opaque,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isApplied
+                      ? const Color(0xFFE8F9F1)
+                      : (coupon.eligible ? AppColors.primary : AppColors.greyButton),
+                  foregroundColor: isApplied
+                      ? AppColors.primary
+                      : (coupon.eligible ? AppColors.white : AppColors.lightSurfaceSubtitle),
+                  elevation: 0,
+                  minimumSize: const Size(84, 36),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
                 child: Text(
-                  'Apply',
+                  isApplied ? 'Applied' : 'Apply',
                   style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: coupon.eligible ? AppColors.primary : AppColors.lightSurfaceDisabled,
                   ),
                 ),
               ),

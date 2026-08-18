@@ -8,7 +8,7 @@ enum FavoriteType { restaurant, menuItem }
 class FavoritesRepository {
   final Dio _dio = DioClient.instance;
 
-  Future<ApiResponse<void>> toggleFavorite(
+  Future<ApiResponse<bool>> toggleFavorite(
     FavoriteType type,
     int id,
   ) async {
@@ -17,34 +17,59 @@ class FavoritesRepository {
           ? ApiEndpoints.favoriteRestaurant(id)
           : ApiEndpoints.favoriteMenuItem(id);
       final response = await _dio.post(endpoint);
-      final msg = (response.data as Map?)?['message'] as String? ?? '';
-      return ApiResponse(success: true, message: msg, data: null);
+      final body = response.data as Map<String, dynamic>?;
+      final dataMap = body?['data'] as Map<String, dynamic>?;
+      final bool isFavorited = dataMap?['favorited'] as bool? ?? true;
+      final msg = body?['message'] as String? ??
+          (isFavorited ? 'Added to favorites' : 'Removed from favorites');
+      return ApiResponse(success: true, message: msg, data: isFavorited);
     } catch (e) {
       if (e is DioException && e.response != null) {
-        final msg = (e.response!.data as Map?)?['message'] as String? ?? 'Something went wrong';
+        final msg = (e.response!.data as Map?)?['message'] as String? ??
+            'Something went wrong';
         return ApiResponse(success: false, message: msg, data: null);
       }
-      return const ApiResponse(success: false, message: 'Network error. Please try again.', data: null);
+      return const ApiResponse(
+        success: false,
+        message: 'Network error. Please try again.',
+        data: null,
+      );
     }
   }
 
   Future<ApiResponse<List<Map<String, dynamic>>>> getFavoriteRestaurants() async {
     try {
       final response = await _dio.get(ApiEndpoints.favoriteRestaurants);
-      final list = (response.data['data']['restaurants'] as List).cast<Map<String, dynamic>>();
+      final rawData = response.data['data'];
+      final List rawList = rawData is List
+          ? rawData
+          : (rawData?['restaurants'] ?? rawData?['results'] ?? []);
+      final list = rawList.cast<Map<String, dynamic>>();
       return ApiResponse(success: true, message: '', data: list);
     } catch (e) {
-      return const ApiResponse(success: false, message: 'Failed to fetch favorites', data: null);
+      return const ApiResponse(
+        success: false,
+        message: 'Failed to fetch favorites',
+        data: null,
+      );
     }
   }
 
   Future<ApiResponse<List<Map<String, dynamic>>>> getFavoriteItems() async {
     try {
       final response = await _dio.get(ApiEndpoints.favoriteMenuItems);
-      final list = (response.data['data']['menu_items'] as List).cast<Map<String, dynamic>>();
+      final rawData = response.data['data'];
+      final List rawList = rawData is List
+          ? rawData
+          : (rawData?['menu_items'] ?? rawData?['results'] ?? []);
+      final list = rawList.cast<Map<String, dynamic>>();
       return ApiResponse(success: true, message: '', data: list);
     } catch (e) {
-      return const ApiResponse(success: false, message: 'Failed to fetch favorites', data: null);
+      return const ApiResponse(
+        success: false,
+        message: 'Failed to fetch favorites',
+        data: null,
+      );
     }
   }
 }

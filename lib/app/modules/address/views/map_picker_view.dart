@@ -97,7 +97,10 @@ class MapPickerView extends GetView<MapPickerController> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Get.back(),
+            onTap: () {
+              AppUtils.haptic();
+              Get.back();
+            },
             behavior: HitTestBehavior.opaque,
             child: Container(
               width: 44,
@@ -122,7 +125,9 @@ class MapPickerView extends GetView<MapPickerController> {
           Expanded(
             child: GestureDetector(
               onTap: () async {
+                AppUtils.haptic();
                 final result = await Get.toNamed(
+                
                   AppRoutes.deliveryAddress,
                   arguments: {'fromMapPicker': true},
                 );

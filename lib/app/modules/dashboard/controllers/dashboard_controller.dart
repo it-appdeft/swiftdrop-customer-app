@@ -1,5 +1,6 @@
 
 import 'package:geolocator/geolocator.dart';
+import 'package:swiftdrop_customer_app/app/modules/order_history/controllers/order_history_controller.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 
 class DashboardController extends BaseController with WidgetsBindingObserver {
@@ -14,8 +15,8 @@ class DashboardController extends BaseController with WidgetsBindingObserver {
     fetchActiveOrders();
   }
 
-  Future<void> fetchActiveOrders() async {
-    final result = await _orderRepo.getActiveOrders();
+  Future<void> fetchActiveOrders({bool forceRefresh = false}) async {
+    final result = await _orderRepo.getActiveOrders(forceRefresh: forceRefresh);
     if (result.success && result.data != null) {
       activeOrders.assignAll(result.data!);
     }
@@ -75,5 +76,14 @@ class DashboardController extends BaseController with WidgetsBindingObserver {
     super.onClose();
   }
 
-  void changePage(int index) => currentIndex.value = index;
+  void changePage(int index) {
+    currentIndex.value = index;
+    if (index == 0) {
+      fetchActiveOrders();
+    } else if (index == 2) {
+      if (Get.isRegistered<OrderHistoryController>()) {
+        Get.find<OrderHistoryController>().loadOrders(force: true);
+      }
+    }
+  }
 }

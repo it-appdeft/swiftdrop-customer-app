@@ -60,6 +60,24 @@ class AppImage extends StatelessWidget {
       return fallback ?? LayoutBuilder(builder: (_, c) => _placeholder(c));
     }
 
+    if (path!.startsWith('assets/') || path!.startsWith('lib/')) {
+      Widget img = Image.asset(
+        path!,
+        width: width,
+        height: height,
+        fit: fit,
+        errorBuilder: (_, __, ___) =>
+            fallback ?? LayoutBuilder(builder: (_, c) => _placeholder(c)),
+      );
+      if (borderRadius > 0) {
+        img = ClipRRect(
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: img,
+        );
+      }
+      return img;
+    }
+
     final url = buildUrl(path!);
 
     Widget image = CachedNetworkImage(

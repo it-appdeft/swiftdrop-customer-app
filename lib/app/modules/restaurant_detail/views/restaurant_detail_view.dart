@@ -253,17 +253,42 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                   )
                 else
                   const Spacer(),
-                GestureDetector(
-                  onTap: () => _showMoreOptions(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
+                Row(
+                  children: [
+                    Obx(() => GestureDetector(
+                      onTap: () {
+                        AppUtils.haptic();
+                        controller.toggleRestaurantFavorite();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: (controller.isFavorited.value
+                                ? Assets.images.favouriteAdded
+                                : Assets.images.favourite)
+                            .image(width: 16, height: 16, color: Colors.white),
+                      ),
+                    )),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        AppUtils.haptic();
+                        _showMoreOptions(context);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                            Icons.more_vert, color: AppColors.white, size: 16),
+                      ),
                     ),
-                    child: const Icon(
-                        Icons.more_vert, color: AppColors.white, size: 16),
-                  ),
+                  ],
                 ),
               ],
             ),
@@ -645,7 +670,10 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
   Widget _buildPillFilter(String label, bool isSelected,
       {required VoidCallback onTap}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
         height: 28,
@@ -870,7 +898,10 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
@@ -911,7 +942,10 @@ class _FoodToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -57,11 +57,14 @@ class _ItemCardState extends State<ItemCard> {
   }
 
   Widget _buildImage(String? imageUrl) {
+    final imgPath = (imageUrl != null && imageUrl.isNotEmpty)
+        ? imageUrl
+        : (widget.item['image'] ?? widget.item['image_url'])?.toString();
     return AppImage(
-      path: imageUrl,
+      path: imgPath,
       width: widget.isHorizontal ? 128 : 154,
       height: widget.isHorizontal ? 119 : 144,
-      fit: BoxFit.cover,
+      fit: BoxFit.contain,
     );
   }
 
@@ -295,7 +298,11 @@ class _ItemCardState extends State<ItemCard> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(widget.isHorizontal ? 10 : 12),
-          child: _buildImage(widget.item['image']),
+          child: SizedBox(
+            width: widget.isHorizontal ? 128 : 154,
+            height: widget.isHorizontal ? 119 : 144,
+            child: _buildImage(widget.item['image']),
+          ),
         ),
         Positioned(
           bottom: -14,
@@ -376,7 +383,10 @@ class _ItemCardState extends State<ItemCard> {
     );
 
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: () {
+        AppUtils.haptic();
+        widget.onTap?.call();
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
         width: widget.isHorizontal ? (widget.noDecoration ? double.infinity : 330) : null,

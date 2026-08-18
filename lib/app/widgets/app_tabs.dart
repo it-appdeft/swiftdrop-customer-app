@@ -43,7 +43,7 @@ class AppTabItem extends StatelessWidget {
           Container(
             height: 4,
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primary : Colors.transparent,
+              color: isSelected ? AppColors.primary : const Color.fromARGB(0, 91, 73, 73),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
             ),
           ),

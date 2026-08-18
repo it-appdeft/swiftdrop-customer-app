@@ -187,4 +187,10 @@ class AuthRepository {
 
   static const String _offlineMessage =
       'No internet connection. Please check your network and try again.';
+  Future<ApiResponse<Map<String, dynamic>>> getTermsAndConditions() async { try { final response = await _dio.get(ApiEndpoints.termsAndConditions); return ApiResponse<Map<String, dynamic>>.fromJson(response.data as Map<String, dynamic>, (d) => d as Map<String, dynamic>); } catch (_) { return const ApiResponse<Map<String, dynamic>>(success: false, message: 'Failed'); } }
+
+  Future<ApiResponse<Map<String, dynamic>>> getPrivacyPolicy() async { try { final response = await _dio.get(ApiEndpoints.privacyPolicy); return ApiResponse<Map<String, dynamic>>.fromJson(response.data as Map<String, dynamic>, (d) => d as Map<String, dynamic>); } catch (_) { return const ApiResponse<Map<String, dynamic>>(success: false, message: 'Failed'); } }
+
+  Future<ApiResponse<List<dynamic>>> getDeletionReasons() async { try { final response = await _dio.get(ApiEndpoints.deletionReasons); final json = response.data as Map<String, dynamic>; final list = (json['data'] as List<dynamic>?) ?? []; return ApiResponse<List<dynamic>>(success: true, message: '', data: list); } catch (_) { return const ApiResponse<List<dynamic>>(success: false, message: 'Failed'); } }
+  Future<ApiResponse<Map<String, dynamic>>> createSupportTicket({required String subject, required String description, String? orderReference}) async { try { final response = await _dio.post(ApiEndpoints.createTicket, data: FormData.fromMap({'subject': subject, 'description': description, if (orderReference != null && orderReference.isNotEmpty) 'order_reference': orderReference}), options: Options(contentType: 'multipart/form-data')); final json = response.data as Map<String, dynamic>; return ApiResponse<Map<String, dynamic>>(success: json['success'] as bool? ?? true, message: json['message'] as String? ?? 'Support ticket submitted.', data: json['data'] as Map<String, dynamic>?); } catch (e) { return const ApiResponse<Map<String, dynamic>>(success: false, message: 'Failed to submit support ticket'); } }
 }

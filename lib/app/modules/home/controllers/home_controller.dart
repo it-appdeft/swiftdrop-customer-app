@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:swiftdrop_customer_app/app/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 
 class HomeController extends BaseController {
@@ -20,6 +21,7 @@ class HomeController extends BaseController {
   int _restaurantsPage = 1;
   int? _selectedFoodItemId;
   bool _isInitialized = false;
+  bool _isDisposed = false;
   static const int _bannerCount = 3;
   Timer? _bannerTimer;
 
@@ -48,6 +50,7 @@ class HomeController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+    _isDisposed = false;
     bannerPageController = PageController();
     bannerPageController.addListener(_onBannerPage);
     scrollController = ScrollController();
@@ -66,9 +69,12 @@ class HomeController extends BaseController {
   }
 
   void _onBannerPage() {
-    if (bannerPageController.page != null) {
-      currentBannerPage.value = bannerPageController.page!.round();
-    }
+    if (_isDisposed) return;
+    try {
+      if (bannerPageController.hasClients && bannerPageController.page != null) {
+        currentBannerPage.value = bannerPageController.page!.round();
+      }
+    } catch (_) {}
   }
 
   Future<void> _initFlow() async {
@@ -103,7 +109,7 @@ class HomeController extends BaseController {
       final topPicksResult = results[1] as ApiResponse<List<RestaurantModel>>;
       final restaurantsResult = results[2] as ApiResponse<RestaurantsPageModel>;
 
-      if (foodResult.success && foodResult.data != null) {
+      if (foodResult.success && foodResult.data != null && foodResult.data!.isNotEmpty) {
         foodItems.value = foodResult.data!;
       }
       if (topPicksResult.success && topPicksResult.data != null) {
@@ -191,13 +197,21 @@ class HomeController extends BaseController {
   void _startBannerAutoScroll() {
     _bannerTimer?.cancel();
     _bannerTimer = Timer.periodic(const Duration(seconds: 4), (_) {
-      if (!bannerPageController.hasClients) return;
-      final nextPage = (currentBannerPage.value + 1) % _bannerCount;
-      bannerPageController.animateToPage(
-        nextPage,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
-      );
+      if (_isDisposed) {
+        _bannerTimer?.cancel();
+        return;
+      }
+      try {
+        if (!bannerPageController.hasClients) return;
+        final nextPage = (currentBannerPage.value + 1) % _bannerCount;
+        bannerPageController.animateToPage(
+          nextPage,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+        );
+      } catch (_) {
+        _bannerTimer?.cancel();
+      }
     });
   }
 
@@ -214,17 +228,26 @@ class HomeController extends BaseController {
     restaurants.clear();
     topPickRestaurants.clear();
     hasMoreRestaurants.value = false;
+    OrderRepository.invalidateCache();
+    if (Get.isRegistered<DashboardController>()) {
+      Get.find<DashboardController>().fetchActiveOrders(forceRefresh: true);
+    }
     await _loadDashboard();
     _startBannerAutoScroll();
   }
 
   @override
   void onClose() {
+    _isDisposed = true;
     _stopBannerAutoScroll();
-    bannerPageController.removeListener(_onBannerPage);
-    bannerPageController.dispose();
-    scrollController.removeListener(_onScroll);
-    scrollController.dispose();
+    try {
+      bannerPageController.removeListener(_onBannerPage);
+      bannerPageController.dispose();
+    } catch (_) {}
+    try {
+      scrollController.removeListener(_onScroll);
+      scrollController.dispose();
+    } catch (_) {}
     super.onClose();
   }
 }

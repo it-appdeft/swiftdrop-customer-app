@@ -8,6 +8,7 @@ class SearchTabController extends BaseController {
 
   final queryController = TextEditingController();
   final scrollController = ScrollController();
+  final RxString inputText = ''.obs;
   final RxString searchQuery = ''.obs;
   final RxList<String> recentSearches = <String>[].obs;
 
@@ -23,8 +24,6 @@ class SearchTabController extends BaseController {
   int _itemPage = 1;
   final RxBool hasMoreRestaurants = false.obs;
   final RxBool hasMoreItems = false.obs;
-
-  Timer? _debounceTimer;
 
   @override
   void onInit() {
@@ -49,25 +48,27 @@ class SearchTabController extends BaseController {
 
   Future<void> loadRecent({bool showLoading = true}) async {
     if (showLoading) isLoadingRecent.value = true;
-    final result = await _repo.getRecent();
-    if (result.success && result.data != null) {
-      recentSearches.assignAll(result.data!.recent.map((r) => r.keyword).toList());
+    final historyResponse = await _repo.getSearchHistory();
+    if (historyResponse.success && historyResponse.data != null && historyResponse.data!.isNotEmpty) {
+      recentSearches.assignAll(historyResponse.data!);
+    } else {
+      final result = await _repo.getRecent();
+      if (result.success && result.data != null) {
+        recentSearches.assignAll(result.data!.recent.map((r) => r.keyword).toList());
+      }
     }
     if (showLoading) isLoadingRecent.value = false;
   }
 
   void onQueryChanged(String text) {
+    inputText.value = text;
     final trimmed = text.trim();
-    searchQuery.value = trimmed;
-    _debounceTimer?.cancel();
 
     if (trimmed.isEmpty) {
+      searchQuery.value = '';
       _clearResults();
       loadRecent(showLoading: false);
-      return;
     }
-
-    _debounceTimer = Timer(const Duration(milliseconds: 300), () => _performSearch(trimmed));
   }
 
   bool get _offersActive => activeFilters.contains('Offers');
@@ -98,6 +99,10 @@ class SearchTabController extends BaseController {
       lat: LocationService.to.lat,
       lng: LocationService.to.lng,
     );
+
+    // If query changed while search request was in-flight, ignore stale response
+    if (searchQuery.value != q) return;
+
     isSearching.value = false;
 
     if (result.success && result.data != null) {
@@ -123,11 +128,12 @@ class SearchTabController extends BaseController {
     final hasMore = isItems ? hasMoreItems.value : hasMoreRestaurants.value;
     if (!hasMore) return;
 
+    final currentQ = searchQuery.value;
     isLoadingMore.value = true;
     final page = isItems ? _itemPage + 1 : _restaurantPage + 1;
 
     final result = await _repo.search(
-      searchQuery.value,
+      currentQ,
       offers: _offersActive,
       highestRated: _highestRatedActive,
       page: page,
@@ -135,6 +141,12 @@ class SearchTabController extends BaseController {
       lat: LocationService.to.lat,
       lng: LocationService.to.lng,
     );
+
+    if (searchQuery.value != currentQ) {
+      isLoadingMore.value = false;
+      return;
+    }
+
     isLoadingMore.value = false;
 
     if (result.success && result.data != null) {
@@ -166,59 +178,86 @@ class SearchTabController extends BaseController {
     } else {
       activeFilters.add(filter);
     }
-    if (searchQuery.value.isNotEmpty) _performSearch(searchQuery.value);
+    if (searchQuery.value.isNotEmpty) {
+      _performSearch(searchQuery.value);
+    }
   }
 
   void onSubmit(String q) {
     final t = q.trim();
     if (t.isEmpty) return;
-    _debounceTimer?.cancel();
+    searchQuery.value = t;
     _performSearch(t);
   }
 
   void tapRecent(String q) {
     queryController.text = q;
     queryController.selection = TextSelection.collapsed(offset: q.length);
+    inputText.value = q;
     searchQuery.value = q;
-    _debounceTimer?.cancel();
     _performSearch(q);
   }
 
   void removeRecent(String q) => recentSearches.remove(q);
-  void clearRecent() => recentSearches.clear();
+
+  Future<void> clearRecent() async {
+    recentSearches.clear();
+    final response = await _repo.clearSearchHistory();
+    if (response.success && response.message.isNotEmpty) {
+      AppUtils.showSuccess(response.message);
+    }
+  }
 
   void clearQuery() {
     queryController.clear();
+    inputText.value = '';
     searchQuery.value = '';
-    _debounceTimer?.cancel();
     _clearResults();
     loadRecent(showLoading: false);
   }
 
   Future<void> toggleRestaurantFavorite(int id) async {
-    final list = selectedTabIndex.value == 0 ? restaurantResults : itemResults;
-    final idx = list.indexWhere((r) => r['id'] == id);
+    final idx = restaurantResults.indexWhere((r) => r['id'] == id);
     if (idx == -1) return;
 
-    final restaurant = list[idx];
+    final restaurant = restaurantResults[idx];
     final prev = restaurant['is_favorited'] ?? false;
 
     final updated = Map<String, dynamic>.from(restaurant);
     updated['is_favorited'] = !prev;
-    list[idx] = updated;
+    restaurantResults[idx] = updated;
 
     final result = await _favRepo.toggleFavorite(FavoriteType.restaurant, id);
     if (result.success) {
       if (result.message.isNotEmpty) AppUtils.showSuccess(result.message);
     } else {
       updated['is_favorited'] = prev;
-      list[idx] = updated;
+      restaurantResults[idx] = updated;
+    }
+  }
+
+  Future<void> toggleItemFavorite(int id) async {
+    final idx = itemResults.indexWhere((r) => r['id'] == id);
+    if (idx == -1) return;
+
+    final item = itemResults[idx];
+    final prev = item['is_favorited'] ?? false;
+
+    final updated = Map<String, dynamic>.from(item);
+    updated['is_favorited'] = !prev;
+    itemResults[idx] = updated;
+
+    final result = await _favRepo.toggleFavorite(FavoriteType.menuItem, id);
+    if (result.success) {
+      if (result.message.isNotEmpty) AppUtils.showSuccess(result.message);
+    } else {
+      updated['is_favorited'] = prev;
+      itemResults[idx] = updated;
     }
   }
 
   @override
   void onClose() {
-    _debounceTimer?.cancel();
     queryController.dispose();
     scrollController.removeListener(_onScroll);
     scrollController.dispose();

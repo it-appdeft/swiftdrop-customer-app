@@ -27,23 +27,38 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
                 
                 final orders = controller.historyOrders;
                 if (orders.isEmpty) {
-                  return const NoDataWidget(
-                    image: SizedBox.shrink(),
-                    subtitle: 'Your order history will appear here once orders are live.',
+                  return RefreshIndicator(
+                    onRefresh: () => controller.loadOrders(),
+                    color: AppColors.primary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.6,
+                        child: const NoDataWidget(
+                          image: SizedBox.shrink(),
+                          subtitle: 'Your order history will appear here once orders are live.',
+                        ),
+                      ),
+                    ),
                   );
                 }
 
-                return ListView.builder(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    Get.find<CartController>().cartItemCount.value > 0 ? 120 : 20,
+                return RefreshIndicator(
+                  onRefresh: () => controller.loadOrders(),
+                  color: AppColors.primary,
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      0,
+                      16,
+                      Get.find<CartController>().cartItemCount.value > 0 ? 120 : 20,
+                    ),
+                    itemCount: orders.length,
+                    itemBuilder: (context, index) {
+                      return _OrderCard(order: orders[index], index: index);
+                    },
                   ),
-                  itemCount: orders.length,
-                  itemBuilder: (context, index) {
-                    return _OrderCard(order: orders[index], index: index);
-                  },
                 );
               }),
             ),
@@ -110,18 +125,24 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final restaurantName = order.pickupAddress.split(',').first;
-    final restaurantLocation = order.pickupAddress.contains(',') 
-        ? order.pickupAddress.substring(order.pickupAddress.indexOf(',') + 1).trim()
-        : 'Green Park, CA 90210';
+    final restaurantName = order.displayRestaurantName;
+    final restaurantLocation = order.restaurantAddressLine.isNotEmpty
+        ? order.restaurantAddressLine
+        : (order.pickupAddress.contains(',')
+            ? order.pickupAddress.substring(order.pickupAddress.indexOf(',') + 1).trim()
+            : '');
 
-    final isFailed = order.status == 'failed' || index == 1;
-    final dateStr = DateFormat('MMMM d, h:mm a').format(order.createdAt);
+    final isFailed = order.status == 'failed' || order.status == 'payment_failed';
+    final isCancelled = order.isCancelled;
+    final effectiveOrder = order;
+
+    final dateStr = order.displayPlacedAt;
+    final imgUrl = order.fullRestaurantImage;
 
     return GestureDetector(
       onTap: () {
         AppUtils.haptic();
-        Get.toNamed(AppRoutes.orderDelivered, arguments: order);
+        Get.toNamed(AppRoutes.orderDelivered, arguments: effectiveOrder);
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 16.h),
@@ -146,11 +167,28 @@ class _OrderCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Assets.images.restaurantImage.image(
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                  ),
+                  child: imgUrl != null && imgUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: imgUrl,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Assets.images.restaurantImage.image(
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                          ),
+                          errorWidget: (context, url, error) => Assets.images.restaurantImage.image(
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Assets.images.restaurantImage.image(
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -182,7 +220,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (order.isDelivered && !isFailed)
+                if (order.isDelivered && !isFailed && !isCancelled)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -203,6 +241,54 @@ class _OrderCard extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                  )
+                else if (isFailed || isCancelled)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFEBEE),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          isFailed ? 'Failed' : 'Cancelled',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.error,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+                    ),
+                    child: Text(
+                      order.status.toUpperCase(),
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.warning,
+                      ),
                     ),
                   ),
               ],

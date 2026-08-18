@@ -50,7 +50,11 @@ class HomeRepository {
   }) async {
     try {
       final params = <String, dynamic>{'page': page};
-      if (foodItemId != null) params['search'] = foodItemId;
+      if (foodItemId != null) {
+        params['search'] = foodItemId;
+        params['food_item_id'] = foodItemId;
+        params['food_type_id'] = foodItemId;
+      }
       if (lat != null) params['latitude'] = lat;
       if (lng != null) params['longitude'] = lng;
       final response = await _dio.get(
@@ -103,6 +107,45 @@ class HomeRepository {
       return ApiResponse<SearchResultModel>(success: true, message: '', data: model);
     } catch (_) {
       return ApiResponse<SearchResultModel>(success: false, message: '', data: null);
+    }
+  }
+
+  Future<ApiResponse<List<String>>> getSearchHistory() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.customerSearchHistory);
+      final rawData = response.data['data'];
+      List<String> list = [];
+      if (rawData is List) {
+        list = rawData
+            .map((e) => e is Map ? (e['query'] ?? e['keyword'] ?? e['name'] ?? '').toString() : e.toString())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      } else if (rawData is Map) {
+        final rawQueries = rawData['queries'] ?? rawData['history'] ?? rawData['items'] ?? rawData['recent'] ?? [];
+        if (rawQueries is List) {
+          list = rawQueries
+              .map((e) => e is Map ? (e['query'] ?? e['keyword'] ?? e['name'] ?? '').toString() : e.toString())
+              .where((e) => e.isNotEmpty)
+              .toList();
+        }
+      }
+      return ApiResponse<List<String>>(success: true, message: '', data: list);
+    } catch (_) {
+      return const ApiResponse<List<String>>(success: false, message: '', data: []);
+    }
+  }
+
+  Future<ApiResponse<bool>> clearSearchHistory() async {
+    try {
+      final response = await _dio.delete(ApiEndpoints.customerSearchHistory);
+      final msg = (response.data as Map?)?['message'] as String? ?? 'Search history cleared.';
+      return ApiResponse<bool>(success: true, message: msg, data: true);
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        final msg = (e.response!.data as Map?)?['message'] as String? ?? 'Failed to clear history';
+        return ApiResponse<bool>(success: false, message: msg, data: false);
+      }
+      return const ApiResponse<bool>(success: false, message: 'Network error', data: false);
     }
   }
 }

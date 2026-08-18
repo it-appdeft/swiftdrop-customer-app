@@ -2,7 +2,7 @@ import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
-import '../controllers/search_controller.dart';
+
 
 class SearchView extends GetView<SearchTabController> {
   const SearchView({super.key});
@@ -136,7 +136,7 @@ class _SearchRow extends GetView<SearchTabController> {
                     ),
                   ),
                   Obx(
-                    () => controller.searchQuery.value.isNotEmpty
+                    () => controller.inputText.value.isNotEmpty
                         ? GestureDetector(
                             onTap: () {
                               AppUtils.haptic();
@@ -228,19 +228,40 @@ class _RecentChipsRow extends GetView<SearchTabController> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.search_rounded,
-                  size: 48,
-                  color: AppColors.lightSurfaceSubtitle.withOpacity(0.5),
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: const BoxDecoration(
+                    color: AppColors.offWhite,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Assets.images.recentSearch.image(
+                      width: 68,
+                      height: 68,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 20),
                 Text(
-                  'Search for your favorite food & restaurants',
+                  'Search Foods & Restaurants',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.lightSurfaceDarkText,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Find your favorite dishes, cuisines, or top-rated restaurants near you.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w400,
                     color: AppColors.lightSurfaceSubtitle,
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -306,7 +327,9 @@ class _ResultTabs extends GetView<SearchTabController> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      return Padding(
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Row(
           children: [
@@ -378,7 +401,10 @@ class _FilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         height: 36,
@@ -427,11 +453,53 @@ class _SearchResultsList extends GetView<SearchTabController> {
           : controller.itemResults.isEmpty;
 
       if (isEmpty) {
-        return NoDataWidget(
-          image: Assets.images.noResultofSearch.image(width: 96, height: 96),
-          subtitle: isRestaurantsTab
-              ? AppStrings.noResultRestaurantsSubtitle
-              : AppStrings.noResultItemsSubtitle,
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: const BoxDecoration(
+                    color: AppColors.offWhite,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Assets.images.noResultofSearch.image(
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  AppStrings.noResultFound,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.lightSurfaceDarkText,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isRestaurantsTab
+                      ? AppStrings.noResultRestaurantsSubtitle
+                      : AppStrings.noResultItemsSubtitle,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceSubtitle,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       }
 

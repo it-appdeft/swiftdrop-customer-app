@@ -1,7 +1,7 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../controllers/favorites_controller.dart';
-import '../../../widgets/app_tabs.dart';
+
 
 class FavoritesView extends GetView<FavoritesController> {
   const FavoritesView({super.key});
@@ -9,13 +9,22 @@ class FavoritesView extends GetView<FavoritesController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.buttonLabel,
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
         backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.black, size: 20),
-          onPressed: () => Get.back(),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: AppDimensions.iconSm,
+            color: AppColors.lightSurfaceDarkText,
+          ),
+          onPressed: () {
+            AppUtils.haptic();
+            Get.back();
+          },
         ),
         title: Text(
           'Favorites',
@@ -25,7 +34,6 @@ class FavoritesView extends GetView<FavoritesController> {
             color: AppColors.lightSurfaceDarkText,
           ),
         ),
-        centerTitle: true,
       ),
       body: Column(
         children: [
@@ -46,35 +54,34 @@ class FavoritesView extends GetView<FavoritesController> {
 
   Widget _buildTabs() {
     return Container(
+      width: double.infinity,
       color: AppColors.white,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Obx(() => Row(
                   children: [
-                    Expanded(
-                      child: AppTabItem(
-                        label: AppStrings.categories,
-                        isSelected: controller.selectedTabIndex.value == 0,
-                        onTap: () {
-                          AppUtils.haptic();
-                          controller.onTabChanged(0);
-                        },
-                        expand: true,
-                      ),
+                    AppTabItem(
+                      label: AppStrings.categories,
+                      isSelected: controller.selectedTabIndex.value == 0,
+                      onTap: () {
+                        AppUtils.haptic();
+                        controller.onTabChanged(0);
+                      },
+                      expand: false,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: AppTabItem(
-                        label: AppStrings.popularRestaurants,
-                        isSelected: controller.selectedTabIndex.value == 1,
-                        onTap: () {
-                          AppUtils.haptic();
-                          controller.onTabChanged(1);
-                        },
-                        expand: true,
-                      ),
+                    const SizedBox(width: 24),
+                    AppTabItem(
+                      label: AppStrings.popularRestaurants,
+                      isSelected: controller.selectedTabIndex.value == 1,
+                      onTap: () {
+                        AppUtils.haptic();
+                        controller.onTabChanged(1);
+                      },
+                      expand: false,
                     ),
                   ],
                 )),
@@ -94,16 +101,17 @@ class FavoritesView extends GetView<FavoritesController> {
           itemBuilder: (_, __) => const FavoriteItemCardShimmer(),
         );
       }
-      
+
       if (controller.favoriteItems.isEmpty) {
-        return NoDataWidget(
-          image: Assets.images.noResultofSearch.image(width: 96, height: 96),
-          subtitle: 'No favorite items yet',
+        return _buildEmptyState(
+          image: Assets.images.noResultofSearch.image(fit: BoxFit.contain),
+          title: 'No Favorite Items',
+          subtitle: 'Items you mark as favorite will appear here for quick access.',
         );
       }
 
       return ListView.builder(
-        padding: const EdgeInsets.only(top: 16, bottom: 20),
+        padding: const EdgeInsets.only(top: 16, bottom: 24),
         itemCount: controller.favoriteItems.length,
         itemBuilder: (context, index) {
           final item = controller.favoriteItems[index];
@@ -137,9 +145,10 @@ class FavoritesView extends GetView<FavoritesController> {
       }
 
       if (controller.favoriteRestaurants.isEmpty) {
-        return NoDataWidget(
-          image: Assets.images.noResultofSearch.image(width: 96, height: 96),
-          subtitle: 'No favorite restaurants yet',
+        return _buildEmptyState(
+          image: Assets.images.noResultofSearch.image(fit: BoxFit.contain),
+          title: 'No Favorite Restaurants',
+          subtitle: 'Restaurants you mark as favorite will appear here for easy ordering.',
         );
       }
 
@@ -150,10 +159,69 @@ class FavoritesView extends GetView<FavoritesController> {
           final restaurant = controller.favoriteRestaurants[index];
           return RestaurantCard(
             restaurant: restaurant,
-            onFavoriteTap: () => controller.toggleRestaurantFavorite(restaurant['id']),
+            onFavoriteTap: () {
+              AppUtils.haptic();
+              controller.toggleRestaurantFavorite(restaurant['id']);
+            },
           );
         },
       );
     });
+  }
+
+  Widget _buildEmptyState({
+    required Widget image,
+    required String title,
+    required String subtitle,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.lightSurfaceBorder),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: image,
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.lightSurfaceDarkText,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                color: AppColors.lightSurfaceSubtitle,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

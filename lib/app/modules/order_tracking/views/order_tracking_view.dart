@@ -1,12 +1,15 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
+import '../../../../data/models/order_model.dart';
+import '../../../routes/app_routes.dart';
 import '../../../themes/app_colors.dart';
-import '../../../themes/app_dimensions.dart';
-import '../../../themes/app_radius.dart';
-import '../../../themes/app_text_styles.dart';
 import '../../../utils/app_utils.dart';
+import '../../../widgets/app_image.dart';
 import '../../../widgets/app_loader.dart';
 import '../../../widgets/error_state_widget.dart';
 import '../controllers/order_tracking_controller.dart';
@@ -32,113 +35,145 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
         final order = controller.order.value;
         if (order == null) return const AppLoader();
 
-        // Extract restaurant name/address from pickupAddress
-        final parts = order.pickupAddress.split(',');
-        final restaurantName = parts.first.trim();
-        final restaurantAddress = parts.length > 1 ? parts.sublist(1).join(',').trim() : '';
+        final restaurantName = order.displayRestaurantName;
+        final restaurantAddress = order.restaurantAddressLine;
 
-        return Column(
-          children: [
-            _Header(order: order, restaurantName: restaurantName, forceStatus: 'picked_up'),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    _MapSection(),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+        // Extract 4-digit delivery pin from order number or delivery_code
+        final cleanNumber = order.orderNumber.replaceAll(RegExp(r'\D'), '');
+        final deliveryCode = cleanNumber.length >= 4
+            ? cleanNumber.substring(cleanNumber.length - 4)
+            : (order.orderNumber.length >= 4
+                ? order.orderNumber.substring(order.orderNumber.length - 4)
+                : '');
+
+        final status = order.status.toString().toLowerCase();
+        final isAwaitingConfirmation = status == 'placed' || status == 'pending';
+        final isOrderPlaced = status == 'accepted' || status == 'confirmed';
+        final isPreparing = status == 'preparing';
+        final isOutForDelivery = status == 'picked_up' || status == 'out_for_delivery' || status == 'on_the_way';
+        final isDriverReached = status == 'driver_reached' || status == 'arrived';
+
+        // Visibility rules based on UI flow
+        final showDeliveryCode = deliveryCode.isNotEmpty && (isPreparing || isOutForDelivery || isDriverReached);
+        final showDeliveryPartner = isPreparing || isOutForDelivery || isDriverReached;
+
+        return NestedScrollView(
+          physics: const BouncingScrollPhysics(),
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              _SliverTrackingHeader(order: order, restaurantName: restaurantName),
+            ];
+          },
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              children: [
+                const _MapSection(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      if (showDeliveryCode) ...[
+                        _DeliveryCodeSection(code: deliveryCode),
+                        const SizedBox(height: 16),
+                      ],
+                      if (showDeliveryPartner) ...[
+                        _DeliveryPartnerSection(order: order),
+                        const SizedBox(height: 16),
+                      ],
+                      _DeliveryAddressCard(address: order.deliveryAddress),
+                      const SizedBox(height: 16),
+                      _OrderDetailsCard(
+                        restaurantName: restaurantName,
+                        restaurantAddress: restaurantAddress,
+                        orderNumber: order.orderNumber,
+                        items: order.items,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
                         children: [
-                          _DeliveryCodeSection(code: '5236'),
-                          const SizedBox(height: 16),
-                          _DeliveryPartnerSection(
-                            isAssigning: false,
-                            partnerName: 'James Bride',
-                            partnerStats: '230 Order delivered',
-                            rating: 4.8,
+                          Expanded(
+                            child: _SummaryCard(
+                              label: 'Total Paid',
+                              value: AppUtils.formatCurrency(order.totalAmount),
+                              valueColor: AppColors.primary,
+                            ),
                           ),
-                          const SizedBox(height: 16),
-                          _DeliveryAddressCard(address: order.deliveryAddress),
-                          const SizedBox(height: 16),
-                          _OrderDetailsCard(
-                            restaurantName: restaurantName,
-                            restaurantAddress: restaurantAddress,
-                            orderNumber: order.orderNumber,
-                            items: order.items,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: _SummaryCard(
+                              label: 'Payment',
+                              value: order.paymentMethod?.trim().isNotEmpty == true
+                                  ? order.paymentMethod!
+                                  : 'Online',
+                              icon: Icons.credit_card,
+                              isPayment: true,
+                            ),
                           ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _SummaryCard(
-                                  label: 'Total Paid',
-                                  value: AppUtils.formatCurrency(order.totalAmount),
-                                  valueColor: AppColors.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              const Expanded(
-                                child: _SummaryCard(
-                                  label: 'Payment',
-                                  value: '•••• 4412',
-                                  icon: Icons.credit_card,
-                                  isPayment: true,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _SupportButton(),
-                          const SizedBox(height: 24),
-                          _CancelButton(order: order),
-                          const SizedBox(height: 16),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      _SupportButton(),
+                      if (isAwaitingConfirmation) ...[
+                        const SizedBox(height: 24),
+                        _CancelButton(order: order),
+                      ],
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         );
       }),
     );
   }
 }
 
-class _Header extends StatelessWidget {
+class _SliverTrackingHeader extends StatelessWidget {
   final dynamic order;
   final String restaurantName;
-  final String? forceStatus;
 
-  const _Header({required this.order, required this.restaurantName, this.forceStatus});
+  const _SliverTrackingHeader({required this.order, required this.restaurantName});
 
   @override
   Widget build(BuildContext context) {
-    String statusTitle = 'Order Placed';
-    String statusSubtitle = 'Food preparation will begin shortly';
-    double progress = 0.2;
+    String statusTitle = 'Awaiting Confirmation';
+    String statusSubtitle = '';
+    double progress = 0.15;
 
-    switch (forceStatus?.toLowerCase() ?? order.status.toLowerCase()) {
+    switch (order.status.toString().toLowerCase()) {
+      case 'placed':
       case 'pending':
         statusTitle = 'Awaiting Confirmation';
         statusSubtitle = '';
-        progress = 0.1;
+        progress = 0.15;
         break;
       case 'accepted':
-        statusTitle = 'Order placed';
-        statusSubtitle = 'Food preparation will begin shortly';
-        progress = 0.2;
+      case 'confirmed':
+        statusTitle = 'Order Placed';
+        statusSubtitle = 'Food preparation will begin shorty';
+        progress = 0.35;
         break;
       case 'preparing':
-        statusTitle = 'Order placed';
+        statusTitle = 'Preparing Your Order';
         statusSubtitle = 'Arriving in ${order.estimatedTime} mins';
-        progress = 0.4;
+        progress = 0.60;
         break;
       case 'picked_up':
+      case 'out_for_delivery':
+      case 'on_the_way':
         statusTitle = 'Out For Delivery';
         statusSubtitle = 'Arriving in ${order.estimatedTime} mins';
-        progress = 0.8;
+        progress = 0.80;
+        break;
+      case 'driver_reached':
+      case 'arrived':
+        statusTitle = 'Driver Reached Your Location';
+        statusSubtitle = 'Please share the delivery code';
+        progress = 0.95;
         break;
       case 'delivered':
         statusTitle = 'Order Delivered';
@@ -150,116 +185,242 @@ class _Header extends StatelessWidget {
         statusSubtitle = 'Your request has been processed';
         progress = 1.0;
         break;
+      default:
+        statusTitle = 'Awaiting Confirmation';
+        statusSubtitle = '';
+        progress = 0.15;
+        break;
     }
 
-    return Container(
-      color: AppColors.primary,
-      padding: EdgeInsets.fromLTRB(
-        16,
-        MediaQuery.of(context).padding.top + 10,
-        16,
-        20,
+    final topPadding = MediaQuery.of(context).padding.top;
+    final hasSubtitle = statusSubtitle.isNotEmpty;
+    final expandedHeight = topPadding + (hasSubtitle ? 160.0 : 140.0);
+
+    return SliverAppBar(
+      expandedHeight: expandedHeight,
+      pinned: true,
+      floating: true,
+      snap: true,
+      elevation: 2,
+      backgroundColor: AppColors.primary,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+        onPressed: () {
+          AppUtils.haptic();
+          Get.back();
+        },
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      title: Text(
+        restaurantName,
+        style: GoogleFonts.inter(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: Assets.images.reloadButton.image(width: 28, height: 28),
+          onPressed: () {
+            AppUtils.haptic();
+            Get.find<OrderTrackingController>().refreshTracking();
+          },
+        ),
+        const SizedBox(width: 4),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Padding(
+          padding: EdgeInsets.fromLTRB(16, topPadding + 52, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              GestureDetector(
-                onTap: () => Get.back(),
-                behavior: HitTestBehavior.opaque,
-                child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-              ),
-              Expanded(
-                child: Text(
-                  restaurantName,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Text(
+                statusTitle,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(width: 20), // To balance the back button
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      statusTitle,
-                      style: GoogleFonts.inter(
+              if (hasSubtitle) ...[
+                const SizedBox(height: 4),
+                Text(
+                  statusSubtitle,
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 14),
+              Stack(
+                children: [
+                  Container(
+                    height: 6,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  FractionallySizedBox(
+                    widthFactor: progress,
+                    child: Container(
+                      height: 6,
+                      decoration: BoxDecoration(
                         color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
-                    if (statusSubtitle.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        statusSubtitle,
-                        style: GoogleFonts.inter(
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Get.find<OrderTrackingController>().loadOrder(order.id),
-                child: Assets.images.reloadButton.image(width: 36, height: 36),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Stack(
-            children: [
-              Container(
-                height: 6,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              FractionallySizedBox(
-                widthFactor: progress,
-                child: Container(
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(3),
                   ),
-                ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _MapSection extends StatelessWidget {
+class _MapSection extends GetView<OrderTrackingController> {
+  const _MapSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 280,
+      width: double.infinity,
+      child: Obx(() {
+        if (!controller.hasMapData.value) {
+          return _MapUnavailable(
+            isLoading: controller.isLoading.value,
+          );
+        }
+
+        final order = controller.order.value;
+        final isFinished = order != null && !order.isActive;
+
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GoogleMap(
+                initialCameraPosition: controller.initialCamera,
+                markers: controller.markers.value,
+                polylines: controller.polylines.value,
+                onMapCreated: controller.onMapCreated,
+                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                  Factory<OneSequenceGestureRecognizer>(
+                      () => EagerGestureRecognizer()),
+                },
+                myLocationEnabled: false,
+                myLocationButtonEnabled: false,
+                zoomControlsEnabled: false,
+                zoomGesturesEnabled: true,
+                scrollGesturesEnabled: true,
+                rotateGesturesEnabled: true,
+                tiltGesturesEnabled: true,
+                compassEnabled: false,
+                mapToolbarEnabled: false,
+                liteModeEnabled: false,
+                padding: const EdgeInsets.only(bottom: 8),
+              ),
+            ),
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: _MapRoundButton(
+                icon: Icons.my_location,
+                onTap: controller.recenter,
+              ),
+            ),
+            if (isFinished)
+              Positioned(
+                left: 12,
+                top: 12,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: order.isCancelled
+                        ? const Color(0xFFDC3545)
+                        : AppColors.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    order.isCancelled ? 'Order cancelled' : 'Delivered',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      }),
+    );
+  }
+}
+
+class _MapRoundButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _MapRoundButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 3,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () {
+          AppUtils.haptic();
+          onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, size: 20, color: AppColors.lightSurfaceNavy),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapUnavailable extends StatelessWidget {
+  final bool isLoading;
+
+  const _MapUnavailable({required this.isLoading});
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 240,
-      width: double.infinity,
-      color: Colors.grey[200],
-      child: Assets.images.dummyMapImage.image(
-        fit: BoxFit.cover,
-        width: double.infinity,
-      ),
+      color: AppColors.offWhite,
+      alignment: Alignment.center,
+      child: isLoading
+          ? const AppLoader()
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Assets.images.locationIcon.image(width: 28, height: 28),
+                const SizedBox(height: 12),
+                Text(
+                  'Live map is not available for this order',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: const Color(0xFF868AA5),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 }
@@ -316,20 +477,15 @@ class _DeliveryCodeSection extends StatelessWidget {
 }
 
 class _DeliveryPartnerSection extends StatelessWidget {
-  final bool isAssigning;
-  final String? partnerName;
-  final String? partnerStats;
-  final double? rating;
+  final OrderModel order;
 
-  const _DeliveryPartnerSection({
-    this.isAssigning = true,
-    this.partnerName,
-    this.partnerStats,
-    this.rating,
-  });
+  const _DeliveryPartnerSection({required this.order});
 
   @override
   Widget build(BuildContext context) {
+    final partnerName = order.driverName?.trim() ?? '';
+    final isAssigning = partnerName.isEmpty;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -343,7 +499,9 @@ class _DeliveryPartnerSection extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Assigning a delivery partner...',
+                    order.isActive
+                        ? 'Assigning a delivery partner...'
+                        : 'No delivery partner assigned',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
@@ -355,9 +513,18 @@ class _DeliveryPartnerSection extends StatelessWidget {
             )
           : Row(
               children: [
-                const CircleAvatar(
-                  radius: 24,
-                  backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=james'),
+                ClipOval(
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: AppImage(
+                      path: order.driverImage,
+                      width: 48,
+                      height: 48,
+                      fallback:
+                          Assets.images.deliveryPartner.image(width: 48, height: 48),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -365,7 +532,7 @@ class _DeliveryPartnerSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        partnerName ?? '',
+                        partnerName,
                         style: GoogleFonts.inter(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -373,7 +540,7 @@ class _DeliveryPartnerSection extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        partnerStats ?? '',
+                        '230 Order delivered',
                         style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
@@ -383,27 +550,28 @@ class _DeliveryPartnerSection extends StatelessWidget {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        rating?.toString() ?? '0.0',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF0B243A),
+                if (order.driverRating != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          order.driverRating!.toStringAsFixed(1),
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFF0B243A),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
     );
@@ -657,27 +825,34 @@ class _SummaryCard extends StatelessWidget {
 class _SupportButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.offWhite,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Assets.images.goToSupport.image(width: 24, height: 24),
-          const SizedBox(width: 12),
-          Text(
-            'Go to Support',
-            style: GoogleFonts.inter(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF0B243A),
-                ),
-          ),
-          const Spacer(),
-          Assets.images.rightArrow.image(width: 24, height: 24),
-        ],
+    return GestureDetector(
+      onTap: () {
+        AppUtils.haptic();
+        Get.toNamed(AppRoutes.helpCenter);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.offWhite,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Assets.images.goToSupport.image(width: 24, height: 24),
+            const SizedBox(width: 12),
+            Text(
+              'Go to Support',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF0B243A),
+              ),
+            ),
+            const Spacer(),
+            Assets.images.rightArrow.image(width: 24, height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -690,8 +865,8 @@ class _CancelButton extends GetView<OrderTrackingController> {
 
   @override
   Widget build(BuildContext context) {
-    // Show cancel button only if order is pending
-    if (order.status.toLowerCase() != 'pending') {
+    final st = order.status.toString().toLowerCase();
+    if (st != 'pending' && st != 'placed') {
       return const SizedBox.shrink();
     }
 
@@ -765,7 +940,10 @@ class _CancelButton extends GetView<OrderTrackingController> {
                 ...reasons.map((reason) {
                   final isSelected = selectedReason == reason;
                   return GestureDetector(
-                    onTap: () => setSheetState(() => selectedReason = reason),
+                    onTap: () {
+                      AppUtils.haptic();
+                      setSheetState(() => selectedReason = reason);
+                    },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -818,8 +996,9 @@ class _CancelButton extends GetView<OrderTrackingController> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.back(); // Close reason sheet
-                     // _showProcessingSheet(context, orderId);
+                      AppUtils.haptic();
+                      Get.back();
+                      controller.cancelOrder(orderId);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFD94D52),
@@ -841,7 +1020,10 @@ class _CancelButton extends GetView<OrderTrackingController> {
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  onPressed: () => Get.back(),
+                  onPressed: () {
+                    AppUtils.haptic();
+                    Get.back();
+                  },
                   child: Text(
                     'Keep order',
                     style: GoogleFonts.inter(
@@ -858,60 +1040,5 @@ class _CancelButton extends GetView<OrderTrackingController> {
       ),
       isScrollControlled: true,
     );
-  }
-
-  void _showProcessingSheet(BuildContext context, String orderId) {
-    Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: const Icon(
-                Icons.close,
-                color: AppColors.primary,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Cancelling Your Order...',
-              style: GoogleFonts.inter(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF0B243A),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Please wait while we process your request. We are notifying the kitchen to stop your preparation.',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF868AA5),
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-      isDismissible: false,
-      enableDrag: false,
-    );
-    controller.cancelOrder(orderId);
   }
 }

@@ -90,7 +90,7 @@ class EditOtpView extends GetView<EditProfileController> {
         return AppOtpScreen(
           appBarTitle: 'Verify Account',
           background: AppColors.white,
-          heading: 'For your security, Please verify\nyour account information',
+          heading: AppStrings.verifyAccountHeading,
           subtitleBuilder: () {
             final target = c.deletionTarget.value;
             final dest = target.isEmpty ? c.currentPhoneDisplay : target;

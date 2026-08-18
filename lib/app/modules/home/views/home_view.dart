@@ -163,7 +163,7 @@ class _CategoriesSection extends GetView<HomeController> {
       final items = controller.foodItems;
       if (controller.isLoading.value && items.isEmpty) {
         return SizedBox(
-          height: 100,
+          height: 108,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -172,9 +172,9 @@ class _CategoriesSection extends GetView<HomeController> {
           ),
         );
       }
-      if (items.isEmpty) return const SizedBox(height: 100);
+      if (items.isEmpty) return const SizedBox(height: 108);
       return SizedBox(
-        height: 100,
+        height: 108,
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -224,16 +224,12 @@ class _CategoryItem extends StatelessWidget {
                 color: AppColors.white,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.lightSurfaceBorder,
+                  color: AppColors.lightSurfaceBorder,
                   width: isSelected ? 2.5 : 1,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isSelected
-                        ? AppColors.primary.withValues(alpha: 0.25)
-                        : Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: isSelected ? 10 : 6,
                     spreadRadius: isSelected ? 1 : 0,
                     offset: const Offset(0, 3),
@@ -260,6 +256,16 @@ class _CategoryItem extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 3,
+              width: 52,
+              decoration: BoxDecoration(
+                color: isSelected ? AppColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ],
         ),
@@ -342,6 +348,7 @@ class _TopPicksSection extends GetView<HomeController> {
   }
 }
 
+
 class _TopPickCard extends StatelessWidget {
   final RestaurantModel restaurant;
   const _TopPickCard({required this.restaurant});
@@ -403,6 +410,28 @@ class _TopPickCard extends StatelessWidget {
             Stack(
               children: [
                 _buildImage(restaurant.coverUrl),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () {
+                      AppUtils.haptic();
+                      Get.find<HomeController>().toggleRestaurantFavorite(restaurant.id);
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: (restaurant.isFavorited
+                              ? Assets.images.favouriteAdded
+                              : Assets.images.favourite)
+                          .image(width: 18, height: 18),
+                    ),
+                  ),
+                ),
                 if (isClosed)
                   Positioned.fill(
                     child: Container(

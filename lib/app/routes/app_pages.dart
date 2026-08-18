@@ -53,6 +53,12 @@ import '../modules/restaurant_detail/bindings/restaurant_detail_binding.dart';
 import '../modules/restaurant_detail/views/restaurant_detail_view.dart';
 import '../modules/wallet/bindings/wallet_binding.dart';
 import '../modules/wallet/views/wallet_view.dart';
+import '../modules/privacy_policy/bindings/privacy_policy_binding.dart';
+import '../modules/privacy_policy/views/privacy_policy_view.dart';
+import '../modules/terms_conditions/bindings/terms_conditions_binding.dart';
+import '../modules/terms_conditions/views/terms_conditions_view.dart';
+import '../modules/help_center/bindings/help_center_binding.dart';
+import '../modules/help_center/views/help_center_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -262,6 +268,24 @@ class AppPages {
       name: AppRoutes.orderDelivered,
       page: () => const OrderDeliveredView(),
       binding: OrderDeliveredBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.privacyPolicy,
+      page: () => const PrivacyPolicyView(),
+      binding: PrivacyPolicyBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.termsConditions,
+      page: () => const TermsConditionsView(),
+      binding: TermsConditionsBinding(),
+      middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
+    ),
+    GetPage(
+      name: AppRoutes.helpCenter,
+      page: () => const HelpCenterView(),
+      binding: HelpCenterBinding(),
       middlewares: [AuthMiddleware(), ConnectivityMiddleware()],
     ),
   ];

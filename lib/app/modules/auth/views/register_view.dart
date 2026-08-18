@@ -570,6 +570,7 @@ class _InlineOtpPanel extends StatelessWidget {
                   GestureDetector(
                     onTap: allFilled
                         ? () {
+                            AppUtils.haptic();
                             FocusScope.of(context).unfocus();
                             onVerify();
                           }

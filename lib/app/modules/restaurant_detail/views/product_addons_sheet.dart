@@ -260,7 +260,10 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -479,7 +482,10 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
 
   Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap) {
     return InkWell(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
         child: icon.image(width: 20, height: 20, color: AppColors.primary),

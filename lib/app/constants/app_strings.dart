@@ -103,6 +103,34 @@ class AppStrings {
   static const String deliveryFee = 'Delivery Fee';
   static const String discount = 'Discount';
   static const String grandTotal = 'Grand Total';
+  static const String itemsInCart = 'Items In Cart';
+  static const String itemUnavailableWarning =
+      'Some items in your cart are currently unavailable. Please review your cart.';
+  static const String itemCurrentlyUnavailable = 'This item is currently unavailable';
+  static const String noAddressAdded = 'No address is added';
+  static const String change = 'Change';
+  static const String addAddress = 'Add address';
+  static const String remove = 'Remove';
+  static const String addItems = 'Add Items';
+  static const String cookingRequests = 'Cooking Requests';
+  static const String typeCookingRequests = 'Type cooking requests';
+  static const String cookingDisclaimer =
+      'The restaurant will do its best to accommodate your request. However, refunds cannot be issued for unmet special requests.';
+  static const String viewAllCoupons = 'View all coupons';
+  static const String billSummary = 'Bill Summary';
+  static const String itemDiscount = 'Item Discount';
+  static const String taxesAndCharges = 'Taxes & Charges';
+  static const String toPay = 'To Pay';
+  static const String cancellationPolicy = 'Cancellation policy';
+  static const String cancellationPolicySubtitle =
+      'Please double-check your orders and address details. Orders are not-refundable once placed.';
+  static const String restaurantClosed = 'Restaurant Closed';
+  static const String notAcceptingOrders = 'Not Accepting Orders';
+  static const String applyCoupons = 'Apply Coupons';
+  static const String moreOffers = 'More Offers';
+  static const String enterPromoCode = 'Enter Promo Code';
+  static const String applyNow = 'Apply Now';
+  static const String exclusiveOffer = 'EXCLUSIVE OFFER';
 
   // Wallet
   static const String wallet = 'Wallet';
@@ -113,7 +141,26 @@ class AppStrings {
   // Orders & Delivered
   static const String orderHistory = 'Order History';
   static const String activeOrders = 'Active Orders';
+  static const String orderStatus = 'Order Status';
   static const String orderDelivered = 'Order Delivered!';
+  static const String orderCancelled = 'Order Cancelled';
+  static const String orderFailed = 'Order Failed';
+  static const String orderCouldNotBeFulfilled = 'Your order could not be fulfilled';
+  static const String paymentCouldNotBeProcessed = 'Your payment could not be processed';
+  static const String orderIdLabel = 'Order ID';
+  static const String reasonForCancellation = 'REASON FOR CANCELLATION';
+  static const String reasonForFailure = 'REASON FOR FAILURE';
+  static const String paymentFailedReason = 'Payment authorization failed by your card issuer.';
+  static const String restaurantUnavailableReason = 'Restaurant is temporarily unavailable';
+  static const String totalPaid = 'Total Paid';
+  static const String payment = 'Payment';
+  static const String refundFailedNotice = 'Amount will be refunded within 3-5 business days if debited';
+  static const String refundProcessedNotice = 'Refund will be processed in 3-5 days';
+  static const String goToSupport = 'Go to Support';
+  static const String rateFood = 'Rate the Food';
+  static const String rateDeliveryPartner = 'Rate your delivery partner';
+  static const String feedbackCourierHint = 'Any feedback for your courier?';
+  static const String hopeYouEnjoyedMeal = 'Hope you enjoyed your meal.';
   static const String deliveredAt = 'Delivered At';
   static const String rateRestaurant = 'Rate the Restaurant';
   static const String rateCourier = 'Rate the Courier Partner';
@@ -121,6 +168,16 @@ class AppStrings {
   static const String backToHome = 'Back To Home';
   static const String reorder = 'Reorder';
   static const String trackOrder = 'Track Order';
+
+  // Delete Account
+  static const String deleteAccount = 'Delete Account';
+  static const String deleteConfirmation = 'Delete Confirmation';
+  static const String selectReason = 'Select Reason';
+  static const String whyDeleteAccount = 'Why would you like to delete your account?';
+  static const String deleteAccountFeedbackHint =
+      'Do you have any feedback for us? We would love to hear from you! (optional)';
+  static const String verifyAccountHeading =
+      'For your security, Please verify your account information';
 
   // Settings & Profile
   static const String profile = 'Profile';

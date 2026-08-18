@@ -1,6 +1,5 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
-import '../../cart/controllers/cart_controller.dart';
 import 'product_addons_sheet.dart';
 
 void showYourCustomizationsSheet(Map item) {
@@ -218,7 +217,10 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
 
   Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap, {bool isAdd = false}) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        AppUtils.haptic();
+        onTap();
+      },
       behavior: HitTestBehavior.opaque,
       child: icon.image(
         width: 32,

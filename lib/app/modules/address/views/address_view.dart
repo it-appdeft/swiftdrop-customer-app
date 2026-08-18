@@ -390,7 +390,10 @@ class AddressView extends GetView<AddressController> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             GestureDetector(
-              onTap: () => controller.selectAddress(address.id),
+              onTap: () {
+                AppUtils.haptic();
+                controller.selectAddress(address.id);
+              },
               child: SizedBox(
                 height: 20,
                 width: 20,
