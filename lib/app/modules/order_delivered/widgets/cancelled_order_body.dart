@@ -27,9 +27,9 @@ class CancelledOrFailedOrderBody extends StatelessWidget {
           const SizedBox(height: 16),
           _RestaurantOrderDetailsCard(order: order, isFailed: isFailed),
           const SizedBox(height: 16),
-          _CancellationReasonCard(isFailed: isFailed),
+          _CancellationReasonCard(order: order, isFailed: isFailed),
           const SizedBox(height: 16),
-          _PaymentSummaryRow(totalAmount: order.totalAmount),
+          _PaymentSummaryRow(order: order),
           const SizedBox(height: 16),
           _RefundInformationBanner(isFailed: isFailed),
           const SizedBox(height: 16),
@@ -382,11 +382,14 @@ class _OrderItemRow extends StatelessWidget {
 }
 
 class _CancellationReasonCard extends StatelessWidget {
+  final OrderModel order;
   final bool isFailed;
-  const _CancellationReasonCard({required this.isFailed});
+  const _CancellationReasonCard({required this.order, required this.isFailed});
 
   @override
   Widget build(BuildContext context) {
+    final reasonText = order.effectiveCancellationReason;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -417,9 +420,7 @@ class _CancellationReasonCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  isFailed
-                      ? AppStrings.paymentFailedReason
-                      : AppStrings.restaurantUnavailableReason,
+                  reasonText,
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
@@ -436,12 +437,15 @@ class _CancellationReasonCard extends StatelessWidget {
 }
 
 class _PaymentSummaryRow extends StatelessWidget {
-  final double totalAmount;
-  const _PaymentSummaryRow({required this.totalAmount});
+  final OrderModel order;
+  const _PaymentSummaryRow({required this.order});
 
   @override
   Widget build(BuildContext context) {
-    final amountText = totalAmount > 0 ? totalAmount.toStringAsFixed(2) : '23.90';
+    final amountText = order.totalAmount.toStringAsFixed(2);
+    final paymentText = order.paymentMethod?.isNotEmpty == true
+        ? order.paymentMethod!
+        : 'Online Payment';
 
     return Row(
       children: [
@@ -466,7 +470,7 @@ class _PaymentSummaryRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '£$amountText',
+                  '₹$amountText',
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -506,12 +510,16 @@ class _PaymentSummaryRow extends StatelessWidget {
                       color: AppColors.lightSurfaceDarkText,
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      '•••• 4412',
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.lightSurfaceDarkText,
+                    Expanded(
+                      child: Text(
+                        paymentText,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.lightSurfaceDarkText,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

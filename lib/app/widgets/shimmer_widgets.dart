@@ -406,3 +406,27 @@ class ShimmerList extends StatelessWidget {
     );
   }
 }
+
+class BannerShimmer extends StatelessWidget {
+  const BannerShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppShimmer.baseColor,
+      highlightColor: AppShimmer.highlightColor,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Container(
+          height: 174,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppShimmer.baseColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

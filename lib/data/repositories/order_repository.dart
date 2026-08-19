@@ -86,6 +86,22 @@ class OrderRepository {
 
   Future<ApiResponse<OrderModel>> getOrderDetail(String orderId) async {
     try {
+      final response = await _dio.get(ApiEndpoints.customerProfileOrderDetail(orderId));
+      final dJson = response.data;
+      if (dJson is Map<String, dynamic>) {
+        final parsedOrder = OrderModel.fromJson(dJson);
+        AppLogger.i('[ORDERS] getOrderDetail SUCCESS | orderId: $orderId');
+        return ApiResponse<OrderModel>(
+          success: dJson['success'] as bool? ?? true,
+          message: dJson['message'] as String? ?? 'Order detail retrieved.',
+          data: parsedOrder,
+        );
+      }
+    } catch (e) {
+      AppLogger.w('[ORDERS] getOrderDetail API error, attempting cached fallback | $e');
+    }
+
+    try {
       final activeRes = await getActiveOrders();
       if (activeRes.success && activeRes.data != null) {
         for (final o in activeRes.data!) {
@@ -104,27 +120,6 @@ class OrderRepository {
         }
       }
 
-      // Secondary fallback: attempt single order route
-      try {
-        final detailResp = await _dio.get('${ApiEndpoints.customerProfileOrders}/$orderId');
-        final dJson = detailResp.data;
-        Map<String, dynamic>? orderJson;
-        if (dJson is Map<String, dynamic>) {
-          if (dJson['data'] is Map<String, dynamic>) {
-            orderJson = dJson['data'] as Map<String, dynamic>;
-          } else {
-            orderJson = dJson;
-          }
-        }
-        if (orderJson != null) {
-          return ApiResponse.fromJson(
-            orderJson,
-            (data) => OrderModel.fromJson(data as Map<String, dynamic>),
-          );
-        }
-      } catch (_) {}
-
-      // Tertiary fallback: AppData mock
       final fallback = AppData.activeOrders.firstWhere(
         (o) => o.id == orderId,
         orElse: () => AppData.orderHistory.firstWhere(

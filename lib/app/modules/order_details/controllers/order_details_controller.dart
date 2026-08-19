@@ -1,46 +1,52 @@
-import 'package:swiftdrop_customer_app/export.dart';
+import '../../../../export.dart';
+import '../../../../data/models/order_model.dart';
+import '../../../../data/repositories/order_repository.dart';
 
 class OrderDetailsController extends GetxController {
-  // Static data for now as requested
-  final orderId = "#SWD12345".obs;
-  final deliveredOn = "April 24, 6:42 PM".obs;
-  
-  final deliveryAddress = "4521 Emerald Valley, Block B, Suite 104, Green Park, CA 90210".obs;
-  final deliveryPartner = "James Bride".obs;
-  
-  final restaurantName = "The Marble Grill".obs;
-  final restaurantAddress = "West Coker, Yelovil, UK".obs;
+  final order = Rxn<OrderModel>();
+  final isLoading = false.obs;
+  final errorMessage = ''.obs;
+  final partnerRating = 0.0.obs;
+  final _repo = OrderRepository();
 
-  // Mock items
-  final items = <Map<String, dynamic>>[
-    {
-      "name": "Margherita Pizza",
-      "subtitle": "Giant Slice x1",
-      "price": "£8.23",
-      "image": "https://via.placeholder.com/150",
-      "rating": 4.0,
-    },
-    {
-      "name": "Sweet Corn Pizza",
-      "subtitle": "Regular x1",
-      "price": "£8.02",
-      "image": "https://via.placeholder.com/150",
-      "rating": 3.0,
-    },
-  ].obs;
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.arguments is OrderModel) {
+      order.value = Get.arguments as OrderModel;
+      if (order.value != null && order.value!.id.isNotEmpty) {
+        fetchOrderDetail(order.value!.id);
+      }
+    } else if (Get.arguments is Map) {
+      final map = Get.arguments as Map;
+      if (map['order'] is OrderModel) {
+        order.value = map['order'] as OrderModel;
+      }
+      final id = map['orderId'] ?? map['id'] ?? order.value?.id;
+      if (id != null && id.toString().isNotEmpty) {
+        fetchOrderDetail(id.toString());
+      }
+    }
+  }
 
-  final partnerRating = 1.0.obs;
-
-  final itemTotal = "£16.25".obs;
-  final deliveryFee = "£2.20".obs;
-  final taxesAndCharges = "£1.20".obs;
-  final toPay = "£19.65".obs;
-  
-  final paymentMethod = "Visa ***3432".obs;
-  final paymentStatus = "Paid".obs;
+  Future<void> fetchOrderDetail(String orderId) async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final res = await _repo.getOrderDetail(orderId);
+      if (res.success && res.data != null) {
+        order.value = res.data!;
+      } else if (res.message.isNotEmpty) {
+        errorMessage.value = res.message;
+      }
+    } catch (e) {
+      AppLogger.w('[ORDER_DETAILS] fetchOrderDetail error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   void onReorder() {
-    // Implement reorder logic
-    AppUtils.showSuccess('Reordering...');
+    AppUtils.showSuccess('Reordering order #${order.value?.orderNumber ?? ""}...');
   }
 }

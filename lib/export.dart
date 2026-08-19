@@ -71,6 +71,7 @@ export 'app/widgets/active_orders_floating_bar.dart';
 export 'app/widgets/app_tabs.dart';
 
 export 'data/models/address_model.dart';
+export 'data/models/banner_model.dart';
 export 'data/models/cart_model.dart';
 export 'data/models/checkout_model.dart';
 export 'data/models/dashboard_model.dart';

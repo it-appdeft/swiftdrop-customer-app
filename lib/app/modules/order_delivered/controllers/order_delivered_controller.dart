@@ -26,7 +26,7 @@ class OrderDeliveredController extends GetxController {
 
   Future<void> _loadFullDetailIfNeeded() async {
     final current = order.value;
-    if (current != null && current.items.isEmpty && current.id.isNotEmpty) {
+    if (current != null && current.id.isNotEmpty) {
       fetchOrderDetail(current.id);
     }
   }

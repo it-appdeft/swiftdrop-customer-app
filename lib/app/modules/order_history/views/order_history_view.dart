@@ -1,6 +1,5 @@
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
-import 'package:intl/intl.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../../dashboard/controllers/dashboard_controller.dart';
 import '../controllers/order_history_controller.dart';
@@ -43,6 +42,24 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
                   );
                 }
 
+                final dashboardController = Get.isRegistered<DashboardController>()
+                    ? Get.find<DashboardController>()
+                    : null;
+                final hasCart = Get.find<CartController>().cartItemCount.value > 0;
+                final hasActiveOrders = dashboardController != null &&
+                    dashboardController.activeOrders.isNotEmpty;
+
+                final double bottomPadding;
+                if (hasCart && hasActiveOrders) {
+                  bottomPadding = 270.0;
+                } else if (hasActiveOrders) {
+                  bottomPadding = 210.0;
+                } else if (hasCart) {
+                  bottomPadding = 180.0;
+                } else {
+                  bottomPadding = 140.0;
+                }
+
                 return RefreshIndicator(
                   onRefresh: () => controller.loadOrders(),
                   color: AppColors.primary,
@@ -52,7 +69,7 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
                       16,
                       0,
                       16,
-                      Get.find<CartController>().cartItemCount.value > 0 ? 120 : 20,
+                      bottomPadding,
                     ),
                     itemCount: orders.length,
                     itemBuilder: (context, index) {
@@ -142,7 +159,11 @@ class _OrderCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         AppUtils.haptic();
-        Get.toNamed(AppRoutes.orderDelivered, arguments: effectiveOrder);
+        if (effectiveOrder.isActive) {
+          Get.toNamed(AppRoutes.orderTracking, arguments: {'orderId': effectiveOrder.id, 'order': effectiveOrder});
+        } else {
+          Get.toNamed(AppRoutes.orderDelivered, arguments: {'orderId': effectiveOrder.id, 'order': effectiveOrder});
+        }
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 16.h),
@@ -385,7 +406,7 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '£${order.totalAmount.toStringAsFixed(2)}',
+                    '₹${order.totalAmount.toStringAsFixed(2)}',
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

@@ -17,9 +17,10 @@ class ApiEndpoints {
   static const String deletionReasons = '/deletion-reasons';
 
   static const String customerProfileOrders = '/customer/profile/orders';
+  static String customerProfileOrderDetail(dynamic id) => '/customer/profile/order/$id';
   static const String activeOrders = '/customer/orders/active';
   static const String orderHistory = '/customer/profile/orders';
-  static const String orderDetail = '/customer/profile/orders';
+  static const String orderDetail = '/customer/profile/order';
   static String orderTracking(String orderId) =>
       '/customer/orders/$orderId/status';
   static const String placeOrder = '/customer/checkout';
@@ -62,6 +63,7 @@ class ApiEndpoints {
   static const String restaurantDetail = '/restaurants';
   static const String categories = '/categories';
   static const String searchRestaurants = '/restaurants/search';
+  static const String banners = '/banners';
   static const String termsAndConditions = '/legal/terms-and-conditions';
   static const String privacyPolicy = '/legal/privacy-policy';
   static const String createTicket = '/support-tickets';

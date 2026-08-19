@@ -2,10 +2,28 @@ import 'package:dio/dio.dart';
 import '../../app/network/api_endpoints.dart';
 import '../../app/network/dio_client.dart';
 import '../models/api_response.dart';
+import '../models/banner_model.dart';
 import '../models/dashboard_model.dart';
 
 class HomeRepository {
   final Dio _dio = DioClient.instance;
+
+  Future<ApiResponse<List<BannerModel>>> getBanners() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.banners);
+      final rawData = response.data['data'];
+      List<BannerModel> list = [];
+      if (rawData is List) {
+        list = rawData
+            .map((e) => BannerModel.fromJson(e as Map<String, dynamic>))
+            .where((b) => b.status.isEmpty || b.status.toLowerCase() == 'active')
+            .toList();
+      }
+      return ApiResponse<List<BannerModel>>(success: true, message: '', data: list);
+    } catch (_) {
+      return const ApiResponse<List<BannerModel>>(success: false, message: '', data: []);
+    }
+  }
 
   Future<ApiResponse<List<FoodItemModel>>> getFoodItems() async {
     try {

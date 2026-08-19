@@ -10,6 +10,8 @@ class HomeController extends BaseController {
   final RxList<FoodItemModel> foodItems = <FoodItemModel>[].obs;
   final RxList<RestaurantModel> topPickRestaurants = <RestaurantModel>[].obs;
   final RxList<RestaurantModel> restaurants = <RestaurantModel>[].obs;
+  final RxList<BannerModel> banners = <BannerModel>[].obs;
+  final RxBool isBannersLoading = false.obs;
   final RxString currentAddress = 'Select Location'.obs;
   final RxInt currentBannerPage = 0.obs;
   final RxInt selectedCategoryIndex = (-1).obs;
@@ -22,7 +24,6 @@ class HomeController extends BaseController {
   int? _selectedFoodItemId;
   bool _isInitialized = false;
   bool _isDisposed = false;
-  static const int _bannerCount = 3;
   Timer? _bannerTimer;
 
   void selectCategory(int index, int foodItemId) {
@@ -96,6 +97,7 @@ class HomeController extends BaseController {
 
   Future<void> _loadDashboard() async {
     if (isLoading.value) return;
+    isBannersLoading.value = true;
     final lat = LocationService.to.lat;
     final lng = LocationService.to.lng;
     await runAsync(() async {
@@ -103,11 +105,13 @@ class HomeController extends BaseController {
         _repo.getFoodItems(),
         _repo.getTopPicks(foodItemId: _selectedFoodItemId, lat: lat, lng: lng),
         _repo.getRestaurants(page: 1, foodItemId: _selectedFoodItemId, lat: lat, lng: lng),
+        _repo.getBanners(),
       ]);
 
       final foodResult = results[0] as ApiResponse<List<FoodItemModel>>;
       final topPicksResult = results[1] as ApiResponse<List<RestaurantModel>>;
       final restaurantsResult = results[2] as ApiResponse<RestaurantsPageModel>;
+      final bannersResult = results[3] as ApiResponse<List<BannerModel>>;
 
       if (foodResult.success && foodResult.data != null && foodResult.data!.isNotEmpty) {
         foodItems.value = foodResult.data!;
@@ -121,6 +125,10 @@ class HomeController extends BaseController {
         hasMoreRestaurants.value = page.meta.hasNextPage;
         _restaurantsPage = page.meta.currentPage;
       }
+      if (bannersResult.success && bannersResult.data != null) {
+        banners.value = bannersResult.data!;
+      }
+      isBannersLoading.value = false;
     });
   }
 
@@ -196,14 +204,15 @@ class HomeController extends BaseController {
 
   void _startBannerAutoScroll() {
     _bannerTimer?.cancel();
+    if (banners.length <= 1) return;
     _bannerTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (_isDisposed) {
         _bannerTimer?.cancel();
         return;
       }
       try {
-        if (!bannerPageController.hasClients) return;
-        final nextPage = (currentBannerPage.value + 1) % _bannerCount;
+        if (!bannerPageController.hasClients || banners.isEmpty) return;
+        final nextPage = (currentBannerPage.value + 1) % banners.length;
         bannerPageController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 600),
@@ -227,6 +236,7 @@ class HomeController extends BaseController {
     selectedCategoryIndex.value = -1;
     restaurants.clear();
     topPickRestaurants.clear();
+    banners.clear();
     hasMoreRestaurants.value = false;
     OrderRepository.invalidateCache();
     if (Get.isRegistered<DashboardController>()) {

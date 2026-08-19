@@ -550,31 +550,14 @@ class _TopPickCard extends StatelessWidget {
 // ─── Promo Banners (carousel) ─────────────────────────────────────────────────
 
 class _PromoBannerSection extends GetView<HomeController> {
-  static final _banners = [
-    {
-      'bg': AppColors.bannerPink,
-      'nameColor': AppColors.darkNavy,
-      'offerColor': AppColors.navyMedium,
-      'image': 'assets/images/onbording1.png',
-    },
-    {
-      'bg': AppColors.bannerYellow,
-      'nameColor': AppColors.lightSurfaceDarkText,
-      'offerColor': AppColors.navyMuted400,
-      'image': 'assets/images/onbording2.png',
-    },
-    {
-      'bg': AppColors.bannerOrange,
-      'nameColor': AppColors.darkNavy,
-      'offerColor': AppColors.navyMedium,
-      'image': 'assets/images/onbording3.png',
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (controller.isLoading.value || controller.restaurants.isEmpty) {
+      if (controller.isBannersLoading.value ||
+          (controller.isLoading.value && controller.banners.isEmpty)) {
+        return const BannerShimmer();
+      }
+      if (controller.banners.isEmpty) {
         return const SizedBox.shrink();
       }
       return _buildBanners();
@@ -582,6 +565,7 @@ class _PromoBannerSection extends GetView<HomeController> {
   }
 
   Widget _buildBanners() {
+    final list = controller.banners;
     return Column(
       children: [
         Padding(
@@ -591,39 +575,41 @@ class _PromoBannerSection extends GetView<HomeController> {
             child: PageView.builder(
               controller: controller.bannerPageController,
               onPageChanged: (i) => controller.currentBannerPage.value = i,
-              itemCount: _banners.length,
-              itemBuilder: (_, i) => _BannerCard(data: _banners[i]),
+              itemCount: list.length,
+              itemBuilder: (_, i) => _BannerCard(banner: list[i]),
             ),
           ),
         ),
-        const SizedBox(height: 12),
-        Obx(
-          () => Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_banners.length, (i) {
-              final isActive = controller.currentBannerPage.value == i;
-              return Container(
-                width: 6,
-                height: 6,
-                margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? AppColors.primary
-                      : AppColors.lightSurfaceDisabled,
-                  shape: BoxShape.circle,
-                ),
-              );
-            }),
+        if (list.length > 1) ...[
+          const SizedBox(height: 12),
+          Obx(
+            () => Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(list.length, (i) {
+                final isActive = controller.currentBannerPage.value == i;
+                return Container(
+                  width: 6,
+                  height: 6,
+                  margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? AppColors.primary
+                        : AppColors.lightSurfaceDisabled,
+                    shape: BoxShape.circle,
+                  ),
+                );
+              }),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
 }
 
 class _BannerCard extends StatelessWidget {
-  final Map<String, dynamic> data;
-  const _BannerCard({required this.data});
+  final BannerModel banner;
+  const _BannerCard({required this.banner});
 
   @override
   Widget build(BuildContext context) {
@@ -632,60 +618,21 @@ class _BannerCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Container(
-        height: 174,
-        color: data['bg'] as Color,
-        child: Stack(
-          children: [
-            Positioned(
-              left: 180,
-              top: -33,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: const BoxDecoration(shape: BoxShape.circle),
-                clipBehavior: Clip.antiAlias,
-                child: Image.asset(data['image'] as String, fit: BoxFit.cover),
-              ),
-            ),
-            Positioned(
-              left: 23,
-              top: 35,
-              width: 131,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Kooker',
-                    style: GoogleFonts.inter(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: data['nameColor'] as Color,
-                    ),
-                  ),
-                  Text(
-                    'Special birthday\noffer up to -25%',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: data['offerColor'] as Color,
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  Text(
-                    'Up to 3 delivery promo',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.navyMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          height: 174,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.offWhite,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: AppImage(
+            path: banner.imageUrl,
+            width: double.infinity,
+            height: 174,
+            fit: BoxFit.cover,
+            borderRadius: 12,
+          ),
         ),
       ),
-    )
     );
   }
 }

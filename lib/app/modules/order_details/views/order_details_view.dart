@@ -1,7 +1,7 @@
 import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
-
+import '../../../../data/models/order_model.dart';
 import '../controllers/order_details_controller.dart';
 
 class OrderDetailsView extends GetView<OrderDetailsController> {
@@ -28,53 +28,127 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined, color: AppColors.lightSurfaceDarkText),
-            onPressed: () {
-              // Download invoice
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppDimensions.paddingMd),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildOrderIdCard(),
-            const SizedBox(height: AppDimensions.gapMd),
-            _buildAddressAndPartnerCard(),
-            const SizedBox(height: AppDimensions.gapLg),
-            _buildSectionHeader('Order Items'),
-            const SizedBox(height: AppDimensions.gapMd),
-            _buildOrderItemsCard(),
-            const SizedBox(height: AppDimensions.gapLg),
-            _buildSectionHeader('Rate your ordered dishes'),
-            const SizedBox(height: AppDimensions.gapMd),
-            _buildDishesRatingCard(),
-            const SizedBox(height: AppDimensions.gapLg),
-            _buildPartnerRatingCard(),
-            const SizedBox(height: AppDimensions.gapLg),
-            _buildSectionHeader('Payment Details'),
-            const SizedBox(height: AppDimensions.gapMd),
-            _buildPaymentDetailsCard(),
-            const SizedBox(height: AppDimensions.gapMd),
-            _buildPaymentMethodCard(),
-            const SizedBox(height: AppDimensions.gapXl),
-            AppButton(
-              label: 'Reorder',
-              onTap: controller.onReorder,
+      body: Obx(() {
+        if (controller.isLoading.value && controller.order.value == null) {
+          return const Center(child: AppLoader());
+        }
+
+        final order = controller.order.value;
+        if (order == null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  controller.errorMessage.value.isNotEmpty
+                      ? controller.errorMessage.value
+                      : 'Order details not found',
+                  style: GoogleFonts.inter(fontSize: 14, color: AppColors.navyMuted200),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () => Get.back(),
+                  child: const Text('Go Back'),
+                ),
+              ],
             ),
-            const SizedBox(height: AppDimensions.gapXl),
-          ],
-        ),
+          );
+        }
+
+        final isCancelledOrFailed = order.isCancelled || order.status == 'failed' || order.status == 'payment_failed';
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimensions.paddingMd),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isCancelledOrFailed) ...[
+                _buildCancellationBanner(order),
+                const SizedBox(height: AppDimensions.gapMd),
+              ],
+              _buildOrderIdCard(order),
+              const SizedBox(height: AppDimensions.gapMd),
+              _buildAddressAndPartnerCard(order),
+              const SizedBox(height: AppDimensions.gapLg),
+              _buildSectionHeader('Order Items'),
+              const SizedBox(height: AppDimensions.gapMd),
+              _buildOrderItemsCard(order),
+              if (!isCancelledOrFailed && order.items.isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.gapLg),
+                _buildSectionHeader('Rate your ordered dishes'),
+                const SizedBox(height: AppDimensions.gapMd),
+                _buildDishesRatingCard(order),
+                const SizedBox(height: AppDimensions.gapLg),
+                _buildPartnerRatingCard(),
+              ],
+              const SizedBox(height: AppDimensions.gapLg),
+              _buildSectionHeader('Payment Details'),
+              const SizedBox(height: AppDimensions.gapMd),
+              _buildPaymentDetailsCard(order),
+              const SizedBox(height: AppDimensions.gapMd),
+              _buildPaymentMethodCard(order),
+              const SizedBox(height: AppDimensions.gapXl),
+              AppButton(
+                label: 'Reorder',
+                onTap: controller.onReorder,
+              ),
+              const SizedBox(height: AppDimensions.gapXl),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildCancellationBanner(OrderModel order) {
+    final reasonText = order.effectiveCancellationReason;
+    final isFailed = order.status == 'failed' || order.status == 'payment_failed';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBEE),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.cancel_outlined,
+            color: AppColors.error,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isFailed ? 'Order Failed' : 'Order Cancelled',
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.error,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  reasonText,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: AppColors.error.withOpacity(0.85),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildOrderIdCard() {
+  Widget _buildOrderIdCard(OrderModel order) {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
@@ -95,37 +169,37 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 ),
               ),
               const SizedBox(height: 4),
-              Obx(() => Text(
-                    controller.orderId.value,
-                    style: const TextStyle(
-                      fontFamily: 'Fonts/Paragraph',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.lightSurfaceDarkText,
-                    ),
-                  )),
+              Text(
+                '#${order.orderNumber.isNotEmpty ? order.orderNumber : order.id}',
+                style: const TextStyle(
+                  fontFamily: 'Fonts/Paragraph',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.lightSurfaceDarkText,
+                ),
+              ),
             ],
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Delivered On',
+                order.isCancelled ? 'Cancelled On' : (order.isDelivered ? 'Delivered On' : 'Placed On'),
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppColors.navyMuted200,
                 ),
               ),
               const SizedBox(height: 4),
-              Obx(() => Text(
-                    controller.deliveredOn.value,
-                    style: const TextStyle(
-                      fontFamily: 'Fonts/Paragraph',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.lightSurfaceDarkText,
-                    ),
-                  )),
+              Text(
+                order.displayPlacedAt,
+                style: const TextStyle(
+                  fontFamily: 'Fonts/Paragraph',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.lightSurfaceDarkText,
+                ),
+              ),
             ],
           ),
         ],
@@ -133,7 +207,11 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
     );
   }
 
-  Widget _buildAddressAndPartnerCard() {
+  Widget _buildAddressAndPartnerCard(OrderModel order) {
+    final driverText = order.driverName?.isNotEmpty == true
+        ? order.driverName!
+        : (order.isCancelled ? 'Not assigned' : 'Assigned upon pickup');
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
@@ -154,9 +232,9 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Delivery Address',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Fonts/Paragraph',
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
@@ -164,15 +242,15 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Obx(() => Text(
-                          controller.deliveryAddress.value,
-                          style: const TextStyle(
-                            fontFamily: 'Fonts/Paragraph',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.navyMuted200,
-                          ),
-                        )),
+                    Text(
+                      order.deliveryAddress,
+                      style: const TextStyle(
+                        fontFamily: 'Fonts/Paragraph',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.navyMuted200,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -194,9 +272,9 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Delivery Partner',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Fonts/Paragraph',
                         fontSize: 16,
                         fontWeight: FontWeight.w400,
@@ -204,15 +282,15 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Obx(() => Text(
-                          controller.deliveryPartner.value,
-                          style: const TextStyle(
-                            fontFamily: 'Fonts/Paragraph',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.navyMuted200,
-                          ),
-                        )),
+                    Text(
+                      driverText,
+                      style: const TextStyle(
+                        fontFamily: 'Fonts/Paragraph',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.navyMuted200,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -235,7 +313,12 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
     );
   }
 
-  Widget _buildOrderItemsCard() {
+  Widget _buildOrderItemsCard(OrderModel order) {
+    final restaurantName = order.displayRestaurantName;
+    final restaurantAddress = order.restaurantAddressLine.isNotEmpty
+        ? order.restaurantAddressLine
+        : order.pickupAddress;
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
@@ -253,24 +336,25 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Obx(() => Text(
-                          controller.restaurantName.value,
-                          style: const TextStyle(
-                            fontFamily: 'Fonts/Paragraph',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.lightSurfaceDarkText,
-                          ),
-                        )),
-                    Obx(() => Text(
-                          controller.restaurantAddress.value,
-                          style: const TextStyle(
-                            fontFamily: 'Fonts/Paragraph',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.navyMuted200,
-                          ),
-                        )),
+                    Text(
+                      restaurantName,
+                      style: const TextStyle(
+                        fontFamily: 'Fonts/Paragraph',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.lightSurfaceDarkText,
+                      ),
+                    ),
+                    if (restaurantAddress.isNotEmpty)
+                      Text(
+                        restaurantAddress,
+                        style: const TextStyle(
+                          fontFamily: 'Fonts/Paragraph',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.navyMuted200,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -281,119 +365,115 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: AppColors.lightSurfaceBorder, height: 1),
           ),
-          Obx(() => ListView.separated(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: controller.items.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 16),
-                itemBuilder: (context, index) {
-                  final item = controller.items[index];
-                  return Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: AppImage(
-                          path: item['image'],
-                          width: 48,
-                          height: 48,
-                          fit: BoxFit.cover,
-                        ),
+          ListView.separated(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: order.items.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final item = order.items[index];
+              return Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${item.quantity}x',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['name'],
-                              style: const TextStyle(
-                                fontFamily: 'Fonts/Paragraph',
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.lightSurfaceDarkText,
-                              ),
-                            ),
-                            Text(
-                              item['subtitle'],
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: AppColors.navyMuted200,
-                              ),
-                            ),
-                          ],
-                        ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      item.name,
+                      style: const TextStyle(
+                        fontFamily: 'Fonts/Paragraph',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.lightSurfaceDarkText,
                       ),
-                      Text(
-                        item['price'],
-                        style: const TextStyle(
-                          fontFamily: 'Fonts/Paragraph',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.lightSurfaceDarkText,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              )),
+                    ),
+                  ),
+                  Text(
+                    '₹${(item.subtotal > 0 ? item.subtotal : (item.price * item.quantity)).toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontFamily: 'Fonts/Paragraph',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.lightSurfaceDarkText,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDishesRatingCard() {
+  Widget _buildDishesRatingCard(OrderModel order) {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: AppColors.offWhite,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Obx(() => ListView.separated(
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: controller.items.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final item = controller.items[index];
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${item['name']} ${item['subtitle'] ?? ''}',
-                      style: const TextStyle(
-                        fontFamily: 'Fonts/Paragraph',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.lightSurfaceSubtitle,
-                      ),
-                    ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: order.items.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final item = order.items[index];
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontFamily: 'Fonts/Paragraph',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.lightSurfaceSubtitle,
                   ),
-                  RatingStars(
-                    value: item['rating'] ?? 0,
-                    onValueChanged: (v) {
-                      // Update rating
-                    },
-                    starBuilder: (index, color) => (color == AppColors.warning
-                            ? Assets.images.filledStart
-                            : Assets.images.emptyStar)
-                        .image(
-                      width: 18,
-                      height: 18,
-                    ),
-                    starCount: 5,
-                    starSize: 18,
-                    valueLabelVisibility: false,
-                    starSpacing: 2,
-                    starOffColor: const Color(0xffe4e8ef),
-                    starColor: AppColors.warning,
-                  ),
-                ],
-              );
-            },
-          )),
+                ),
+              ),
+              RatingStars(
+                value: 0,
+                onValueChanged: (v) {
+                  AppUtils.showSuccess('Rating recorded!');
+                },
+                starBuilder: (index, color) => (color == AppColors.warning
+                        ? Assets.images.filledStart
+                        : Assets.images.emptyStar)
+                    .image(
+                  width: 18,
+                  height: 18,
+                ),
+                starCount: 5,
+                starSize: 18,
+                valueLabelVisibility: false,
+                starSpacing: 2,
+                starOffColor: const Color(0xffe4e8ef),
+                starColor: AppColors.warning,
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -434,7 +514,11 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
     );
   }
 
-  Widget _buildPaymentDetailsCard() {
+  Widget _buildPaymentDetailsCard(OrderModel order) {
+    final subtotal = order.subtotalAmount > 0
+        ? order.subtotalAmount
+        : (order.totalAmount - order.deliveryFee - order.vatAmount).clamp(0.0, double.infinity);
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
@@ -443,11 +527,17 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
       ),
       child: Column(
         children: [
-          _buildPaymentRow('Item Total', controller.itemTotal.value),
+          _buildPaymentRow('Item Total', '₹${subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 12),
-          _buildPaymentRow('Delivery Fee', controller.deliveryFee.value),
-          const SizedBox(height: 12),
-          _buildPaymentRow('Taxes & Charges', controller.taxesAndCharges.value),
+          _buildPaymentRow('Delivery Fee', '₹${order.deliveryFee.toStringAsFixed(2)}'),
+          if (order.vatAmount > 0) ...[
+            const SizedBox(height: 12),
+            _buildPaymentRow('Taxes & Charges (VAT)', '₹${order.vatAmount.toStringAsFixed(2)}'),
+          ],
+          if (order.discountAmount > 0) ...[
+            const SizedBox(height: 12),
+            _buildPaymentRow('Discount', '-₹${order.discountAmount.toStringAsFixed(2)}'),
+          ],
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(color: AppColors.lightSurfaceBorder, height: 1),
@@ -455,24 +545,24 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'To Pay',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Fonts/Paragraph',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: AppColors.lightSurfaceDarkText,
                 ),
               ),
-              Obx(() => Text(
-                    controller.toPay.value,
-                    style: const TextStyle(
-                      fontFamily: 'Fonts/Paragraph',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
-                  )),
+              Text(
+                '₹${order.totalAmount.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontFamily: 'Fonts/Paragraph',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
             ],
           ),
         ],
@@ -506,7 +596,12 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
     );
   }
 
-  Widget _buildPaymentMethodCard() {
+  Widget _buildPaymentMethodCard(OrderModel order) {
+    final method = order.paymentMethod?.isNotEmpty == true
+        ? order.paymentMethod!
+        : 'Online Payment';
+    final statusText = order.status.toUpperCase();
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
@@ -518,24 +613,24 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
           const Icon(Icons.credit_card, color: AppColors.lightSurfaceDarkText, size: 20),
           const SizedBox(width: 12),
           Expanded(
-            child: Obx(() => Text(
-                  controller.paymentMethod.value,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: AppColors.lightSurfaceDarkText,
-                    fontWeight: FontWeight.w500,
-                  ),
-                )),
+            child: Text(
+              method,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: AppColors.lightSurfaceDarkText,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-          Obx(() => Text(
-                controller.paymentStatus.value,
-                style: const TextStyle(
-                  fontFamily: 'Fonts/Paragraph',
-                  fontSize: 14,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              )),
+          Text(
+            statusText,
+            style: TextStyle(
+              fontFamily: 'Fonts/Paragraph',
+              fontSize: 14,
+              color: order.isCancelled ? AppColors.error : AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );

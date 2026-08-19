@@ -1,5 +1,6 @@
 import '../../../../export.dart';
 import '../../cart/controllers/cart_controller.dart';
+import '../../dashboard/controllers/dashboard_controller.dart';
 import '../controllers/profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -8,6 +9,9 @@ class ProfileView extends GetView<ProfileController> {
   @override
   Widget build(BuildContext context) {
     final cartController = Get.find<CartController>();
+    final dashboardController = Get.isRegistered<DashboardController>()
+        ? Get.find<DashboardController>()
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.offWhite,
@@ -27,12 +31,26 @@ class ProfileView extends GetView<ProfileController> {
       ),
       body: Obx(() {
         final hasCart = cartController.cartItemCount.value > 0;
+        final hasActiveOrders = dashboardController != null &&
+            dashboardController.activeOrders.isNotEmpty;
+
+        final double bottomPadding;
+        if (hasCart && hasActiveOrders) {
+          bottomPadding = 270.0;
+        } else if (hasActiveOrders) {
+          bottomPadding = 210.0;
+        } else if (hasCart) {
+          bottomPadding = 180.0;
+        } else {
+          bottomPadding = 140.0;
+        }
+
         return SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
             AppDimensions.paddingMd,
             AppDimensions.paddingMd,
             AppDimensions.paddingMd,
-            hasCart ? 200 : 150,
+            bottomPadding,
           ),
           child: Column(
             children: [
