@@ -430,3 +430,215 @@ class BannerShimmer extends StatelessWidget {
   }
 }
 
+class OrderTrackingShimmer extends StatelessWidget {
+  const OrderTrackingShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header shimmer
+          Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 8,
+              left: 16,
+              right: 16,
+              bottom: 16,
+            ),
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppShimmer.circle(size: 36),
+                    AppShimmer.rect(width: 110, height: 28, radius: 14),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                AppShimmer.text(width: 180, height: 20),
+                const SizedBox(height: 6),
+                AppShimmer.text(width: 240, height: 13),
+              ],
+            ),
+          ),
+
+          // Map skeleton
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: AppShimmer.rect(
+              width: double.infinity,
+              height: 240,
+              radius: 16,
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Content Cards
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                // Delivery Partner / Stepper card shimmer
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.offWhite,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.lightSurfaceBorder),
+                  ),
+                  child: Row(
+                    children: [
+                      AppShimmer.circle(size: 44),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppShimmer.text(width: 120, height: 15),
+                            const SizedBox(height: 6),
+                            AppShimmer.text(width: 160, height: 12),
+                          ],
+                        ),
+                      ),
+                      AppShimmer.circle(size: 36),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Delivery Address shimmer
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.offWhite,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.lightSurfaceBorder),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AppShimmer.circle(size: 36),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppShimmer.text(width: 130, height: 15),
+                            const SizedBox(height: 6),
+                            AppShimmer.text(width: double.infinity, height: 13),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Restaurant & Order Items shimmer
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.offWhite,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.lightSurfaceBorder),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          AppShimmer.rect(width: 44, height: 44, radius: 8),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AppShimmer.text(width: 140, height: 15),
+                                const SizedBox(height: 6),
+                                AppShimmer.text(width: 180, height: 12),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Divider(color: AppColors.lightSurfaceBorder, height: 1),
+                      ),
+                      ...List.generate(
+                        2,
+                        (index) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            children: [
+                              AppShimmer.rect(width: 24, height: 24, radius: 6),
+                              const SizedBox(width: 10),
+                              Expanded(child: AppShimmer.text(width: double.infinity, height: 14)),
+                              const SizedBox(width: 16),
+                              AppShimmer.text(width: 50, height: 14),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Payment / Summary Shimmer
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.offWhite,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.lightSurfaceBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppShimmer.text(width: 70, height: 12),
+                            const SizedBox(height: 6),
+                            AppShimmer.text(width: 80, height: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.offWhite,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.lightSurfaceBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppShimmer.text(width: 60, height: 12),
+                            const SizedBox(height: 6),
+                            AppShimmer.text(width: 90, height: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

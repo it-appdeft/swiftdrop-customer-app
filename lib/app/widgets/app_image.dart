@@ -22,7 +22,8 @@ class AppImage extends StatelessWidget {
   static String buildUrl(String path) {
     if (path.startsWith('http')) return path;
 
-    final base = AppConfig.imageBaseUrl;
+    var base = AppConfig.imageBaseUrl;
+    if (base.isEmpty) base = AppConfig.baseUrl;
     if (base.isEmpty) return path;
 
     try {

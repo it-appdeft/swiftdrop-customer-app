@@ -338,14 +338,23 @@ class AddressController extends BaseController {
       final editId = _editingAddressId;
       late final ApiResponse<dynamic> result;
 
+      final finalAddressLine1 = addressLine1.trim().isNotEmpty
+          ? addressLine1.trim()
+          : additionalDetailsController.text.trim().isNotEmpty
+              ? additionalDetailsController.text.trim()
+              : 'Selected Location';
+
+      final finalCity = city.trim().isNotEmpty ? city.trim() : 'City';
+      final finalCounty = county.trim().isNotEmpty ? county.trim() : 'County';
+
       if (editId != null) {
         result = await _repo.updateAddress(
           id: editId,
           label: label,
-          addressLine1: addressLine1,
+          addressLine1: finalAddressLine1,
           addressLine2: additionalDetailsController.text.trim(),
-          city: city,
-          county: county,
+          city: finalCity,
+          county: finalCounty,
           postcode: postcodeController.text.trim(),
           lat: lat,
           lng: lng,
@@ -354,10 +363,10 @@ class AddressController extends BaseController {
       } else {
         result = await _repo.saveAddress(
           label: label,
-          addressLine1: addressLine1,
+          addressLine1: finalAddressLine1,
           addressLine2: additionalDetailsController.text.trim(),
-          city: city,
-          county: county,
+          city: finalCity,
+          county: finalCounty,
           postcode: postcodeController.text.trim(),
           lat: lat,
           lng: lng,

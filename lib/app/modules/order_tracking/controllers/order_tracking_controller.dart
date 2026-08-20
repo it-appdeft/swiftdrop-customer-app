@@ -3,6 +3,8 @@ import 'dart:ui' show Offset;
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:swiftdrop_customer_app/app/modules/dashboard/controllers/dashboard_controller.dart';
+import 'package:swiftdrop_customer_app/app/modules/order_history/controllers/order_history_controller.dart';
 
 import '../../../../data/models/order_model.dart';
 import '../../../../data/repositories/order_repository.dart';
@@ -51,6 +53,9 @@ class OrderTrackingController extends BaseController {
   void onClose() {
     // GoogleMap disposes the controller it handed us; only drop the reference.
     _mapController = null;
+    if (Get.isRegistered<DashboardController>()) {
+      Get.find<DashboardController>().fetchActiveOrders(forceRefresh: true);
+    }
     super.onClose();
   }
 
@@ -266,16 +271,19 @@ class OrderTrackingController extends BaseController {
   Future<void> _fitBounds({bool animate = true}) async {
     final bounds = _bounds;
     final map = _mapController;
-    if (bounds == null || map == null) return;
+    if (bounds == null || map == null || isClosed) return;
+    if (order.value?.status.toString().toLowerCase() == 'cancelled') return;
 
     final update = CameraUpdate.newLatLngBounds(bounds, 60);
     // The platform view reports a null size until it has been laid out, which
     // makes the first bounds update throw; one retry covers that window.
     for (var attempt = 0; attempt < 2; attempt++) {
       try {
+        if (isClosed) return;
         await (animate ? map.animateCamera(update) : map.moveCamera(update));
         return;
       } catch (e) {
+        if (isClosed) return;
         AppLogger.w('[TRACKING] camera fit retry | $e');
         await Future.delayed(const Duration(milliseconds: 350));
       }
@@ -289,20 +297,50 @@ class OrderTrackingController extends BaseController {
     await loadOrder(id);
   }
 
-  Future<void> cancelOrder(String orderId) async {
-    await Future.delayed(const Duration(seconds: 1));
+  final RxList<String> cancellationReasons = <String>[].obs;
+  final RxBool isFetchingReasons = false.obs;
 
-    final result = await _repo.cancelOrder(orderId);
-    if (result.success) {
-      Get.back();
-      AppUtils.showSuccess('order cancelled successfully');
-      _lastGeometryKey = '';
-      loadOrder(orderId);
-    } else {
-      Get.back();
-      AppUtils.showError(
-        result.message.isNotEmpty ? result.message : 'Failed to cancel order',
-      );
+  Future<List<String>> fetchCancellationReasons() async {
+    if (cancellationReasons.isNotEmpty) return cancellationReasons;
+    isFetchingReasons.value = true;
+    try {
+      final result = await _repo.getCancellationReasons();
+      if (result.success && result.data != null && result.data!.isNotEmpty) {
+        cancellationReasons.value = result.data!;
+      }
+    } finally {
+      isFetchingReasons.value = false;
+    }
+    return cancellationReasons;
+  }
+
+  Future<bool> cancelOrder(String orderId, {String? reason}) async {
+    isLoading.value = true;
+    try {
+      final result = await _repo.cancelOrder(orderId, reason: reason);
+      if (result.success) {
+        AppUtils.showSuccess(
+          result.message.isNotEmpty ? result.message : 'Order cancelled successfully',
+        );
+        _lastGeometryKey = '';
+        await loadOrder(orderId);
+        if (Get.isRegistered<DashboardController>()) {
+          final dash = Get.find<DashboardController>();
+          dash.activeOrders.removeWhere((o) => o.id == orderId || o.orderNumber == orderId);
+          dash.fetchActiveOrders(forceRefresh: true);
+        }
+        if (Get.isRegistered<OrderHistoryController>()) {
+          Get.find<OrderHistoryController>().loadOrders(force: true);
+        }
+        return true;
+      } else {
+        AppUtils.showError(
+          result.message.isNotEmpty ? result.message : 'Failed to cancel order',
+        );
+        return false;
+      }
+    } finally {
+      isLoading.value = false;
     }
   }
 }

@@ -251,7 +251,6 @@ class RestaurantDetailController extends BaseController {
   void onClose() {
     _searchDebounce?.cancel();
     searchController.dispose();
-    scrollController.dispose();
     super.onClose();
   }
 }

@@ -312,6 +312,23 @@ class CartController extends BaseController {
     }
   }
 
+  Future<ApiResponse<bool>> updateCartItemApi(
+      int cartItemId, List<int> options, int quantity) async {
+    final loadingKey = "$cartItemId-update";
+    loadingButtons.add(loadingKey);
+
+    final result = await _repo.updateCartItemQuantity(cartItemId, quantity, options: options);
+    if (result.success) {
+      await fetchCart();
+      await fetchCheckout();
+    } else {
+      if (result.message.isNotEmpty) AppUtils.showError(result.message);
+      await fetchCart();
+    }
+    loadingButtons.remove(loadingKey);
+    return result;
+  }
+
   Future<void> updateCartItemQty(int cartItemId, int newQty,
       {int? menuItemId, String? buttonType}) async {
     final loadingKey = buttonType != null ? "$cartItemId-$buttonType" : null;

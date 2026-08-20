@@ -156,16 +156,16 @@ class OrderModel {
 
   factory OrderModel.fromJson(Map<String, dynamic> rawJson) {
     Map<String, dynamic> json = rawJson;
-    if (rawJson.containsKey('data') && rawJson['data'] is Map<String, dynamic>) {
-      json = rawJson['data'] as Map<String, dynamic>;
+    if (rawJson.containsKey('data') && rawJson['data'] is Map) {
+      json = Map<String, dynamic>.from(rawJson['data'] as Map);
     }
-    if (json.containsKey('order') && json['order'] is Map<String, dynamic>) {
+    if (json.containsKey('order') && json['order'] is Map) {
       final orderMap = Map<String, dynamic>.from(json['order'] as Map);
-      if (json['restaurant'] != null) orderMap['restaurant'] = json['restaurant'];
-      if (json['address'] != null) orderMap['address'] = json['address'];
-      if (json['items'] != null) orderMap['items'] = json['items'];
-      if (json['delivery'] != null) orderMap['delivery'] = json['delivery'];
-      if (json['payment'] != null) orderMap['payment'] = json['payment'];
+      if (json['restaurant'] != null && orderMap['restaurant'] == null) orderMap['restaurant'] = json['restaurant'];
+      if (json['address'] != null && orderMap['address'] == null) orderMap['address'] = json['address'];
+      if (json['items'] != null && orderMap['items'] == null) orderMap['items'] = json['items'];
+      if (json['delivery'] != null && orderMap['delivery'] == null) orderMap['delivery'] = json['delivery'];
+      if (json['payment'] != null && orderMap['payment'] == null) orderMap['payment'] = json['payment'];
       json = orderMap;
     }
 
@@ -249,8 +249,8 @@ class OrderModel {
     final itemsList = <OrderItem>[];
     if (rawItems is List) {
       for (final item in rawItems) {
-        if (item is Map<String, dynamic>) {
-          itemsList.add(OrderItem.fromJson(item));
+        if (item is Map) {
+          itemsList.add(OrderItem.fromJson(Map<String, dynamic>.from(item)));
         }
       }
     }
@@ -274,7 +274,7 @@ class OrderModel {
     }
 
     final totalAmount = parseDouble(
-        json['totalAmount'] ?? json['total_amount'] ?? json['total'] ?? json['grand_total']);
+        json['totalAmount'] ?? json['total_amount'] ?? json['total'] ?? json['grand_total'] ?? json['order_total'] ?? json['amount']);
     final subtotalAmount = parseDouble(
         json['subtotal'] ?? json['subtotal_amount']);
     final vatAmount = parseDouble(
@@ -535,5 +535,95 @@ class OrderModel {
       return 'Cancelled by ${cancelledBy![0].toUpperCase()}${cancelledBy!.substring(1)}';
     }
     return status == 'rejected' ? 'Order rejected by restaurant' : 'Order was cancelled';
+  }
+
+  OrderModel copyWith({
+    String? id,
+    String? orderNumber,
+    String? status,
+    String? pickupAddress,
+    String? deliveryAddress,
+    List<OrderItem>? items,
+    double? totalAmount,
+    double? subtotalAmount,
+    double? vatAmount,
+    double? discountAmount,
+    double? deliveryFee,
+    double? driverTip,
+    double? distance,
+    int? estimatedTime,
+    DateTime? createdAt,
+    DateTime? acceptedAt,
+    DateTime? preparingAt,
+    DateTime? readyAt,
+    DateTime? pickedUpAt,
+    DateTime? deliveredAt,
+    DateTime? cancelledAt,
+    String? cancelledBy,
+    String? cancellationReason,
+    bool? isAcceptedFlag,
+    String? rawPlacedAt,
+    String? addressLine1,
+    String? addressLine2,
+    String? addressCity,
+    String? addressLabel,
+    double? pickupLat,
+    double? pickupLng,
+    double? deliveryLat,
+    double? deliveryLng,
+    String? restaurantName,
+    String? restaurantImage,
+    double? driverLat,
+    double? driverLng,
+    String? driverName,
+    String? driverImage,
+    double? driverRating,
+    String? routePolyline,
+    String? paymentMethod,
+  }) {
+    return OrderModel(
+      id: id ?? this.id,
+      orderNumber: orderNumber ?? this.orderNumber,
+      status: status ?? this.status,
+      pickupAddress: pickupAddress ?? this.pickupAddress,
+      deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      items: items ?? this.items,
+      totalAmount: totalAmount ?? this.totalAmount,
+      subtotalAmount: subtotalAmount ?? this.subtotalAmount,
+      vatAmount: vatAmount ?? this.vatAmount,
+      discountAmount: discountAmount ?? this.discountAmount,
+      deliveryFee: deliveryFee ?? this.deliveryFee,
+      driverTip: driverTip ?? this.driverTip,
+      distance: distance ?? this.distance,
+      estimatedTime: estimatedTime ?? this.estimatedTime,
+      createdAt: createdAt ?? this.createdAt,
+      acceptedAt: acceptedAt ?? this.acceptedAt,
+      preparingAt: preparingAt ?? this.preparingAt,
+      readyAt: readyAt ?? this.readyAt,
+      pickedUpAt: pickedUpAt ?? this.pickedUpAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
+      cancelledAt: cancelledAt ?? this.cancelledAt,
+      cancelledBy: cancelledBy ?? this.cancelledBy,
+      cancellationReason: cancellationReason ?? this.cancellationReason,
+      isAcceptedFlag: isAcceptedFlag ?? this.isAcceptedFlag,
+      rawPlacedAt: rawPlacedAt ?? this.rawPlacedAt,
+      addressLine1: addressLine1 ?? this.addressLine1,
+      addressLine2: addressLine2 ?? this.addressLine2,
+      addressCity: addressCity ?? this.addressCity,
+      addressLabel: addressLabel ?? this.addressLabel,
+      pickupLat: pickupLat ?? this.pickupLat,
+      pickupLng: pickupLng ?? this.pickupLng,
+      deliveryLat: deliveryLat ?? this.deliveryLat,
+      deliveryLng: deliveryLng ?? this.deliveryLng,
+      restaurantName: restaurantName ?? this.restaurantName,
+      restaurantImage: restaurantImage ?? this.restaurantImage,
+      driverLat: driverLat ?? this.driverLat,
+      driverLng: driverLng ?? this.driverLng,
+      driverName: driverName ?? this.driverName,
+      driverImage: driverImage ?? this.driverImage,
+      driverRating: driverRating ?? this.driverRating,
+      routePolyline: routePolyline ?? this.routePolyline,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+    );
   }
 }

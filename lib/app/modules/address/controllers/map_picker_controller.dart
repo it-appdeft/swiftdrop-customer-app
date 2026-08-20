@@ -230,6 +230,25 @@ class MapPickerController extends GetxController {
           }
         }
       }
+      if (city.isEmpty && formatted.isNotEmpty) {
+        final parts = formatted.split(',');
+        if (parts.length >= 2) {
+          city = parts[parts.length - 2].trim();
+        }
+      }
+
+      if (country.isEmpty && formatted.isNotEmpty) {
+        final parts = formatted.split(',');
+        if (parts.isNotEmpty) {
+          country = parts.last.trim();
+        }
+      }
+
+      if (name.trim().isEmpty) {
+        name = formatted.isNotEmpty ? formatted.split(',').first.trim() : 'Selected Location';
+      }
+      if (city.trim().isEmpty) city = 'City';
+      if (country.trim().isEmpty) country = 'County';
 
       locationName.value = name;
       locationAddress.value = formatted;

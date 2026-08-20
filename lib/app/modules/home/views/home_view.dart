@@ -348,7 +348,6 @@ class _TopPicksSection extends GetView<HomeController> {
   }
 }
 
-
 class _TopPickCard extends StatelessWidget {
   final RestaurantModel restaurant;
   const _TopPickCard({required this.restaurant});
@@ -374,9 +373,11 @@ class _TopPickCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isClosed = !restaurant.isOpenNow || !restaurant.isAcceptingOrders;
+    final bool isClosed =
+        !restaurant.isOpenNow || !restaurant.isAcceptingOrders;
     String openAtText = '';
-    if (restaurant.todayHours != null && restaurant.todayHours!.openFrom.isNotEmpty) {
+    if (restaurant.todayHours != null &&
+        restaurant.todayHours!.openFrom.isNotEmpty) {
       final formatted = _formatTimeString(restaurant.todayHours!.openFrom);
       if (formatted.isNotEmpty) openAtText = 'Opens at $formatted';
     }
@@ -416,7 +417,9 @@ class _TopPickCard extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () {
                       AppUtils.haptic();
-                      Get.find<HomeController>().toggleRestaurantFavorite(restaurant.id);
+                      Get.find<HomeController>().toggleRestaurantFavorite(
+                        restaurant.id,
+                      );
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Container(
@@ -425,10 +428,11 @@ class _TopPickCard extends StatelessWidget {
                         color: Colors.white.withOpacity(0.9),
                         shape: BoxShape.circle,
                       ),
-                      child: (restaurant.isFavorited
-                              ? Assets.images.favouriteAdded
-                              : Assets.images.favourite)
-                          .image(width: 18, height: 18),
+                      child:
+                          (restaurant.isFavorited
+                                  ? Assets.images.favouriteAdded
+                                  : Assets.images.favourite)
+                              .image(width: 18, height: 18),
                     ),
                   ),
                 ),
@@ -575,6 +579,9 @@ class _PromoBannerSection extends GetView<HomeController> {
             child: PageView.builder(
               controller: controller.bannerPageController,
               onPageChanged: (i) => controller.currentBannerPage.value = i,
+              physics: list.length > 1
+                  ? const BouncingScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
               itemCount: list.length,
               itemBuilder: (_, i) => _BannerCard(banner: list[i]),
             ),
@@ -587,15 +594,16 @@ class _PromoBannerSection extends GetView<HomeController> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(list.length, (i) {
                 final isActive = controller.currentBannerPage.value == i;
-                return Container(
-                  width: 6,
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  width: isActive ? 18 : 6,
                   height: 6,
                   margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
                   decoration: BoxDecoration(
                     color: isActive
                         ? AppColors.primary
                         : AppColors.lightSurfaceDisabled,
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 );
               }),

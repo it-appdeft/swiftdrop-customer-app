@@ -38,7 +38,7 @@ class OrderRepository {
   Future<ApiResponse<List<OrderModel>>> getActiveOrders({bool forceRefresh = false}) async {
     try {
       final response = await _dio.get(ApiEndpoints.activeOrders);
-      final activeList = _parseOrders(response.data);
+      final activeList = _parseOrders(response.data).where((o) => o.isActive).toList();
       AppLogger.i('[ORDERS] getActiveOrders SUCCESS | count: ${activeList.length}');
       final msg = response.data is Map<String, dynamic>
           ? (response.data['message'] as String? ?? 'Active orders retrieved.')
@@ -49,11 +49,11 @@ class OrderRepository {
         data: activeList,
       );
     } catch (e) {
-      AppLogger.w('[ORDERS] getActiveOrders fallback: $e');
-      return ApiResponse<List<OrderModel>>(
-        success: true,
+      AppLogger.w('[ORDERS] getActiveOrders error: $e');
+      return const ApiResponse<List<OrderModel>>(
+        success: false,
         message: '',
-        data: AppData.activeOrders,
+        data: [],
       );
     }
   }
@@ -163,15 +163,55 @@ class OrderRepository {
     return getOrderDetail(orderId);
   }
 
-  Future<ApiResponse<bool>> cancelOrder(String orderId) async {
+  Future<ApiResponse<bool>> cancelOrder(String orderId, {String? reason}) async {
     try {
-      final response = await _dio.post('${ApiEndpoints.customerProfileOrders}/$orderId/cancel');
+      final params = <String, dynamic>{};
+      if (reason != null && reason.trim().isNotEmpty) {
+        params['reason'] = reason.trim();
+      }
+
+      Response response;
+      try {
+        response = await _dio.post(
+          ApiEndpoints.customerCancelOrder(orderId),
+          queryParameters: params.isNotEmpty ? params : null,
+          data: params.isNotEmpty ? params : null,
+        );
+      } catch (e) {
+        response = await _dio.post(
+          '${ApiEndpoints.customerProfileOrders}/$orderId/cancel',
+          queryParameters: params.isNotEmpty ? params : null,
+          data: params.isNotEmpty ? params : null,
+        );
+      }
+
       final success = (response.data as Map?)?['success'] as bool? ?? true;
-      AppLogger.i('[ORDERS] cancelOrder SUCCESS | orderId: $orderId');
-      return ApiResponse<bool>(success: success, message: '', data: success);
+      final msg = (response.data as Map?)?['message'] as String? ?? 'Order cancelled.';
+      AppLogger.i('[ORDERS] cancelOrder SUCCESS | orderId: $orderId, reason: $reason');
+      return ApiResponse<bool>(success: success, message: msg, data: success);
     } catch (e) {
-      AppLogger.w('[ORDERS] cancelOrder fallback | $e');
-      return const ApiResponse<bool>(success: true, message: '', data: true);
+      AppLogger.w('[ORDERS] cancelOrder error | $e');
+      if (e is DioException && e.response != null) {
+        final msg = (e.response!.data as Map?)?['message'] as String? ?? 'Failed to cancel order';
+        return ApiResponse<bool>(success: false, message: msg, data: false);
+      }
+      return const ApiResponse<bool>(success: false, message: 'Failed to cancel order', data: false);
+    }
+  }
+
+  Future<ApiResponse<List<String>>> getCancellationReasons() async {
+    try {
+      final response = await _dio.get(ApiEndpoints.cancellationReasons);
+
+      final rawData = response.data['data'];
+      List<String> list = [];
+      if (rawData is List) {
+        list = rawData.map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toList();
+      }
+      return ApiResponse<List<String>>(success: true, message: '', data: list);
+    } catch (e) {
+      AppLogger.w('[ORDERS] getCancellationReasons error | $e');
+      return const ApiResponse<List<String>>(success: false, message: '', data: []);
     }
   }
 }

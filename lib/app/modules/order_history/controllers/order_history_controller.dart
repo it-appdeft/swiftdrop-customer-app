@@ -10,7 +10,21 @@ class OrderHistoryController extends BaseController {
 
   final historyOrders = <OrderModel>[].obs;
   final RxBool hasMoreHistory = true.obs;
+  final RxString searchQuery = ''.obs;
   int _historyPage = 1;
+
+  List<OrderModel> get filteredOrders {
+    final query = searchQuery.value.trim().toLowerCase();
+    if (query.isEmpty) return historyOrders;
+    return historyOrders.where((order) {
+      final rName = order.displayRestaurantName.toLowerCase();
+      if (rName.contains(query)) return true;
+      for (final item in order.items) {
+        if (item.name.toLowerCase().contains(query)) return true;
+      }
+      return false;
+    }).toList();
+  }
 
   Future<void> loadOrders({bool force = false}) async {
     if (isLoading.value && !force) return;

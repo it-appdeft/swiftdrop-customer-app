@@ -4,9 +4,19 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../controllers/restaurant_detail_controller.dart';
 
-void showProductAddonsSheet(Map item, {List<CartApiModifier>? existingModifiers}) {
+void showProductAddonsSheet(
+  Map item, {
+  List<CartApiModifier>? existingModifiers,
+  int? editingCartItemId,
+  int? editingQuantity,
+}) {
   Get.bottomSheet(
-    ProductAddonsContent(item: item, existingModifiers: existingModifiers),
+    ProductAddonsContent(
+      item: item,
+      existingModifiers: existingModifiers,
+      editingCartItemId: editingCartItemId,
+      editingQuantity: editingQuantity,
+    ),
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
   );
@@ -15,7 +25,16 @@ void showProductAddonsSheet(Map item, {List<CartApiModifier>? existingModifiers}
 class ProductAddonsContent extends StatefulWidget {
   final Map item;
   final List<CartApiModifier>? existingModifiers;
-  const ProductAddonsContent({super.key, required this.item, this.existingModifiers});
+  final int? editingCartItemId;
+  final int? editingQuantity;
+
+  const ProductAddonsContent({
+    super.key,
+    required this.item,
+    this.existingModifiers,
+    this.editingCartItemId,
+    this.editingQuantity,
+  });
 
   @override
   State<ProductAddonsContent> createState() => _ProductAddonsContentState();
@@ -35,6 +54,10 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
   }
 
   void _initQuantity() {
+    if (widget.editingQuantity != null && widget.editingQuantity! > 0) {
+      _quantity = widget.editingQuantity!;
+      return;
+    }
     if (widget.existingModifiers == null) return;
     try {
       final cart = Get.find<CartController>();
@@ -75,18 +98,15 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
           .toList() ??
       [];
 
-  double get _basePrice =>
-      double.tryParse(widget.item['price']?.toString() ?? '0') ?? 0;
+  double get _basePrice {
+    final raw = widget.item['price'] ?? widget.item['base_price'];
+    return double.tryParse(raw?.toString() ?? '0') ?? 0;
+  }
 
   double get _currentPrice {
     double delta = 0;
-    bool hasRequiredVariant = false;
 
     for (final group in _groups) {
-      if (group.isRequired && group.selectionType == 'single') {
-        hasRequiredVariant = true;
-      }
-
       if (group.selectionType == 'single') {
         final selectedId = _singleSelections[group.id];
         if (selectedId != null) {
@@ -101,9 +121,7 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
         }
       }
     }
-    // If the item has a required variant (size), we ignore the base price
-    // and only show the sum of modifiers. Otherwise, we add deltas to base price.
-    return (hasRequiredVariant ? 0 : _basePrice) + delta;
+    return _basePrice + delta;
   }
 
   @override
@@ -428,8 +446,19 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                           } catch (_) {}
                         }
 
-                        final result = await Get.find<CartController>()
-                            .addToCartApi(menuItemId, selectedOptionIds, _quantity, restaurantId: rId);
+                        final bool isEditing = widget.editingCartItemId != null;
+                        final result = isEditing
+                            ? await Get.find<CartController>().updateCartItemApi(
+                                widget.editingCartItemId!,
+                                selectedOptionIds,
+                                _quantity,
+                              )
+                            : await Get.find<CartController>().addToCartApi(
+                                menuItemId,
+                                selectedOptionIds,
+                                _quantity,
+                                restaurantId: rId,
+                              );
                         
                         if (result.success) {
                           try {
@@ -465,7 +494,9 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                         ),
                       )
                     : Text(
-                        'Add Item £${(_currentPrice * _quantity).toStringAsFixed(2)}',
+                        widget.editingCartItemId != null
+                            ? 'Update Item £${(_currentPrice * _quantity).toStringAsFixed(2)}'
+                            : 'Add Item £${(_currentPrice * _quantity).toStringAsFixed(2)}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,

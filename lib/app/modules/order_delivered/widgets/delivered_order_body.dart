@@ -123,9 +123,7 @@ class _DeliveredAtCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deliveryAddress = order?.deliveryAddress ?? '';
-    final addressText = deliveryAddress.isNotEmpty
-        ? deliveryAddress
-        : '4521 Emerald Valley, Block B, Suite 104, Green Park, CA 90210';
+    if (deliveryAddress.isEmpty) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -135,7 +133,7 @@ class _DeliveredAtCard extends StatelessWidget {
         border: Border.all(color: AppColors.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -147,7 +145,7 @@ class _DeliveredAtCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Assets.images.locationIcon.image(width: 20, height: 20),
@@ -167,7 +165,7 @@ class _DeliveredAtCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  addressText,
+                  deliveryAddress,
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: AppColors.lightSurfaceSubtitle,
@@ -190,13 +188,9 @@ class _RateRestaurantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pickupAddress = order?.pickupAddress ?? '';
-    final restaurantName = pickupAddress.isNotEmpty
-        ? pickupAddress.split(',').first.trim()
-        : 'The Marble Grill';
-    final restaurantCategory = pickupAddress.contains(',')
-        ? pickupAddress.substring(pickupAddress.indexOf(',') + 1).trim()
-        : 'Italian & Pizza';
+    final restaurantName = order?.displayRestaurantName ?? 'Restaurant';
+    final restaurantAddress = order?.restaurantAddressLine ?? '';
+    final imgUrl = order?.fullRestaurantImage;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -206,7 +200,7 @@ class _RateRestaurantCard extends StatelessWidget {
         border: Border.all(color: AppColors.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -228,11 +222,23 @@ class _RateRestaurantCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Assets.images.restaurantImage.image(
-                  width: 44,
-                  height: 44,
-                  fit: BoxFit.cover,
-                ),
+                child: imgUrl != null && imgUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: imgUrl,
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        errorWidget: (c, u, e) => Assets.images.restaurantImage.image(
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Assets.images.restaurantImage.image(
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -249,17 +255,19 @@ class _RateRestaurantCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      restaurantCategory,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.lightSurfaceSubtitle,
+                    if (restaurantAddress.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        restaurantAddress,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.lightSurfaceSubtitle,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -279,6 +287,7 @@ class _RateFoodCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = order?.items ?? [];
+    if (items.isEmpty) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -288,7 +297,7 @@ class _RateFoodCard extends StatelessWidget {
         border: Border.all(color: AppColors.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -306,20 +315,18 @@ class _RateFoodCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          if (items.isEmpty) ...[
-            const _RateFoodItemRow(name: 'Margherita Pizza', subtitle: 'Giant Slice x1'),
-            const SizedBox(height: 14),
-            const _RateFoodItemRow(name: 'Sweet Corn Pizza', subtitle: 'Regular x1'),
-          ] else ...[
-            ...items.asMap().entries.map((entry) {
-              final item = entry.value;
-              final isLast = entry.key == items.length - 1;
-              return Padding(
-                padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
-                child: _RateFoodItemRow(name: item.name, subtitle: 'Qty: x${item.quantity}'),
-              );
-            }),
-          ],
+          ...items.asMap().entries.map((entry) {
+            final item = entry.value;
+            final isLast = entry.key == items.length - 1;
+            return Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+              child: _RateFoodItemRow(
+                name: item.name,
+                subtitle: 'Qty: x${item.quantity}',
+                image: order?.fullRestaurantImage,
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -329,10 +336,12 @@ class _RateFoodCard extends StatelessWidget {
 class _RateFoodItemRow extends StatelessWidget {
   final String name;
   final String subtitle;
+  final String? image;
 
   const _RateFoodItemRow({
     required this.name,
     required this.subtitle,
+    this.image,
   });
 
   @override
@@ -341,11 +350,23 @@ class _RateFoodItemRow extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Assets.images.restaurantImage.image(
-            width: 42,
-            height: 42,
-            fit: BoxFit.cover,
-          ),
+          child: image != null && image!.isNotEmpty
+              ? CachedNetworkImage(
+                  imageUrl: image!,
+                  width: 42,
+                  height: 42,
+                  fit: BoxFit.cover,
+                  errorWidget: (c, u, e) => Assets.images.restaurantImage.image(
+                    width: 42,
+                    height: 42,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : Assets.images.restaurantImage.image(
+                  width: 42,
+                  height: 42,
+                  fit: BoxFit.cover,
+                ),
         ),
         const SizedBox(width: 12),
         Expanded(

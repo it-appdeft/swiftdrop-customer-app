@@ -51,10 +51,12 @@ class AddressRepository {
         ApiEndpoints.customerAddresses,
         data: {
           'label': label,
-          'address_line_1': addressLine1,
+          'address_line_1': addressLine1.trim().isNotEmpty
+              ? addressLine1.trim()
+              : (addressLine2.trim().isNotEmpty ? addressLine2.trim() : 'Selected Location'),
           'address_line_2': addressLine2,
-          'city': city,
-          'county': county,
+          'city': city.trim().isNotEmpty ? city.trim() : 'City',
+          'county': county.trim().isNotEmpty ? county.trim() : 'County',
           'postcode': postcode,
           'lat': lat,
           'lng': lng,
@@ -91,10 +93,12 @@ class AddressRepository {
         data: {
           '_method': 'PUT',
           'label': label,
-          'address_line_1': addressLine1,
+          'address_line_1': addressLine1.trim().isNotEmpty
+              ? addressLine1.trim()
+              : (addressLine2.trim().isNotEmpty ? addressLine2.trim() : 'Selected Location'),
           'address_line_2': addressLine2,
-          'city': city,
-          'county': county,
+          'city': city.trim().isNotEmpty ? city.trim() : 'City',
+          'county': county.trim().isNotEmpty ? county.trim() : 'County',
           'postcode': postcode,
           'lat': lat,
           'lng': lng,

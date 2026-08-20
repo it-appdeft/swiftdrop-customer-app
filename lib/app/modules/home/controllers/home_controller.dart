@@ -97,6 +97,9 @@ class HomeController extends BaseController {
 
   Future<void> _loadDashboard() async {
     if (isLoading.value) return;
+    if (Get.isRegistered<DashboardController>()) {
+      Get.find<DashboardController>().fetchActiveOrders(forceRefresh: true);
+    }
     isBannersLoading.value = true;
     final lat = LocationService.to.lat;
     final lng = LocationService.to.lng;
@@ -127,6 +130,7 @@ class HomeController extends BaseController {
       }
       if (bannersResult.success && bannersResult.data != null) {
         banners.value = bannersResult.data!;
+        _startBannerAutoScroll();
       }
       isBannersLoading.value = false;
     });
@@ -252,11 +256,9 @@ class HomeController extends BaseController {
     _stopBannerAutoScroll();
     try {
       bannerPageController.removeListener(_onBannerPage);
-      bannerPageController.dispose();
     } catch (_) {}
     try {
       scrollController.removeListener(_onScroll);
-      scrollController.dispose();
     } catch (_) {}
     super.onClose();
   }

@@ -25,6 +25,8 @@ class ApiEndpoints {
       '/customer/orders/$orderId/status';
   static const String placeOrder = '/customer/checkout';
   static const String cancelOrder = '/customer/profile/orders';
+  static String customerCancelOrder(String orderId) => '/customer/orders/$orderId/cancel';
+  static const String cancellationReasons = '/customer/order/cancel-options';
 
   static const String walletBalance = '/user/wallet/balance';
   static const String transactions = '/user/transactions';
@@ -63,7 +65,8 @@ class ApiEndpoints {
   static const String restaurantDetail = '/restaurants';
   static const String categories = '/categories';
   static const String searchRestaurants = '/restaurants/search';
-  static const String banners = '/banners';
+  static const String customerBanners = '/customer/banners';
+  static const String banners = '/customer/banners';
   static const String termsAndConditions = '/legal/terms-and-conditions';
   static const String privacyPolicy = '/legal/privacy-policy';
   static const String createTicket = '/support-tickets';

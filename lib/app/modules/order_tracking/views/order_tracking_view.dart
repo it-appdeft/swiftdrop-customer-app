@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:swiftdrop_customer_app/app/widgets/shimmer_widgets.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../../../data/models/order_model.dart';
 import '../../../routes/app_routes.dart';
@@ -22,7 +23,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Obx(() {
-        if (controller.isLoading.value) return const AppLoader();
+        if (controller.isLoading.value) return const OrderTrackingShimmer();
         if (controller.hasError.value) {
           return ErrorStateWidget(
             message: controller.errorMessage.value,
@@ -33,7 +34,7 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
         }
 
         final order = controller.order.value;
-        if (order == null) return const AppLoader();
+        if (order == null) return const OrderTrackingShimmer();
 
         final restaurantName = order.displayRestaurantName;
         final restaurantAddress = order.restaurantAddressLine;
@@ -182,7 +183,9 @@ class _SliverTrackingHeader extends StatelessWidget {
         break;
       case 'cancelled':
         statusTitle = 'Order Cancelled';
-        statusSubtitle = 'Your request has been processed';
+        statusSubtitle = order.effectiveCancellationReason.isNotEmpty
+            ? order.effectiveCancellationReason
+            : 'Your request has been processed';
         progress = 1.0;
         break;
       default:
@@ -895,150 +898,401 @@ class _CancelButton extends GetView<OrderTrackingController> {
   }
 
   void _showCancellationDialog(BuildContext context, String orderId) {
-    String selectedReason = 'Ordered by mistake';
-    final reasons = [
-      'Ordered by mistake',
-      'Want to change items',
-      'Delivery time too long',
-      'Found a better option',
-      'Other',
-    ];
+    String selectedReason = '';
+    final customReasonController = TextEditingController();
+    bool isSubmitting = false;
+
+    // Fetch dynamic options from API
+    controller.fetchCancellationReasons().then((reasonsList) {
+      if (reasonsList.isNotEmpty && selectedReason.isEmpty) {
+        selectedReason = reasonsList.first;
+      }
+    });
 
     Get.bottomSheet(
       StatefulBuilder(
         builder: (context, setSheetState) {
-          return Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Cancel This Order?',
-                  style: GoogleFonts.inter(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF0B243A),
+          return SingleChildScrollView(
+            child: Container(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 28,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+              ),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Cancel This Order?',
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0B243A),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "You'll receive a full refund because the restaurant has not started preparing your food yet.",
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF868AA5),
-                    height: 1.5,
+                  const SizedBox(height: 8),
+                  Text(
+                    "Select a reason for cancellation. Reason is required.",
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF868AA5),
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-                ...reasons.map((reason) {
-                  final isSelected = selectedReason == reason;
-                  return GestureDetector(
-                    onTap: () {
-                      AppUtils.haptic();
-                      setSheetState(() => selectedReason = reason);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FB),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              reason,
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: const Color(0xFF0B243A),
+                  const SizedBox(height: 24),
+                  Obx(() {
+                    if (controller.isFetchingReasons.value &&
+                        controller.cancellationReasons.isEmpty) {
+                      return _buildReasonsShimmer();
+                    }
+
+                    final dynamicReasons = controller.cancellationReasons.isNotEmpty
+                        ? controller.cancellationReasons.toList()
+                        : [
+                            'Ordered by mistake',
+                            'Want to change items',
+                            'Delivery time too long',
+                            'Found a better option',
+                            'Other',
+                          ];
+
+                    if (selectedReason.isEmpty && dynamicReasons.isNotEmpty) {
+                      selectedReason = dynamicReasons.first;
+                    }
+
+                    final isOtherSelected = selectedReason == 'Other';
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ...dynamicReasons.map((reason) {
+                          final isSelected = selectedReason == reason;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  AppUtils.haptic();
+                                  setSheetState(() => selectedReason = reason);
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primary.withValues(alpha: 0.06)
+                                        : const Color(0xFFF8F9FB),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.primary
+                                          : Colors.transparent,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          reason,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 15,
+                                            fontWeight: isSelected
+                                                ? FontWeight.w600
+                                                : FontWeight.w400,
+                                            color: const Color(0xFF0B243A),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? AppColors.primary
+                                                : const Color(0xFFE1E2E3),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: isSelected
+                                            ? Center(
+                                                child: Container(
+                                                  width: 10,
+                                                  height: 10,
+                                                  decoration: const BoxDecoration(
+                                                    color: AppColors.primary,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                          Container(
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: isSelected ? AppColors.primary : const Color(0xFFE1E2E3),
-                                width: 2,
-                              ),
-                            ),
-                            child: isSelected
-                                ? Center(
-                                    child: Container(
-                                      width: 10,
-                                      height: 10,
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.primary,
-                                        shape: BoxShape.circle,
+                              if (isSelected && reason == 'Other') ...[
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: TextField(
+                                    controller: customReasonController,
+                                    onChanged: (_) => setSheetState(() {}),
+                                    maxLines: 3,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      color: const Color(0xFF0B243A),
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Please enter your reason here...',
+                                      hintStyle: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        color: const Color(0xFFA0A5BA),
+                                      ),
+                                      filled: true,
+                                      fillColor: const Color(0xFFF8F9FB),
+                                      contentPadding: const EdgeInsets.all(12),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: const BorderSide(
+                                            color: AppColors.primary, width: 1.5),
                                       ),
                                     ),
-                                  )
-                                : null,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        }),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              AppUtils.haptic();
+                              final reasonToSubmit = isOtherSelected
+                                  ? customReasonController.text.trim()
+                                  : selectedReason;
+
+                              if (reasonToSubmit.isEmpty) {
+                                AppUtils.showError(
+                                    'Please enter a cancellation reason');
+                                return;
+                              }
+
+                              _showConfirmationDialog(
+                                context,
+                                orderId,
+                                reasonToSubmit,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFD94D52),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Cancel Order',
+                              style: GoogleFonts.inter(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
+                        ),
+                      ],
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                  TextButton(
                     onPressed: () {
                       AppUtils.haptic();
                       Get.back();
-                      controller.cancelOrder(orderId);
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD94D52),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
                     child: Text(
-                      'Cancel Order',
+                      'Keep order',
                       style: GoogleFonts.inter(
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    AppUtils.haptic();
-                    Get.back();
-                  },
-                  child: Text(
-                    'Keep order',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
       ),
       isScrollControlled: true,
+    );
+  }
+
+  void _showConfirmationDialog(
+      BuildContext context, String orderId, String reasonToSubmit) {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD94D52).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFD94D52),
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Cancel Order?',
+                style: GoogleFonts.inter(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF0B243A),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Are you sure you want to cancel this order? This action cannot be undone.',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: const Color(0xFF868AA5),
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        AppUtils.haptic();
+                        Get.back();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: Color(0xFFE1E2E3)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Keep Order',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF0B243A),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        AppUtils.haptic();
+                        // 1. Close confirmation dialog
+                        Get.back();
+                        // 2. Close bottom sheet
+                        if (Get.isBottomSheetOpen ?? false) {
+                          Get.back();
+                        }
+                        // 3. Trigger cancellation API & refresh tracking
+                        await controller.cancelOrder(
+                          orderId,
+                          reason: reasonToSubmit,
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD94D52),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Yes, Cancel',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: true,
+    );
+  }
+
+  Widget _buildReasonsShimmer() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        4,
+        (index) => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8F9FB),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppShimmer(
+                  height: 16,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 16),
+              AppShimmer.circle(size: 20),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

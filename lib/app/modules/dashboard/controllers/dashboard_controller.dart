@@ -19,26 +19,9 @@ class DashboardController extends BaseController with WidgetsBindingObserver {
     final result = await _orderRepo.getActiveOrders(forceRefresh: forceRefresh);
     if (result.success && result.data != null) {
       activeOrders.assignAll(result.data!);
+    } else {
+      activeOrders.clear();
     }
-
-    // For testing: ensuring we have exactly ONE mock order to see how it looks
-  //   if (activeOrders.isEmpty) {
-  //     activeOrders.add(
-  //       OrderModel(
-  //         id: 'mock_1',
-  //         orderNumber: 'SD-999001',
-  //         status: 'picked_up',
-  //         pickupAddress: 'The Marble Grill, High Street',
-  //         deliveryAddress: 'Your Home',
-  //         items: [],
-  //         totalAmount: 15.0,
-  //         deliveryFee: 2.0,
-  //         distance: 1.5,
-  //         estimatedTime: 12,
-  //         createdAt: DateTime.now(),
-  //       ),
-  //     );
-  // }
   }
 
   @override

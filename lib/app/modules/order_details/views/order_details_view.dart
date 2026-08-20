@@ -405,7 +405,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                     ),
                   ),
                   Text(
-                    '₹${(item.subtotal > 0 ? item.subtotal : (item.price * item.quantity)).toStringAsFixed(2)}',
+                    '£${(item.subtotal > 0 ? item.subtotal : (item.price * item.quantity)).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontFamily: 'Fonts/Paragraph',
                       fontSize: 14,
@@ -527,16 +527,16 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
       ),
       child: Column(
         children: [
-          _buildPaymentRow('Item Total', '₹${subtotal.toStringAsFixed(2)}'),
+          _buildPaymentRow('Item Total', '£${subtotal.toStringAsFixed(2)}'),
           const SizedBox(height: 12),
-          _buildPaymentRow('Delivery Fee', '₹${order.deliveryFee.toStringAsFixed(2)}'),
+          _buildPaymentRow('Delivery Fee', '£${order.deliveryFee.toStringAsFixed(2)}'),
           if (order.vatAmount > 0) ...[
             const SizedBox(height: 12),
-            _buildPaymentRow('Taxes & Charges (VAT)', '₹${order.vatAmount.toStringAsFixed(2)}'),
+            _buildPaymentRow('Taxes & Charges (VAT)', '£${order.vatAmount.toStringAsFixed(2)}'),
           ],
           if (order.discountAmount > 0) ...[
             const SizedBox(height: 12),
-            _buildPaymentRow('Discount', '-₹${order.discountAmount.toStringAsFixed(2)}'),
+            _buildPaymentRow('Discount', '-£${order.discountAmount.toStringAsFixed(2)}'),
           ],
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -555,7 +555,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 ),
               ),
               Text(
-                '₹${order.totalAmount.toStringAsFixed(2)}',
+                '£${order.totalAmount.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontFamily: 'Fonts/Paragraph',
                   fontSize: 16,

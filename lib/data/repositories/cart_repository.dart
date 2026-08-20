@@ -37,15 +37,24 @@ class CartRepository {
   }
 
   Future<ApiResponse<bool>> updateCartItemQuantity(
-      int cartItemId, int quantity) async {
+      int cartItemId, int quantity, {List<int>? options}) async {
     try {
-      await _dio.post(ApiEndpoints.customerCartItem(cartItemId), data: {
+      final map = <String, dynamic>{
         'quantity': quantity,
         '_method': 'PUT',
-      });
-      return ApiResponse(success: true, message: '', data: true);
-    } catch (_) {
-      return ApiResponse(success: false, message: '', data: false);
+      };
+      if (options != null) {
+        map['options'] = options;
+      }
+      final response = await _dio.post(ApiEndpoints.customerCartItem(cartItemId), data: map);
+      final msg = (response.data as Map?)?['message'] as String? ?? '';
+      return ApiResponse(success: true, message: msg, data: true);
+    } catch (e) {
+      String msg = '';
+      if (e is DioException) {
+        msg = (e.response?.data as Map?)?['message'] as String? ?? '';
+      }
+      return ApiResponse(success: false, message: msg, data: false);
     }
   }
 

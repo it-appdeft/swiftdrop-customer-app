@@ -10,7 +10,7 @@ class HomeRepository {
 
   Future<ApiResponse<List<BannerModel>>> getBanners() async {
     try {
-      final response = await _dio.get(ApiEndpoints.banners);
+      final response = await _dio.get(ApiEndpoints.customerBanners);
       final rawData = response.data['data'];
       List<BannerModel> list = [];
       if (rawData is List) {
@@ -25,6 +25,7 @@ class HomeRepository {
     }
   }
 
+ 
   Future<ApiResponse<List<FoodItemModel>>> getFoodItems() async {
     try {
       final response = await _dio.get(ApiEndpoints.customerFoodItems);

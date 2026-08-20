@@ -1,3 +1,4 @@
+import 'package:swiftdrop_customer_app/app/modules/cart/controllers/cart_controller.dart';
 import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import 'product_addons_sheet.dart';
@@ -10,70 +11,65 @@ void showYourCustomizationsSheet(Map item) {
   );
 }
 
-class YourCustomizationsContent extends StatefulWidget {
+class YourCustomizationsContent extends StatelessWidget {
   final Map item;
   const YourCustomizationsContent({super.key, required this.item});
 
   @override
-  State<YourCustomizationsContent> createState() => _YourCustomizationsContentState();
-}
-
-class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
-  final List<Map<String, dynamic>> _mockCustomizations = [
-    {
-      'id': 101,
-      'name': 'Regular',
-      'price': 8.23,
-      'isVeg': true,
-      'quantity': 1,
-    },
-    {
-      'id': 102,
-      'name': 'Medium',
-      'price': 10.23,
-      'isVeg': true,
-      'quantity': 1,
-    },
-  ];
-
-  bool _hasChanges = false;
-
-  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.8,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: _mockCustomizations.length,
-                separatorBuilder: (_, __) => const Divider(color: AppColors.lightSurfaceBorder, height: 32),
-                itemBuilder: (context, index) => _buildCustomizationItem(_mockCustomizations[index]),
+    final cart = Get.find<CartController>();
+    final menuItemId = (item['id'] as int?) ?? 0;
+
+    return Obx(() {
+      final cartItems = cart.cartApiItems
+          .where((i) => i.menuItemId == menuItemId)
+          .toList();
+
+      if (cartItems.isEmpty) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (Get.isBottomSheetOpen ?? false) Get.back();
+        });
+        return const SizedBox.shrink();
+      }
+
+      return Material(
+        color: Colors.transparent,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(item['name'] as String? ?? ''),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: cartItems.length,
+                  separatorBuilder: (_, __) => const Divider(
+                    color: AppColors.lightSurfaceBorder,
+                    height: 32,
+                  ),
+                  itemBuilder: (context, index) =>
+                      _buildCustomizationItem(context, cart, cartItems[index]),
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            _buildAddNewButton(),
-            if (_hasChanges) _buildConfirmButton(),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
-          ],
+              const SizedBox(height: 24),
+              _buildAddNewButton(),
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
@@ -83,7 +79,7 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.item['name'] ?? '',
+                title,
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
@@ -110,18 +106,31 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
     );
   }
 
-  Widget _buildCustomizationItem(Map<String, dynamic> custom) {
+  Widget _buildCustomizationItem(
+      BuildContext context, CartController cart, CartApiItem cartItem) {
+    final modifiersStr = cartItem.modifiers.isNotEmpty
+        ? cartItem.modifiers.map((m) => m.optionName).join(', ')
+        : 'Regular';
+
+    final isVeg = cartItem.isVeg;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Assets.images.vegIcon.image(width: 16, height: 16),
+            (isVeg ? Assets.images.vegIcon : Assets.images.nonVegToggle)
+                .image(width: 16, height: 16),
             GestureDetector(
               onTap: () {
                 Get.back();
-                showProductAddonsSheet(widget.item);
+                showProductAddonsSheet(
+                  item,
+                  existingModifiers: cartItem.modifiers,
+                  editingCartItemId: cartItem.id,
+                  editingQuantity: cartItem.quantity,
+                );
               },
               child: Row(
                 children: [
@@ -134,7 +143,8 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.arrow_forward_ios, size: 12, color: AppColors.lightSurfaceDarkText),
+                  const Icon(Icons.arrow_forward_ios,
+                      size: 12, color: AppColors.lightSurfaceDarkText),
                 ],
               ),
             ),
@@ -150,7 +160,7 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    custom['name'],
+                    modifiersStr,
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
@@ -159,7 +169,7 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '£${custom['price'].toStringAsFixed(2)}',
+                    '£${cartItem.unitPrice.toStringAsFixed(2)}',
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -169,14 +179,19 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
                 ],
               ),
             ),
-            _buildQuantitySelector(custom),
+            _buildQuantitySelector(cart, cartItem),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildQuantitySelector(Map<String, dynamic> custom) {
+  Widget _buildQuantitySelector(CartController cart, CartApiItem cartItem) {
+    final isMinusLoading =
+        cart.loadingButtons.contains("${cartItem.id}-minus");
+    final isPlusLoading =
+        cart.loadingButtons.contains("${cartItem.id}-plus");
+
     return Container(
       width: 112,
       height: 40,
@@ -188,34 +203,54 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildQtyBtn(Assets.images.cartMinus, () {
-            if (custom['quantity'] > 0) {
-              setState(() {
-                custom['quantity']--;
-                _hasChanges = true;
-              });
-            }
-          }),
+          isMinusLoading
+              ? const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.primary),
+                  ),
+                )
+              : _buildQtyBtn(Assets.images.cartMinus, () {
+                  if (cartItem.quantity <= 1) {
+                    cart.deleteCartItem(cartItem.id,
+                        menuItemId: cartItem.menuItemId, buttonType: 'minus');
+                  } else {
+                    cart.updateCartItemQty(cartItem.id, cartItem.quantity - 1,
+                        menuItemId: cartItem.menuItemId, buttonType: 'minus');
+                  }
+                }),
           Text(
-            '${custom['quantity']}',
+            '${cartItem.quantity}',
             style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.lightSurfaceDarkText,
             ),
           ),
-          _buildQtyBtn(Assets.images.cartPlus, () {
-            setState(() {
-              custom['quantity']++;
-              _hasChanges = true;
-            });
-          }, isAdd: true),
+          isPlusLoading
+              ? const SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.primary),
+                  ),
+                )
+              : _buildQtyBtn(Assets.images.cartPlus, () {
+                  cart.updateCartItemQty(cartItem.id, cartItem.quantity + 1,
+                      menuItemId: cartItem.menuItemId, buttonType: 'plus');
+                }, isAdd: true),
         ],
       ),
     );
   }
 
-  Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap, {bool isAdd = false}) {
+  Widget _buildQtyBtn(AssetGenImage icon, VoidCallback onTap,
+      {bool isAdd = false}) {
     return GestureDetector(
       onTap: () {
         AppUtils.haptic();
@@ -233,7 +268,7 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
     return GestureDetector(
       onTap: () {
         Get.back();
-        showProductAddonsSheet(widget.item);
+        showProductAddonsSheet(item);
       },
       child: Text(
         'Add new customisation',
@@ -242,19 +277,6 @@ class _YourCustomizationsContentState extends State<YourCustomizationsContent> {
           fontWeight: FontWeight.w500,
           color: AppColors.primary,
         ),
-      ),
-    );
-  }
-
-  Widget _buildConfirmButton() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-      child: AppButton(
-        label: 'Confirm',
-        onTap: () {
-          // In real implementation, this would sync the changes back to the cart
-          Get.back();
-        },
       ),
     );
   }

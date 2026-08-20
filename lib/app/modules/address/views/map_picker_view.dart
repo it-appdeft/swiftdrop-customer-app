@@ -284,17 +284,31 @@ class MapPickerView extends GetView<MapPickerController> {
                 const SizedBox(height: 18),
                 AppButton(
                   label: AppStrings.confirmAndProceed,
-                  onTap: () => Get.toNamed(
-                    AppRoutes.addressDetails,
-                    arguments: {
-                      'address_line_1': controller.locationName.value,
-                      'city': controller.locationCity.value,
-                      'county': controller.locationCounty.value,
-                      'postcode': controller.locationPostcode.value,
-                      'lat': controller.currentLat,
-                      'lng': controller.currentLng,
-                    },
-                  ),
+                  onTap: () {
+                    final line1 = controller.locationName.value.trim().isNotEmpty
+                        ? controller.locationName.value.trim()
+                        : controller.locationAddress.value.trim().isNotEmpty
+                            ? controller.locationAddress.value.trim()
+                            : 'Selected Location';
+                    final city = controller.locationCity.value.trim().isNotEmpty
+                        ? controller.locationCity.value.trim()
+                        : 'City';
+                    final county = controller.locationCounty.value.trim().isNotEmpty
+                        ? controller.locationCounty.value.trim()
+                        : 'County';
+
+                    Get.toNamed(
+                      AppRoutes.addressDetails,
+                      arguments: {
+                        'address_line_1': line1,
+                        'city': city,
+                        'county': county,
+                        'postcode': controller.locationPostcode.value,
+                        'lat': controller.currentLat,
+                        'lng': controller.currentLng,
+                      },
+                    );
+                  },
                   backgroundColor: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                   height: 52,

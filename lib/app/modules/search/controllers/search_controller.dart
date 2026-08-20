@@ -260,7 +260,6 @@ class SearchTabController extends BaseController {
   void onClose() {
     queryController.dispose();
     scrollController.removeListener(_onScroll);
-    scrollController.dispose();
     super.onClose();
   }
 }
