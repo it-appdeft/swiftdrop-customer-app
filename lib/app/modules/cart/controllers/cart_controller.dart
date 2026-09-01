@@ -1,5 +1,7 @@
 import 'package:swiftdrop_customer_app/app/modules/dashboard/controllers/dashboard_controller.dart';
 import 'package:swiftdrop_customer_app/app/modules/order_history/controllers/order_history_controller.dart';
+import '../../../../data/models/order_model.dart';
+import '../../../../data/repositories/order_repository.dart';
 
 import '../../../../export.dart';
 import '../widgets/coupon_applied_dialog.dart';
@@ -12,6 +14,7 @@ class CartItem {
   final String? addons;
   final bool isVeg;
   final double price;
+  final double basePrice;
   final RxInt quantity;
   final String? image;
   final RxBool isExpanded = false.obs;
@@ -26,11 +29,13 @@ class CartItem {
     this.addons,
     this.isVeg = true,
     required this.price,
+    double? basePrice,
     int qty = 1,
     this.image,
     this.isAvailable = true,
     this.modifierGroups = const [],
-  }) : quantity = qty.obs;
+  })  : basePrice = basePrice ?? price,
+        quantity = qty.obs;
 
   bool get hasModifiers => modifierGroups.isNotEmpty;
 
@@ -40,6 +45,7 @@ class CartItem {
         'name': name,
         'description': description,
         'price': price.toStringAsFixed(2),
+        'base_price': basePrice.toStringAsFixed(2),
         'isVeg': isVeg,
         'image': image,
         'modifier_groups': modifierGroups,
@@ -88,7 +94,7 @@ class CartController extends BaseController {
     cookingRequestController.addListener(() {
       cookingRequestTemp.value = cookingRequestController.text;
     });
-    if (AuthService.to.isAuthenticated) {
+    if (Get.isRegistered<AuthService>() && AuthService.to.isAuthenticated) {
       Future.wait([fetchCart(), fetchCheckout()]);
     }
   }
@@ -111,6 +117,7 @@ class CartController extends BaseController {
           description: item.description,
           addons: addonsStr,
           price: item.unitPrice,
+          basePrice: item.basePrice,
           qty: item.quantity,
           image: item.imageUrl,
           isVeg: item.isVeg,
@@ -126,6 +133,19 @@ class CartController extends BaseController {
       if (cart.restaurantId != null) {
         cartRestaurantId.value = cart.restaurantId!;
         _enrichCartItemsWithGroups();
+      } else {
+        cartRestaurantId.value = 0;
+      }
+      
+      if (cart.items.isEmpty) {
+        cartRestaurantId.value = 0;
+        cartRestaurantName.value = '';
+        cartRestaurantLogo.value = '';
+        isCouponApplied.value = false;
+        couponDiscount.value = 0.0;
+        checkoutData.value = null;
+        cookingRequest.value = '';
+        isCookingRequestSaved.value = false;
       }
       
       _checkEmptyAndPop();
@@ -171,6 +191,13 @@ class CartController extends BaseController {
     return result;
   }
 
+  List<CartApiModifier> getModifiersForCartItem(int cartItemId) {
+    for (final item in cartApiItems) {
+      if (item.id == cartItemId) return item.modifiers;
+    }
+    return [];
+  }
+
   List<CartApiModifier> getModifiersForItem(int menuItemId) {
     for (final item in cartApiItems) {
       if (item.menuItemId == menuItemId) return item.modifiers;
@@ -183,6 +210,22 @@ class CartController extends BaseController {
     if (result.success && result.data != null) {
       final data = result.data!;
       checkoutData.value = data;
+
+      if (data.isEmpty || data.items.isEmpty) {
+        isCouponApplied.value = false;
+        couponDiscount.value = 0.0;
+        cartRestaurantId.value = 0;
+        cartRestaurantName.value = '';
+        cartRestaurantLogo.value = '';
+        quantities.clear();
+        items.clear();
+        cartApiItems.clear();
+        cartItemCount.value = 0;
+        cookingRequest.value = '';
+        isCookingRequestSaved.value = false;
+        _checkEmptyAndPop();
+        return;
+      }
 
       // Populate items from checkout response
       final newQty = <int, int>{};
@@ -198,6 +241,7 @@ class CartController extends BaseController {
               ? item.modifiers.map((m) => m.optionName).join(', ')
               : null,
           price: item.unitPrice,
+          basePrice: item.basePrice,
           qty: item.quantity,
           image: item.imageUrl,
           isVeg: item.isVeg,
@@ -231,6 +275,8 @@ class CartController extends BaseController {
       isCouponApplied.value = data.appliedCoupon != null;
       if (data.appliedCoupon != null) {
         couponDiscount.value = data.bill.itemDiscount;
+      } else {
+        couponDiscount.value = 0.0;
       }
       
       _checkEmptyAndPop();
@@ -474,6 +520,11 @@ class CartController extends BaseController {
     cartRestaurantId.value = 0;
     cartRestaurantName.value = '';
     cartRestaurantLogo.value = '';
+    isCouponApplied.value = false;
+    couponDiscount.value = 0.0;
+    checkoutData.value = null;
+    cookingRequest.value = '';
+    isCookingRequestSaved.value = false;
     if (result.success && result.message.isNotEmpty) AppUtils.showSuccess(result.message);
     
     _checkEmptyAndPop();
@@ -495,6 +546,19 @@ class CartController extends BaseController {
     } else {
       AppUtils.showError(result.message.isNotEmpty ? result.message : 'Failed to apply coupon');
     }
+  }
+
+  Future<void> removeCouponApi() async {
+    AppOverlayLoader.show();
+    final result = await _repo.removeCoupon();
+    AppOverlayLoader.hide();
+
+    isCouponApplied.value = false;
+    couponDiscount.value = 0.0;
+    if (result.success && result.message.isNotEmpty) {
+      AppUtils.showSuccess(result.message);
+    }
+    await fetchCheckout();
   }
 
   Future<void> placeOrder() async {
@@ -529,7 +593,87 @@ class CartController extends BaseController {
   }
 
   void applyCoupon() => isCouponApplied.value = true;
-  void removeCoupon() => isCouponApplied.value = false;
-  void clearCart() => items.clear();
+  void removeCoupon() {
+    isCouponApplied.value = false;
+    couponDiscount.value = 0.0;
+    removeCouponApi();
+  }
+  void clearCart() {
+    quantities.clear();
+    items.clear();
+    cartApiItems.clear();
+    cartItemCount.value = 0;
+    cartRestaurantId.value = 0;
+    cartRestaurantName.value = '';
+    cartRestaurantLogo.value = '';
+    isCouponApplied.value = false;
+    couponDiscount.value = 0.0;
+    checkoutData.value = null;
+    cookingRequest.value = '';
+    isCookingRequestSaved.value = false;
+  }
   void proceedToPlaceOrder() => Get.toNamed(AppRoutes.checkout);
+
+  Future<void> reorderFromOrder(OrderModel order) async {
+    if (order.items.isEmpty) {
+      AppUtils.showError('No items found in this order to reorder.');
+      return;
+    }
+
+    AppOverlayLoader.show();
+    try {
+      try {
+        await _repo.clearCart();
+      } catch (_) {}
+
+      quantities.clear();
+      items.clear();
+      cartApiItems.clear();
+
+      final rId = order.restaurantId ?? 0;
+      cartRestaurantId.value = rId;
+      cartRestaurantName.value = order.displayRestaurantName;
+      cartRestaurantLogo.value = order.fullRestaurantImage ?? '';
+
+      final newItems = <CartItem>[];
+      for (final item in order.items) {
+        final mId = int.tryParse(item.id) ?? 0;
+        final qty = item.quantity > 0 ? item.quantity : 1;
+        final price = item.price > 0 ? item.price : item.unitPrice;
+        if (mId > 0) {
+          quantities[mId] = qty;
+          try {
+            await _repo.addToCart(menuItemId: mId, options: const [], quantity: qty);
+          } catch (_) {}
+        }
+        newItems.add(CartItem(
+          id: item.id.isNotEmpty ? item.id : item.name,
+          menuItemId: mId,
+          name: item.name,
+          description: '',
+          addons: item.modifiers.join(', '),
+          price: price,
+          basePrice: price,
+          qty: qty,
+          image: item.image ?? order.fullRestaurantImage,
+        ));
+      }
+
+      try {
+        await fetchCart();
+        await fetchCheckout();
+      } catch (_) {}
+
+      if (items.isEmpty && newItems.isNotEmpty) {
+        items.assignAll(newItems);
+        cartItemCount.value = items.fold<int>(0, (sum, i) => sum + i.quantity.value);
+      }
+
+      AppOverlayLoader.hide();
+      Get.toNamed(AppRoutes.cart);
+    } catch (e) {
+      AppOverlayLoader.hide();
+      AppUtils.showError('Failed to reorder items.');
+    }
+  }
 }

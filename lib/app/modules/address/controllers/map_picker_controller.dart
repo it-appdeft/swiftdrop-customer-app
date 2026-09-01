@@ -17,13 +17,19 @@ class MapPickerController extends GetxController {
   double get currentLat => _lastCamera.target.latitude;
   double get currentLng => _lastCamera.target.longitude;
 
+  // --- TESTING STATIC COORDINATES ---
+  static const double testLat = 30.7046486;
+  static const double testLng = 76.7178726;
+
   CameraPosition initialCameraPosition = const CameraPosition(
-    target: LatLng(51.5074, -0.1278),
+    target: LatLng(testLat, testLng),
+    // target: LatLng(51.5074, -0.1278), // ORIGINAL
     zoom: 15.0,
   );
 
   CameraPosition _lastCamera = const CameraPosition(
-    target: LatLng(51.5074, -0.1278),
+    target: LatLng(testLat, testLng),
+    // target: LatLng(51.5074, -0.1278), // ORIGINAL
     zoom: 15.0,
   );
   bool _skipNextGeocode = false;

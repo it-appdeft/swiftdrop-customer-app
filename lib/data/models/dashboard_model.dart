@@ -173,11 +173,15 @@ class TodayHoursModel {
     required this.openTo,
   });
 
-  factory TodayHoursModel.fromJson(Map<String, dynamic> json) => TodayHoursModel(
-        isOpen: json['is_open'] as bool? ?? false,
-        openFrom: json['open_from'] as String? ?? '',
-        openTo: json['open_to'] as String? ?? '',
-      );
+  factory TodayHoursModel.fromJson(Map<String, dynamic> json) {
+    final rawOpen = json['is_open'] ?? json['isOpen'];
+    final bool isOpen = rawOpen == true || rawOpen == 1 || rawOpen == '1';
+    return TodayHoursModel(
+      isOpen: isOpen,
+      openFrom: (json['open_from'] ?? json['opens_at'] ?? json['open'] ?? '').toString(),
+      openTo: (json['open_to'] ?? json['closes_at'] ?? json['close'] ?? '').toString(),
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'is_open': isOpen,

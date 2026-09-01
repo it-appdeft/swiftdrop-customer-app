@@ -52,6 +52,9 @@ class _ActiveOrdersFloatingBarState extends State<ActiveOrdersFloatingBar> {
   }
 
   int _calculateRemainingMinutes(OrderModel order) {
+    if (order.etaMinutes != null && order.etaMinutes! > 0) {
+      return order.etaMinutes!;
+    }
     final totalEst = order.estimatedTime > 0 ? order.estimatedTime : 25;
     final elapsedMinutes = DateTime.now().difference(order.createdAt).inMinutes;
     final remaining = totalEst - elapsedMinutes;
@@ -65,7 +68,12 @@ class _ActiveOrdersFloatingBarState extends State<ActiveOrdersFloatingBar> {
     return GestureDetector(
       onTap: () {
         AppUtils.haptic();
-        Get.toNamed(AppRoutes.orderTracking, arguments: {'orderId': order.id});
+        Get.toNamed(AppRoutes.orderTracking, arguments: {
+          'orderId': order.id.isNotEmpty ? order.id : order.targetId,
+          'id': order.id.isNotEmpty ? order.id : order.targetId,
+          'orderUuid': order.uuid,
+          'order': order,
+        });
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -163,23 +171,45 @@ class _ActiveOrdersFloatingBarState extends State<ActiveOrdersFloatingBar> {
   }
 
   Widget _buildPageIndicator(int count) {
+    if (count <= 1) return const SizedBox.shrink();
+
+    if (count > 6) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.lightOtpBoxBg,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          '${_currentPage + 1} / $count',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.lightOtpBoxBg, // Light grey background
+        color: AppColors.lightOtpBoxBg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(count, (index) {
-          return Container(
-            width: 6,
+          final isSelected = _currentPage == index;
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: isSelected ? 12 : 6,
             height: 6,
-            margin: const EdgeInsets.symmetric(horizontal: 3),
+            margin: const EdgeInsets.symmetric(horizontal: 2.5),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _currentPage == index
+              borderRadius: BorderRadius.circular(3),
+              color: isSelected
                   ? AppColors.primary
                   : AppColors.primary.withValues(alpha: 0.2),
             ),

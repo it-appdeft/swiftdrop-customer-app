@@ -1,23 +1,33 @@
 import 'package:intl/intl.dart';
-import '../../app/config/app_config.dart';
+import 'package:swiftdrop_customer_app/app/config/app_config.dart';
+import 'package:swiftdrop_customer_app/app/widgets/app_image.dart';
 
 class OrderItem {
+  final String id;
   final String name;
   final int quantity;
   final double price;
   final double subtotal;
   final bool isVeg;
+  final List<String> modifiers;
+  final String? image;
+
+  double get unitPrice => price;
 
   const OrderItem({
+    this.id = '',
     required this.name,
     required this.quantity,
     required this.price,
     this.subtotal = 0.0,
     this.isVeg = true,
+    this.modifiers = const [],
+    this.image,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     final menuItem = json['menu_item'] is Map ? json['menu_item'] as Map : null;
+    final id = (json['menu_item_id'] ?? json['item_id'] ?? menuItem?['id'] ?? json['id'] ?? '').toString();
     final name = (json['name'] ?? json['item_name'] ?? json['title'] ?? menuItem?['name'] ?? '').toString();
 
     int parseInt(dynamic val) {
@@ -40,26 +50,76 @@ class OrderItem {
     final subtotal = rawSub > 0 ? rawSub : (price * quantity);
     final isVeg = menuItem?['is_veg'] == true || json['is_veg'] == true;
 
+    final rawImg = (json['image'] ?? json['image_url'] ?? menuItem?['image'] ?? menuItem?['image_url'])?.toString();
+    final image = (rawImg != null && rawImg.isNotEmpty)
+        ? AppImage.buildUrl(rawImg)
+        : null;
+
+    final rawModifiers = json['modifiers'] ?? json['options'] ?? json['addons'];
+    final modifiers = <String>[];
+    if (rawModifiers is List) {
+      for (final m in rawModifiers) {
+        if (m is String && m.isNotEmpty) {
+          modifiers.add(m);
+        } else if (m is Map) {
+          final opt = (m['name'] ?? m['option_name'] ?? m['title'])?.toString();
+          if (opt != null && opt.isNotEmpty) modifiers.add(opt);
+        }
+      }
+    }
+
     return OrderItem(
+      id: id,
       name: name,
       quantity: quantity,
       price: price,
       subtotal: subtotal,
       isVeg: isVeg,
+      modifiers: modifiers,
+      image: image,
     );
   }
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'name': name,
         'quantity': quantity,
         'price': price,
         'subtotal': subtotal,
         'is_veg': isVeg,
+        'modifiers': modifiers,
+      };
+}
+
+class OrderStatusHistory {
+  final String status;
+  final DateTime at;
+
+  const OrderStatusHistory({required this.status, required this.at});
+
+  factory OrderStatusHistory.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic val) {
+      if (val is String && val.isNotEmpty) {
+        return DateTime.tryParse(val) ?? DateTime.now();
+      }
+      return DateTime.now();
+    }
+
+    return OrderStatusHistory(
+      status: (json['status'] ?? '').toString().toLowerCase(),
+      at: parseDate(json['at'] ?? json['created_at'] ?? json['timestamp']),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'status': status,
+        'at': at.toIso8601String(),
       };
 }
 
 class OrderModel {
   final String id;
+  final String? uuid;
   final String orderNumber;
   final String status;
   final String pickupAddress;
@@ -72,6 +132,7 @@ class OrderModel {
   final double deliveryFee;
   final double driverTip;
   final double distance;
+  final int? etaMinutes;
   final int estimatedTime;
   final DateTime createdAt;
   final DateTime? acceptedAt;
@@ -83,7 +144,11 @@ class OrderModel {
   final String? cancelledBy;
   final String? cancellationReason;
   final bool isAcceptedFlag;
+  final bool? cancellable;
+  final String? deliveryCode;
   final String? rawPlacedAt;
+  final String? specialInstructions;
+  final List<OrderStatusHistory> statusHistory;
 
   final String? addressLine1;
   final String? addressLine2;
@@ -95,6 +160,7 @@ class OrderModel {
   final double? deliveryLat;
   final double? deliveryLng;
 
+  final int? restaurantId;
   final String? restaurantName;
   final String? restaurantImage;
 
@@ -107,12 +173,18 @@ class OrderModel {
   /// Encoded polyline supplied by the backend, when it precomputes the route.
   final String? routePolyline;
 
+  final String? orderStatus;
+  final String? deliveryStatus;
+
   final String? paymentMethod;
 
   const OrderModel({
     required this.id,
+    this.uuid,
     required this.orderNumber,
     required this.status,
+    this.orderStatus,
+    this.deliveryStatus,
     required this.pickupAddress,
     required this.deliveryAddress,
     required this.items,
@@ -123,6 +195,7 @@ class OrderModel {
     required this.deliveryFee,
     this.driverTip = 0.0,
     required this.distance,
+    this.etaMinutes,
     required this.estimatedTime,
     required this.createdAt,
     this.acceptedAt,
@@ -134,7 +207,11 @@ class OrderModel {
     this.cancelledBy,
     this.cancellationReason,
     this.isAcceptedFlag = false,
+    this.cancellable,
+    this.deliveryCode,
     this.rawPlacedAt,
+    this.specialInstructions,
+    this.statusHistory = const [],
     this.addressLine1,
     this.addressLine2,
     this.addressCity,
@@ -143,6 +220,7 @@ class OrderModel {
     this.pickupLng,
     this.deliveryLat,
     this.deliveryLng,
+    this.restaurantId,
     this.restaurantName,
     this.restaurantImage,
     this.driverLat,
@@ -166,24 +244,57 @@ class OrderModel {
       if (json['items'] != null && orderMap['items'] == null) orderMap['items'] = json['items'];
       if (json['delivery'] != null && orderMap['delivery'] == null) orderMap['delivery'] = json['delivery'];
       if (json['payment'] != null && orderMap['payment'] == null) orderMap['payment'] = json['payment'];
+      if (json['status_history'] != null && orderMap['status_history'] == null) orderMap['status_history'] = json['status_history'];
+      if (json['special_instructions'] != null && orderMap['special_instructions'] == null) orderMap['special_instructions'] = json['special_instructions'];
       json = orderMap;
     }
 
-    final id = (json['id'] ?? json['order_id'] ?? json['uuid'] ?? '').toString();
+    final uuid = (json['uuid'] ??
+            rawJson['uuid'] ??
+            (rawJson['data'] is Map
+                ? (rawJson['data']['uuid'] ??
+                    (rawJson['data']['order'] is Map
+                        ? rawJson['data']['order']['uuid']
+                        : null))
+                : null))
+        ?.toString();
+
+    final id = (json['id'] ?? json['order_id'] ?? uuid ?? '').toString();
 
     final orderNumber = (json['orderNumber'] ??
             json['order_number'] ??
             json['order_code'] ??
             (id.isNotEmpty
                 ? (id.length > 8 ? 'SD-${id.substring(0, 8).toUpperCase()}' : 'SD-$id')
-                : 'SD-0000'))
+                : (uuid != null && uuid.isNotEmpty
+                    ? 'SD-${uuid.substring(0, 8).toUpperCase()}'
+                    : 'SD-0000')))
         .toString();
 
-    final status = (json['status'] ?? json['order_status'] ?? 'pending')
-        .toString()
+    final rawOrderStatus = (json['order_status'] ?? json['orderStatus'] ?? json['status'])?.toString();
+    final rawDeliveryStatus = (json['delivery_status'] ??
+            json['deliveryStatus'] ??
+            (json['delivery'] is Map ? json['delivery']['status'] : null) ??
+            (rawJson['data'] is Map && rawJson['data']['delivery'] is Map ? rawJson['data']['delivery']['status'] : null))
+        ?.toString();
+
+    String normalizeStatus(String? val) {
+      if (val == null || val.isEmpty) return '';
+      return val.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    }
+
+    final parsedOrderStatus = normalizeStatus(rawOrderStatus);
+    final parsedDeliveryStatus = normalizeStatus(rawDeliveryStatus);
+
+    final status = (parsedOrderStatus.isNotEmpty
+            ? parsedOrderStatus
+            : (parsedDeliveryStatus.isNotEmpty ? parsedDeliveryStatus : 'pending'))
         .toLowerCase();
 
     final isAcceptedFlag = json['is_accepted'] == true || json['is_accepted'] == 1 || json['is_accepted'] == '1';
+    final cancellable = json['cancellable'] is bool
+        ? json['cancellable'] as bool
+        : (json['can_cancel'] is bool ? json['can_cancel'] as bool : null);
 
     final rawPlacedAt = (json['placed_at'] ?? json['placedAt'] ?? json['created_at'] ?? json['createdAt'])?.toString();
 
@@ -197,7 +308,7 @@ class OrderModel {
       final r = json['restaurant'];
       if (r is Map) {
         final rName = (r['name'] ?? r['title'] ?? '').toString();
-        final fullAddr = (r['full_address'] ?? r['address'] ?? r['formatted_address'] ?? '').toString();
+        final fullAddr = (r['full_address'] ?? r['address'] ?? r['formatted_address'] ?? r['location'] ?? '').toString();
         final city = (r['city'] ?? '').toString();
         final rAddr = fullAddr.isNotEmpty && city.isNotEmpty ? '$fullAddr, $city' : (fullAddr.isNotEmpty ? fullAddr : city);
         pickup = rName.isNotEmpty && rAddr.isNotEmpty
@@ -225,7 +336,7 @@ class OrderModel {
     if (json['address'] != null) {
       final a = json['address'];
       if (a is Map) {
-        addrLine1 = (a['address_line_1'] ?? a['line1'] ?? a['street'])?.toString();
+        addrLine1 = (a['address_line_1'] ?? a['line1'] ?? a['line'] ?? a['street'])?.toString();
         addrLine2 = (a['address_line_2'] ?? a['line2'] ?? a['suite'])?.toString();
         addrCity = a['city']?.toString();
         addrLabel = a['label']?.toString();
@@ -237,7 +348,7 @@ class OrderModel {
           delivery = parts.join(', ');
         }
         if (delivery.isEmpty) {
-          delivery = (a['formatted_address'] ?? a['address'] ?? '').toString();
+          delivery = (a['line'] ?? a['formatted_address'] ?? a['address'] ?? '').toString();
         }
       } else if (a is String) {
         delivery = a;
@@ -273,6 +384,12 @@ class OrderModel {
       return 0;
     }
 
+    int? parseNullableInt(dynamic val) {
+      if (val is num) return val.toInt();
+      if (val is String) return int.tryParse(val);
+      return null;
+    }
+
     final totalAmount = parseDouble(
         json['totalAmount'] ?? json['total_amount'] ?? json['total'] ?? json['grand_total'] ?? json['order_total'] ?? json['amount']);
     final subtotalAmount = parseDouble(
@@ -286,9 +403,14 @@ class OrderModel {
     final driverTip = parseDouble(
         json['driverTip'] ?? json['driver_tip'] ?? json['tip']);
     final distance = parseDouble(json['distance']);
-    final rawEst = parseInt(
-        json['estimatedTime'] ?? json['estimated_time'] ?? json['delivery_time'] ?? json['eta_minutes']);
-    final estimatedTime = rawEst == 0 ? 20 : rawEst;
+    final deliveryCode = (json['delivery_code'] ??
+            json['deliveryCode'] ??
+            json['pin'] ??
+            json['code'] ??
+            (rawJson['data'] is Map && rawJson['data']['order'] is Map
+                ? rawJson['data']['order']['delivery_code']
+                : null))
+        ?.toString();
 
     Map<String, dynamic>? mapOf(String key) {
       final value = json[key];
@@ -304,13 +426,49 @@ class OrderModel {
       return null;
     }
 
-    final restaurantJson = mapOf('restaurant') ?? mapOf('store') ?? mapOf('vendor');
+    final restaurantJson = mapOf('restaurant') ??
+        mapOf('store') ??
+        mapOf('vendor') ??
+        (rawJson['data'] is Map && rawJson['data']['restaurant'] is Map
+            ? Map<String, dynamic>.from(rawJson['data']['restaurant'] as Map)
+            : null);
     final addressJson = mapOf('address') ??
         mapOf('selected_address') ??
         mapOf('delivery_address_details') ??
-        mapOf('customer_address');
-    final driverJson =
-        mapOf('driver') ?? mapOf('rider') ?? mapOf('delivery_partner');
+        mapOf('customer_address') ??
+        (rawJson['data'] is Map && rawJson['data']['address'] is Map
+            ? Map<String, dynamic>.from(rawJson['data']['address'] as Map)
+            : null);
+    final deliveryJson = mapOf('delivery') ??
+        (rawJson['data'] is Map && rawJson['data']['delivery'] is Map
+            ? Map<String, dynamic>.from(rawJson['data']['delivery'] as Map)
+            : null);
+    final driverJson = mapOf('driver') ??
+        mapOf('rider') ??
+        mapOf('delivery_partner') ??
+        (deliveryJson != null && deliveryJson['driver'] is Map
+            ? Map<String, dynamic>.from(deliveryJson['driver'] as Map)
+            : null) ??
+        (deliveryJson != null && deliveryJson['rider'] is Map
+            ? Map<String, dynamic>.from(deliveryJson['rider'] as Map)
+            : null) ??
+        (rawJson['data'] is Map && rawJson['data']['driver'] is Map
+            ? Map<String, dynamic>.from(rawJson['data']['driver'] as Map)
+            : null);
+
+    final etaMinutes = parseNullableInt(
+        json['eta_minutes'] ??
+        json['etaMinutes'] ??
+        json['eta'] ??
+        deliveryJson?['eta_minutes'] ??
+        deliveryJson?['eta']);
+
+    final rawEst = parseInt(json['estimatedTime'] ??
+        json['estimated_time'] ??
+        json['delivery_time'] ??
+        etaMinutes ??
+        deliveryJson?['estimated_time']);
+    final estimatedTime = rawEst > 0 ? rawEst : (etaMinutes ?? 20);
 
     const latKeys = ['lat', 'latitude'];
     const lngKeys = ['lng', 'long', 'longitude'];
@@ -328,6 +486,9 @@ class OrderModel {
         json['delivery_lng'] ??
         pick(addressJson, lngKeys));
 
+    final rawRestaurantId = parseInt(json['restaurant_id'] ?? json['restaurantId'] ?? pick(restaurantJson, ['id', 'restaurant_id']));
+    final restaurantId = rawRestaurantId > 0 ? rawRestaurantId : null;
+
     final restaurantName = (json['restaurantName'] ??
             json['restaurant_name'] ??
             (json['restaurant'] is String ? json['restaurant'] : null) ??
@@ -342,31 +503,38 @@ class OrderModel {
         ?.toString();
 
     final driverLat = parseNullableDouble(
-        json['driverLat'] ?? json['driver_lat'] ?? pick(driverJson, latKeys));
+        json['driverLat'] ?? json['driver_lat'] ?? pick(driverJson, latKeys) ?? deliveryJson?['lat']);
     final driverLng = parseNullableDouble(
-        json['driverLng'] ?? json['driver_lng'] ?? pick(driverJson, lngKeys));
+        json['driverLng'] ?? json['driver_lng'] ?? pick(driverJson, lngKeys) ?? deliveryJson?['lng']);
     final driverName = (json['driverName'] ??
             json['driver_name'] ??
-            pick(driverJson, ['name', 'full_name']))
+            pick(driverJson, ['name', 'full_name', 'title']))
         ?.toString();
     final driverImage = (json['driverImage'] ??
             json['driver_image'] ??
-            pick(driverJson, ['avatar', 'image_url', 'photo', 'image']))
+            pick(driverJson, ['photo', 'avatar', 'image_url', 'image', 'profile_photo', 'picture']))
         ?.toString();
     final driverRating = parseNullableDouble(
         json['driverRating'] ?? json['driver_rating'] ?? pick(driverJson, ['rating']));
 
     final routePolyline = (json['routePolyline'] ??
             json['route_polyline'] ??
-            json['polyline'] ??
-            (json['route'] is Map ? json['route']['polyline'] : null))
+            pick(deliveryJson, ['polyline', 'route_polyline', 'route']))
         ?.toString();
 
     final paymentMethod = (json['paymentMethod'] ??
             json['payment_method'] ??
-            json['payment_mode'] ??
             json['payment_type'] ??
-            (json['payment'] is Map ? (json['payment']['method'] ?? json['payment']['payment_method']) : null))
+            pick(mapOf('payment'), ['method', 'type', 'gateway']))
+        ?.toString();
+
+    final specialInstructions = (json['special_instructions'] ??
+            json['specialInstructions'] ??
+            json['cooking_instructions'] ??
+            json['cooking_request'] ??
+            json['instructions'] ??
+            json['notes'] ??
+            json['note'])
         ?.toString();
 
     DateTime parseDate(dynamic val) {
@@ -383,20 +551,53 @@ class OrderModel {
       return null;
     }
 
-    final createdAt = parseDate(json['createdAt'] ?? json['created_at'] ?? json['placed_at'] ?? json['placedAt']);
-    final acceptedAt = parseNullableDate(json['acceptedAt'] ?? json['accepted_at']);
-    final preparingAt = parseNullableDate(json['preparingAt'] ?? json['preparing_at']);
-    final readyAt = parseNullableDate(json['readyAt'] ?? json['ready_at']);
-    final pickedUpAt = parseNullableDate(json['pickedUpAt'] ?? json['picked_up_at']);
-    final deliveredAt = parseNullableDate(json['deliveredAt'] ?? json['delivered_at']);
-    final cancelledAt = parseNullableDate(json['cancelledAt'] ?? json['cancelled_at']);
+    final rawHistory = json['status_history'] ??
+        rawJson['status_history'] ??
+        (rawJson['data'] is Map ? rawJson['data']['status_history'] : null);
+    final statusHistoryList = <OrderStatusHistory>[];
+    DateTime? historyPlacedAt;
+    DateTime? historyAcceptedAt;
+    DateTime? historyPreparingAt;
+    DateTime? historyReadyAt;
+    DateTime? historyPickedUpAt;
+    DateTime? historyDeliveredAt;
+    DateTime? historyCancelledAt;
+
+    if (rawHistory is List) {
+      for (final h in rawHistory) {
+        if (h is Map) {
+          final item = OrderStatusHistory.fromJson(Map<String, dynamic>.from(h));
+          statusHistoryList.add(item);
+          final hStatus = item.status;
+          final hAt = item.at;
+          if (hStatus == 'placed' || hStatus == 'pending') historyPlacedAt = hAt;
+          if (hStatus == 'accepted' || hStatus == 'confirmed') historyAcceptedAt = hAt;
+          if (hStatus == 'preparing' || hStatus == 'kitchen' || hStatus == 'in_progress') historyPreparingAt = hAt;
+          if (hStatus == 'ready' || hStatus == 'ready_for_pickup') historyReadyAt = hAt;
+          if (hStatus == 'picked_up' || hStatus == 'out_for_delivery' || hStatus == 'on_the_way' || hStatus == 'in_transit') historyPickedUpAt = hAt;
+          if (hStatus == 'delivered' || hStatus == 'completed') historyDeliveredAt = hAt;
+          if (hStatus == 'cancelled' || hStatus == 'canceled' || hStatus == 'rejected' || hStatus == 'failed') historyCancelledAt = hAt;
+        }
+      }
+    }
+
+    final createdAt = parseDate(json['createdAt'] ?? json['created_at'] ?? json['placed_at'] ?? json['placedAt'] ?? historyPlacedAt?.toIso8601String());
+    final acceptedAt = parseNullableDate(json['acceptedAt'] ?? json['accepted_at']) ?? historyAcceptedAt;
+    final preparingAt = parseNullableDate(json['preparingAt'] ?? json['preparing_at']) ?? historyPreparingAt;
+    final readyAt = parseNullableDate(json['readyAt'] ?? json['ready_at']) ?? historyReadyAt;
+    final pickedUpAt = parseNullableDate(json['pickedUpAt'] ?? json['picked_up_at']) ?? historyPickedUpAt;
+    final deliveredAt = parseNullableDate(json['deliveredAt'] ?? json['delivered_at']) ?? historyDeliveredAt;
+    final cancelledAt = parseNullableDate(json['cancelledAt'] ?? json['cancelled_at']) ?? historyCancelledAt;
     final cancelledBy = (json['cancelled_by'] ?? json['canceled_by'])?.toString();
     final cancellationReason = (json['cancellation_reason'] ?? json['cancel_reason'] ?? json['reason'])?.toString();
 
     return OrderModel(
       id: id,
+      uuid: uuid,
       orderNumber: orderNumber,
       status: status,
+      orderStatus: parsedOrderStatus.isNotEmpty ? parsedOrderStatus : null,
+      deliveryStatus: parsedDeliveryStatus.isNotEmpty ? parsedDeliveryStatus : null,
       pickupAddress: pickup,
       deliveryAddress: delivery,
       items: itemsList,
@@ -407,6 +608,7 @@ class OrderModel {
       deliveryFee: deliveryFee,
       driverTip: driverTip,
       distance: distance,
+      etaMinutes: etaMinutes,
       estimatedTime: estimatedTime,
       createdAt: createdAt,
       acceptedAt: acceptedAt,
@@ -418,7 +620,11 @@ class OrderModel {
       cancelledBy: cancelledBy,
       cancellationReason: cancellationReason,
       isAcceptedFlag: isAcceptedFlag,
+      cancellable: cancellable,
+      deliveryCode: deliveryCode,
       rawPlacedAt: rawPlacedAt,
+      specialInstructions: specialInstructions,
+      statusHistory: statusHistoryList,
       addressLine1: addrLine1,
       addressLine2: addrLine2,
       addressCity: addrCity,
@@ -427,6 +633,7 @@ class OrderModel {
       pickupLng: pickupLng,
       deliveryLat: deliveryLat,
       deliveryLng: deliveryLng,
+      restaurantId: restaurantId,
       restaurantName: restaurantName,
       restaurantImage: restaurantImage,
       driverLat: driverLat,
@@ -441,8 +648,11 @@ class OrderModel {
 
   Map<String, dynamic> toJson() => {
         'id': id,
+        if (uuid != null) 'uuid': uuid,
         'orderNumber': orderNumber,
         'status': status,
+        if (orderStatus != null) 'order_status': orderStatus,
+        if (deliveryStatus != null) 'delivery_status': deliveryStatus,
         'pickupAddress': pickupAddress,
         'deliveryAddress': deliveryAddress,
         'items': items.map((e) => e.toJson()).toList(),
@@ -450,13 +660,18 @@ class OrderModel {
         'deliveryFee': deliveryFee,
         'driverTip': driverTip,
         'distance': distance,
+        if (etaMinutes != null) 'eta_minutes': etaMinutes,
         'estimatedTime': estimatedTime,
         'createdAt': createdAt.toIso8601String(),
         'acceptedAt': acceptedAt?.toIso8601String(),
         'pickedUpAt': pickedUpAt?.toIso8601String(),
         'deliveredAt': deliveredAt?.toIso8601String(),
         'isAcceptedFlag': isAcceptedFlag,
+        if (cancellable != null) 'cancellable': cancellable,
+        if (deliveryCode != null) 'deliveryCode': deliveryCode,
         'rawPlacedAt': rawPlacedAt,
+        if (specialInstructions != null) 'special_instructions': specialInstructions,
+        if (statusHistory.isNotEmpty) 'status_history': statusHistory.map((e) => e.toJson()).toList(),
         'pickupLat': pickupLat,
         'pickupLng': pickupLng,
         'deliveryLat': deliveryLat,
@@ -472,6 +687,11 @@ class OrderModel {
         'paymentMethod': paymentMethod,
       };
 
+  /// Identifier used for backend API endpoints (prefers numeric id over uuid)
+  String get targetId => (id.isNotEmpty && id != '0') ? id : (uuid ?? '');
+
+  String get cancelId => targetId;
+
   String get displayRestaurantName {
     final fromApi = restaurantName?.trim() ?? '';
     if (fromApi.isNotEmpty) return fromApi;
@@ -482,12 +702,7 @@ class OrderModel {
   String? get fullRestaurantImage {
     final img = restaurantImage?.trim();
     if (img == null || img.isEmpty) return null;
-    if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    final base = AppConfig.baseUrl.endsWith('/')
-        ? AppConfig.baseUrl.substring(0, AppConfig.baseUrl.length - 1)
-        : AppConfig.baseUrl;
-    final path = img.startsWith('/') ? img : '/$img';
-    return '$base$path';
+    return AppImage.buildUrl(img);
   }
 
   String get displayPlacedAt {
@@ -495,6 +710,20 @@ class OrderModel {
       return rawPlacedAt!;
     }
     return DateFormat('MMMM d, h:mm a').format(createdAt);
+  }
+
+  String get displayCancelledAt {
+    if (cancelledAt != null) {
+      return DateFormat('MMMM d, h:mm a').format(cancelledAt!.toLocal());
+    }
+    return displayPlacedAt;
+  }
+
+  String get displayDeliveredAt {
+    if (deliveredAt != null) {
+      return DateFormat('MMMM d, h:mm a').format(deliveredAt!.toLocal());
+    }
+    return displayPlacedAt;
   }
 
   String get restaurantAddressLine {
@@ -510,18 +739,87 @@ class OrderModel {
   bool get hasPickupCoordinates => pickupLat != null && pickupLng != null;
   bool get hasDeliveryCoordinates => deliveryLat != null && deliveryLng != null;
   bool get hasDriverCoordinates => driverLat != null && driverLng != null;
+
+  String get effectiveOrderStatus =>
+      (orderStatus != null && orderStatus!.isNotEmpty) ? orderStatus! : status;
+  String get effectiveDeliveryStatus =>
+      (deliveryStatus != null && deliveryStatus!.isNotEmpty) ? deliveryStatus! : '';
+
+  bool get isPending =>
+      effectiveOrderStatus == 'pending' ||
+      effectiveOrderStatus == 'placed' ||
+      effectiveOrderStatus == 'order_placed';
+
+  bool get isAccepted =>
+      isAcceptedFlag ||
+      effectiveOrderStatus == 'accepted' ||
+      effectiveOrderStatus == 'order_accepted';
+
+  bool get isPreparing =>
+      effectiveOrderStatus == 'preparing' ||
+      effectiveOrderStatus == 'kitchen' ||
+      effectiveOrderStatus == 'in_kitchen' ||
+      effectiveOrderStatus == 'in_progress' ||
+      effectiveOrderStatus == 'food_preparing';
+
+  bool get isReadyForPickup =>
+      effectiveOrderStatus == 'ready' ||
+      effectiveOrderStatus == 'ready_for_pickup' ||
+      effectiveOrderStatus == 'ready_to_pickup' ||
+      effectiveOrderStatus == 'food_ready';
+
+  bool get isOutForDelivery =>
+      effectiveOrderStatus == 'out_for_delivery' ||
+      effectiveOrderStatus == 'out_of_delivery' ||
+      effectiveOrderStatus == 'on_the_way' ||
+      effectiveOrderStatus == 'in_transit' ||
+      effectiveOrderStatus == 'picked_up' ||
+      effectiveDeliveryStatus == 'on_the_way' ||
+      effectiveDeliveryStatus == 'picked_up' ||
+      effectiveDeliveryStatus == 'in_transit';
+
+  bool get isPickedUp => isOutForDelivery || isDriverReachedCustomer;
+
+  bool get isDelivered =>
+      effectiveOrderStatus == 'delivered' ||
+      effectiveOrderStatus == 'completed' ||
+      effectiveDeliveryStatus == 'delivered';
+
+  bool get isCancelled =>
+      effectiveOrderStatus == 'cancelled' ||
+      effectiveOrderStatus == 'canceled' ||
+      effectiveOrderStatus == 'rejected' ||
+      effectiveOrderStatus == 'failed';
+
+  bool get isActive => !isDelivered && !isCancelled;
+
+  // Delivery status specific helpers
+  bool get isDriverUnassigned =>
+      effectiveDeliveryStatus.isEmpty ||
+      effectiveDeliveryStatus == 'unassigned' ||
+      effectiveDeliveryStatus == 'pending';
+
   bool get isDriverAssigned =>
+      (effectiveDeliveryStatus.isNotEmpty && effectiveDeliveryStatus != 'unassigned') ||
       (driverName != null && driverName!.trim().isNotEmpty) ||
       hasDriverCoordinates;
 
-  bool get isPending => status == 'pending' || status == 'placed';
-  bool get isAccepted =>
-      isAcceptedFlag || status == 'accepted' || status == 'preparing' || status == 'confirmed' || status == 'in_progress';
-  bool get isPickedUp =>
-      status == 'picked_up' || status == 'on_the_way' || status == 'out_for_delivery' || status == 'in_transit' || status == 'arrived';
-  bool get isDelivered => status == 'delivered' || status == 'completed';
-  bool get isCancelled => status == 'cancelled' || status == 'canceled' || status == 'rejected' || status == 'failed';
-  bool get isActive => !isDelivered && !isCancelled;
+  bool get isDriverReachedRestaurant =>
+      effectiveDeliveryStatus == 'reached_restaurant' ||
+      effectiveDeliveryStatus == 'arrived_at_restaurant' ||
+      effectiveDeliveryStatus == 'at_restaurant' ||
+      effectiveDeliveryStatus == 'reached_resturant';
+
+  bool get isDriverOnTheWay =>
+      effectiveDeliveryStatus == 'on_the_way' ||
+      effectiveDeliveryStatus == 'picked_up' ||
+      effectiveDeliveryStatus == 'in_transit';
+
+  bool get isDriverReachedCustomer =>
+      effectiveDeliveryStatus == 'reached_customer' ||
+      effectiveDeliveryStatus == 'arrived' ||
+      effectiveDeliveryStatus == 'driver_reached' ||
+      effectiveDeliveryStatus == 'driver_arrived';
 
   String get effectiveCancellationReason {
     if (cancellationReason != null && cancellationReason!.trim().isNotEmpty) {
@@ -539,8 +837,11 @@ class OrderModel {
 
   OrderModel copyWith({
     String? id,
+    String? uuid,
     String? orderNumber,
     String? status,
+    String? orderStatus,
+    String? deliveryStatus,
     String? pickupAddress,
     String? deliveryAddress,
     List<OrderItem>? items,
@@ -551,6 +852,7 @@ class OrderModel {
     double? deliveryFee,
     double? driverTip,
     double? distance,
+    int? etaMinutes,
     int? estimatedTime,
     DateTime? createdAt,
     DateTime? acceptedAt,
@@ -562,7 +864,11 @@ class OrderModel {
     String? cancelledBy,
     String? cancellationReason,
     bool? isAcceptedFlag,
+    bool? cancellable,
+    String? deliveryCode,
     String? rawPlacedAt,
+    String? specialInstructions,
+    List<OrderStatusHistory>? statusHistory,
     String? addressLine1,
     String? addressLine2,
     String? addressCity,
@@ -571,6 +877,7 @@ class OrderModel {
     double? pickupLng,
     double? deliveryLat,
     double? deliveryLng,
+    int? restaurantId,
     String? restaurantName,
     String? restaurantImage,
     double? driverLat,
@@ -583,8 +890,11 @@ class OrderModel {
   }) {
     return OrderModel(
       id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       orderNumber: orderNumber ?? this.orderNumber,
       status: status ?? this.status,
+      orderStatus: orderStatus ?? this.orderStatus,
+      deliveryStatus: deliveryStatus ?? this.deliveryStatus,
       pickupAddress: pickupAddress ?? this.pickupAddress,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
       items: items ?? this.items,
@@ -595,6 +905,7 @@ class OrderModel {
       deliveryFee: deliveryFee ?? this.deliveryFee,
       driverTip: driverTip ?? this.driverTip,
       distance: distance ?? this.distance,
+      etaMinutes: etaMinutes ?? this.etaMinutes,
       estimatedTime: estimatedTime ?? this.estimatedTime,
       createdAt: createdAt ?? this.createdAt,
       acceptedAt: acceptedAt ?? this.acceptedAt,
@@ -606,7 +917,11 @@ class OrderModel {
       cancelledBy: cancelledBy ?? this.cancelledBy,
       cancellationReason: cancellationReason ?? this.cancellationReason,
       isAcceptedFlag: isAcceptedFlag ?? this.isAcceptedFlag,
+      cancellable: cancellable ?? this.cancellable,
+      deliveryCode: deliveryCode ?? this.deliveryCode,
       rawPlacedAt: rawPlacedAt ?? this.rawPlacedAt,
+      specialInstructions: specialInstructions ?? this.specialInstructions,
+      statusHistory: statusHistory ?? this.statusHistory,
       addressLine1: addressLine1 ?? this.addressLine1,
       addressLine2: addressLine2 ?? this.addressLine2,
       addressCity: addressCity ?? this.addressCity,
@@ -615,6 +930,7 @@ class OrderModel {
       pickupLng: pickupLng ?? this.pickupLng,
       deliveryLat: deliveryLat ?? this.deliveryLat,
       deliveryLng: deliveryLng ?? this.deliveryLng,
+      restaurantId: restaurantId ?? this.restaurantId,
       restaurantName: restaurantName ?? this.restaurantName,
       restaurantImage: restaurantImage ?? this.restaurantImage,
       driverLat: driverLat ?? this.driverLat,

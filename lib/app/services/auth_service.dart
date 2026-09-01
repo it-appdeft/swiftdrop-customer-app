@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import '../../data/models/address_model.dart';
 import '../../data/models/user_model.dart';
@@ -6,6 +7,8 @@ import '../../data/repositories/auth_repository.dart';
 import '../constants/storage_keys.dart';
 import '../network/dio_client.dart';
 import '../utils/app_logger.dart';
+import 'notification_service.dart';
+import 'realtime_service.dart';
 import 'storage_service.dart';
 
 class AuthService extends GetxService {
@@ -21,6 +24,17 @@ class AuthService extends GetxService {
     super.onInit();
     _loadStoredUser();
     _loadStoredAddress();
+
+    if (isAuthenticated && currentUser.value != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (currentUser.value != null) {
+          _connectRealtime(currentUser.value!);
+        }
+        if (Get.isRegistered<NotificationService>()) {
+          NotificationService.to.syncFcmTokenWithServer();
+        }
+      });
+    }
   }
 
   void _loadStoredUser() {
@@ -56,6 +70,11 @@ class AuthService extends GetxService {
     }
     await StorageService.to.write(StorageKeys.userData, jsonEncode(user.toJson()));
     currentUser.value = user;
+
+    _connectRealtime(user);
+    if (Get.isRegistered<NotificationService>()) {
+      NotificationService.to.syncFcmTokenWithServer();
+    }
   }
 
   Future<void> saveSelectedAddress(AddressModel? address) async {
@@ -72,6 +91,9 @@ class AuthService extends GetxService {
   }
 
   Future<void> logout() async {
+    if (Get.isRegistered<RealtimeService>()) {
+      RealtimeService.to.disconnect();
+    }
     try {
       await AuthRepository().logout();
     } catch (e) {
@@ -81,5 +103,18 @@ class AuthService extends GetxService {
     DioClient.reset();
     currentUser.value = null;
     selectedAddress.value = null;
+  }
+
+  // ─── Reverb Connection ─────────────────────────────────────────────────────
+
+  void _connectRealtime(UserModel user) {
+    if (!Get.isRegistered<RealtimeService>()) return;
+    final realtime = RealtimeService.to;
+    realtime.connect().then((_) {
+      final userId = user.id;
+      if (userId.toString().isNotEmpty) {
+        realtime.subscribeUser(userId);
+      }
+    });
   }
 }

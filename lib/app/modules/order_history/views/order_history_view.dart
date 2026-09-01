@@ -21,7 +21,7 @@ class OrderHistoryView extends GetView<OrderHistoryController> {
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value && controller.historyOrders.isEmpty) {
-                  return const Center(child: AppLoader());
+                  return const OrderHistoryShimmer();
                 }
                 
                 final orders = controller.filteredOrders;
@@ -203,9 +203,19 @@ class _OrderCard extends StatelessWidget {
       onTap: () {
         AppUtils.haptic();
         if (effectiveOrder.isActive) {
-          Get.toNamed(AppRoutes.orderTracking, arguments: {'orderId': effectiveOrder.id, 'order': effectiveOrder});
+          Get.toNamed(AppRoutes.orderTracking, arguments: {
+            'id': effectiveOrder.id,
+            'orderId': effectiveOrder.id,
+            'orderUuid': effectiveOrder.uuid ?? effectiveOrder.targetId,
+            'order': effectiveOrder,
+          });
         } else {
-          Get.toNamed(AppRoutes.orderDelivered, arguments: {'orderId': effectiveOrder.id, 'order': effectiveOrder});
+          Get.toNamed(AppRoutes.orderDetails, arguments: {
+            'id': effectiveOrder.id,
+            'orderId': effectiveOrder.id,
+            'orderUuid': effectiveOrder.uuid,
+            'order': effectiveOrder,
+          });
         }
       },
       child: Container(
@@ -388,7 +398,7 @@ class _OrderCard extends StatelessWidget {
                       if (item.subtotal > 0) ...[
                         const SizedBox(width: 8),
                         Text(
-                          '£${item.subtotal.toStringAsFixed(2)}',
+                          AppUtils.formatCurrency(item.subtotal),
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -401,17 +411,19 @@ class _OrderCard extends StatelessWidget {
                 );
               }),
             ],
-
+            // Reorder button on history card is commented out; reordering is accessible via Order Details
+            /*
             if (order.isDelivered && !isCancelled && !isFailed) ...[
               const SizedBox(height: 12),
-              // Reorder Button (Only on completed/delivered orders)
               GestureDetector(
                 onTap: () {
                   AppUtils.haptic();
-                  Get.toNamed(
-                    AppRoutes.orderDelivered,
-                    arguments: {'orderId': effectiveOrder.id, 'order': effectiveOrder},
-                  );
+                  if (Get.isRegistered<CartController>()) {
+                    Get.find<CartController>().reorderFromOrder(effectiveOrder);
+                  } else {
+                    final cart = Get.put(CartController());
+                    cart.reorderFromOrder(effectiveOrder);
+                  }
                 },
                 child: Container(
                   width: double.infinity,
@@ -431,7 +443,8 @@ class _OrderCard extends StatelessWidget {
                   ),
                 ),
               ),
-            ] else if (effectiveOrder.isActive) ...[
+            ] else */
+            if (effectiveOrder.isActive) ...[
               const SizedBox(height: 12),
               // Track Order Button (For active orders)
               GestureDetector(
@@ -439,7 +452,12 @@ class _OrderCard extends StatelessWidget {
                   AppUtils.haptic();
                   Get.toNamed(
                     AppRoutes.orderTracking,
-                    arguments: {'orderId': effectiveOrder.id, 'order': effectiveOrder},
+                    arguments: {
+                      'orderId': effectiveOrder.id.isNotEmpty ? effectiveOrder.id : effectiveOrder.targetId,
+                      'id': effectiveOrder.id.isNotEmpty ? effectiveOrder.id : effectiveOrder.targetId,
+                      'orderUuid': effectiveOrder.uuid,
+                      'order': effectiveOrder,
+                    },
                   );
                 },
                 child: Container(
@@ -499,7 +517,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                   if (order.totalAmount > 0)
                     Text(
-                      '£${order.totalAmount.toStringAsFixed(2)}',
+                      AppUtils.formatCurrency(order.totalAmount),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -514,9 +532,9 @@ class _OrderCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      order.effectiveCancellationReason.isNotEmpty
-                          ? 'Cancelled • ${order.effectiveCancellationReason}'
-                          : 'Ordered $dateStr',
+                      order.cancellationReason != null && order.cancellationReason!.trim().isNotEmpty
+                          ? 'Cancelled • ${order.cancellationReason!.trim()}'
+                          : 'Cancelled on $dateStr',
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
@@ -528,7 +546,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                   if (order.totalAmount > 0)
                     Text(
-                      '£${order.totalAmount.toStringAsFixed(2)}',
+                      AppUtils.formatCurrency(order.totalAmount),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -551,7 +569,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                   if (order.totalAmount > 0)
                     Text(
-                      '£${order.totalAmount.toStringAsFixed(2)}',
+                      AppUtils.formatCurrency(order.totalAmount),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

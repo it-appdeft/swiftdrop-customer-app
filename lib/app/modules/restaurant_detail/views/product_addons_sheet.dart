@@ -49,6 +49,7 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
   @override
   void initState() {
     super.initState();
+    AppLogger.d("ProductAddons opened with: name=${widget.item['name']}, base_price=${widget.item['base_price']}, price=${widget.item['price']}, existingModifiers=${widget.existingModifiers?.map((e) => '${e.optionName}(${e.priceDelta})').toList()}");
     _initQuantity();
     _initSelections();
   }
@@ -58,70 +59,217 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
       _quantity = widget.editingQuantity!;
       return;
     }
-    if (widget.existingModifiers == null) return;
-    try {
-      final cart = Get.find<CartController>();
-      final itemId = (widget.item['id'] as int?) ?? 0;
-      final qty = cart.quantities[itemId] ?? 1;
-      if (qty > 0) _quantity = qty;
-    } catch (_) {}
+    _quantity = 1;
   }
 
   void _initSelections() {
-    final existing = widget.existingModifiers ?? [];
+    List<CartApiModifier> existing = widget.existingModifiers ?? [];
+    if (existing.isEmpty) {
+      try {
+        final cart = Get.find<CartController>();
+        final cartItemId = widget.editingCartItemId ??
+            int.tryParse(widget.item['cart_item_id']?.toString() ?? '0') ??
+            0;
+        if (cartItemId > 0) {
+          existing = cart.getModifiersForCartItem(cartItemId);
+        } else {
+          final itemId = (widget.item['id'] as int?) ??
+              (widget.item['menu_item_id'] as int?) ??
+              (int.tryParse(widget.item['id']?.toString() ?? '0') ?? 0);
+          if (itemId > 0) {                                                                    
+            existing = cart.getModifiersForItem(itemId);
+          }
+        }
+      } catch (_) {}
+    }
+
+    final bool hasExisting = existing.isNotEmpty;
+
     for (final group in _groups) {
       if (group.selectionType == 'single') {
         CartApiModifier? match;
         for (final m in existing) {
-          if (m.groupId == group.id) { match = m; break; }
+          if (m.groupId == group.id || group.options.any((o) => o.id == m.optionId)) {
+            match = m;
+            break;
+          }
         }
-        if (match != null) {
+        if (match != null) {                     
           _singleSelections[group.id] = match.optionId;
+        } else if (!hasExisting) {
+          final defaultOpt = group.options.firstWhereOrNull((o) => o.isDefault);
+          if (defaultOpt != null) {
+            _singleSelections[group.id] = defaultOpt.id;
+          } else if (group.options.isNotEmpty) {
+            _singleSelections[group.id] = group.options[0].id;
+          }
         } else if (group.isRequired && group.options.isNotEmpty) {
           _singleSelections[group.id] = group.options[0].id;
         }
       } else {
         final selectedIds = <int>{};
         for (final m in existing) {
-          if (m.groupId == group.id) selectedIds.add(m.optionId);
+          if (m.groupId == group.id || group.options.any((o) => o.id == m.optionId)) {
+            selectedIds.add(m.optionId);
+          }
         }
         if (selectedIds.isNotEmpty) {
           _multiSelections[group.id] = selectedIds;
+        } else if (!hasExisting) {
+          for (final opt in group.options) {
+            if (opt.isDefault) {
+              selectedIds.add(opt.id);
+            }
+          }
+          if (selectedIds.isNotEmpty) {
+            _multiSelections[group.id] = selectedIds;
+          }
         }
       }
     }
+
+    AppLogger.d("📦 [BOTTOMSHEET DATA] Item: ${widget.item['name']} | "
+        "BasePrice: $_basePrice | "
+        "ExistingModifiers: ${existing.map((e) => '${e.optionName}(id:${e.optionId})').toList()} | "
+        "SingleSelections: $_singleSelections | "
+        "MultiSelections: $_multiSelections | "
+        "PriceBreakdown: [$_priceCalculationBreakdown]");
   }
 
-  List<ModifierGroupModel> get _groups =>
-      (widget.item['modifier_groups'] as List?)
-          ?.whereType<ModifierGroupModel>()
-          .toList() ??
-      [];
+  bool _isFullPriceGroup(ModifierGroupModel group) {
+    if (group.isPriceDriver) return true;
+    if (group.selectionType == 'single' && group.options.isNotEmpty) {
+      final name = group.name.toLowerCase();
+      final isSizeOrVariantGroup = name.contains('size') ||
+          name.contains('plate') ||
+          name.contains('portion') ||
+          name.contains('serving') ||
+          name.contains('quantity') ||
+          name.contains('variant') ||
+          name.contains('type') ||
+          name.contains('choice') ||
+          name.contains('half') ||
+          name.contains('full');
 
-  double get _basePrice {
-    final raw = widget.item['price'] ?? widget.item['base_price'];
-    return double.tryParse(raw?.toString() ?? '0') ?? 0;
+      if (isSizeOrVariantGroup) return true;
+
+      final allPositivePrices = group.options.every((o) => o.priceDelta > 0);
+      if (allPositivePrices && group.options.length > 1) return true;
+
+      final nonZeroPrices = group.options.map((o) => o.priceDelta).where((p) => p > 0).toList();
+      if (nonZeroPrices.isNotEmpty && _basePrice > 0) {
+        final minPrice = nonZeroPrices.reduce((a, b) => a < b ? a : b);
+        if (minPrice >= (_basePrice * 0.35)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
-  double get _currentPrice {
-    double delta = 0;
+  String get _priceCalculationBreakdown {
+    final parts = <String>[];
+    bool hasFullPriceVariant = false;
 
     for (final group in _groups) {
       if (group.selectionType == 'single') {
         final selectedId = _singleSelections[group.id];
         if (selectedId != null) {
-          final idx = group.options.indexWhere((o) => o.id == selectedId);
-          if (idx != -1) delta += group.options[idx].priceDelta;
+          final opt = group.options.firstWhereOrNull((o) => o.id == selectedId);
+          if (opt != null && _isFullPriceGroup(group)) {
+            hasFullPriceVariant = true;
+            parts.add('${opt.name} (£${opt.priceDelta.toStringAsFixed(2)})');
+          }
+        }
+      }
+    }
+
+    if (!hasFullPriceVariant) {
+      parts.add('Base: £${_basePrice.toStringAsFixed(2)}');
+    }
+
+    for (final group in _groups) {
+      if (group.selectionType == 'single') {
+        final selectedId = _singleSelections[group.id];
+        if (selectedId != null) {
+          final opt = group.options.firstWhereOrNull((o) => o.id == selectedId);
+          if (opt != null && !_isFullPriceGroup(group)) {
+            final sign = opt.priceDelta >= 0 ? '+' : '';
+            parts.add('${opt.name} ($sign£${opt.priceDelta.toStringAsFixed(2)})');
+          }
         }
       } else {
         final selected = _multiSelections[group.id] ?? {};
         for (final optId in selected) {
-          final idx = group.options.indexWhere((o) => o.id == optId);
-          if (idx != -1) delta += group.options[idx].priceDelta;
+          final opt = group.options.firstWhereOrNull((o) => o.id == optId);
+          if (opt != null) {
+            final sign = opt.priceDelta >= 0 ? '+' : '';
+            parts.add('${opt.name} ($sign£${opt.priceDelta.toStringAsFixed(2)})');
+          }
         }
       }
     }
-    return _basePrice + delta;
+
+    return '${parts.join(' + ')} = Total: £${_currentPrice.toStringAsFixed(2)}';
+  }
+
+  List<ModifierGroupModel> get _groups {
+    final raw = widget.item['modifier_groups'] ?? widget.item['modifierGroups'];
+    if (raw is List) {
+      return raw.map((e) {
+        if (e is ModifierGroupModel) return e;
+        if (e is Map<String, dynamic>) return ModifierGroupModel.fromJson(e);
+        if (e is Map) return ModifierGroupModel.fromJson(Map<String, dynamic>.from(e));
+        return null;
+      }).whereType<ModifierGroupModel>().toList();
+    }
+    return [];
+  }
+
+  double get _basePrice {
+    if (widget.item['base_price'] != null) {
+      final bp = double.tryParse(widget.item['base_price'].toString());
+      if (bp != null && bp > 0) return bp;
+    }
+    return double.tryParse(widget.item['price']?.toString() ?? '0') ?? 0;
+  }
+
+  double get _currentPrice {
+    double currentBase = _basePrice;
+    bool hasFullPriceVariant = false;
+    double variantPrice = 0.0;
+    double addOnDelta = 0.0;
+
+    for (final group in _groups) {
+      if (group.selectionType == 'single') {
+        final selectedId = _singleSelections[group.id];
+        if (selectedId != null) {
+          final opt = group.options.firstWhereOrNull((o) => o.id == selectedId);
+          if (opt != null) {
+            if (_isFullPriceGroup(group)) {
+              hasFullPriceVariant = true;
+              variantPrice = opt.priceDelta;
+            } else {
+              addOnDelta += opt.priceDelta;
+            }
+          }
+        }
+      } else {
+        final selected = _multiSelections[group.id] ?? {};
+        for (final optId in selected) {
+          final opt = group.options.firstWhereOrNull((o) => o.id == optId);
+          if (opt != null) {
+            addOnDelta += opt.priceDelta;
+          }
+        }
+      }
+    }
+
+    if (hasFullPriceVariant) {
+      return (variantPrice + addOnDelta);
+    }
+
+    return (currentBase + addOnDelta);
   }
 
   @override
@@ -239,11 +387,14 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
           final isSelected = isSingle
               ? _singleSelections[group.id] == opt.id
               : (_multiSelections[group.id] ?? {}).contains(opt.id);
+          final bool isFullPrice = _isFullPriceGroup(group);
           final priceLabel = opt.priceDelta == 0
               ? ''
-              : opt.priceDelta > 0
-                  ? '+£${opt.priceDelta.toStringAsFixed(2)}'
-                  : '-£${opt.priceDelta.abs().toStringAsFixed(2)}';
+              : isFullPrice
+                  ? '£${opt.priceDelta.toStringAsFixed(2)}'
+                  : opt.priceDelta > 0
+                      ? '+£${opt.priceDelta.toStringAsFixed(2)}'
+                      : '-£${opt.priceDelta.abs().toStringAsFixed(2)}';
           return _buildSelectionItem(
             title: opt.name,
             price: priceLabel,
@@ -252,7 +403,11 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
             onTap: () {
               setState(() {
                 if (isSingle) {
-                  _singleSelections[group.id] = opt.id;
+                  if (_singleSelections[group.id] == opt.id && !group.isRequired) {
+                    _singleSelections[group.id] = null;
+                  } else {
+                    _singleSelections[group.id] = opt.id;
+                  }
                 } else {
                   final set =
                       _multiSelections.putIfAbsent(group.id, () => {});
@@ -262,6 +417,7 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                     set.add(opt.id);
                   }
                 }
+                AppLogger.d("👉 [OPTION TOGGLED] ${opt.name} (${opt.priceDelta >= 0 ? '+' : ''}${opt.priceDelta}) | Breakdown: [$_priceCalculationBreakdown]");
               });
             },
           );
@@ -416,6 +572,12 @@ class _ProductAddonsContentState extends State<ProductAddonsContent> {
                               .addAll(_multiSelections[group.id] ?? {});
                         }
                       }
+
+                      AppLogger.d("🛒 [CART ACTION] MenuItem: $menuItemId, "
+                          "SelectedOptions: $selectedOptionIds, "
+                          "Quantity: $_quantity, "
+                          "Breakdown: [$_priceCalculationBreakdown], "
+                          "ExpectedTotal: ${_currentPrice * _quantity}");
 
                       try {
                         final bool? itemIsOpen = widget.item['is_open_now'] as bool?;

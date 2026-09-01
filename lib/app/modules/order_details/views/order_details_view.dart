@@ -28,10 +28,23 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.download_rounded,
+              color: AppColors.lightSurfaceDarkText,
+              size: 22,
+            ),
+            onPressed: () {
+              AppUtils.showSuccess('Invoice downloaded successfully');
+            },
+          ),
+          const SizedBox(width: 6),
+        ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value && controller.order.value == null) {
-          return const Center(child: AppLoader());
+        if (controller.isLoading.value) {
+          return const OrderDetailsShimmer();
         }
 
         final order = controller.order.value;
@@ -74,13 +87,17 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
               _buildSectionHeader('Order Items'),
               const SizedBox(height: AppDimensions.gapMd),
               _buildOrderItemsCard(order),
+              if (order.specialInstructions != null && order.specialInstructions!.trim().isNotEmpty) ...[
+                const SizedBox(height: AppDimensions.gapMd),
+                _buildSpecialInstructionsCard(order.specialInstructions!),
+              ],
               if (!isCancelledOrFailed && order.items.isNotEmpty) ...[
                 const SizedBox(height: AppDimensions.gapLg),
                 _buildSectionHeader('Rate your ordered dishes'),
                 const SizedBox(height: AppDimensions.gapMd),
                 _buildDishesRatingCard(order),
                 const SizedBox(height: AppDimensions.gapLg),
-                _buildPartnerRatingCard(),
+                _buildPartnerRatingCard(order),
               ],
               const SizedBox(height: AppDimensions.gapLg),
               _buildSectionHeader('Payment Details'),
@@ -88,12 +105,60 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
               _buildPaymentDetailsCard(order),
               const SizedBox(height: AppDimensions.gapMd),
               _buildPaymentMethodCard(order),
-              const SizedBox(height: AppDimensions.gapXl),
-              AppButton(
-                label: 'Reorder',
-                onTap: controller.onReorder,
-              ),
-              const SizedBox(height: AppDimensions.gapXl),
+              if (order.isDelivered && !isCancelledOrFailed) ...[
+                const SizedBox(height: AppDimensions.gapXl),
+                AppButton(
+                  label: 'Give Feedback',
+                  onTap: () {
+                    AppUtils.haptic();
+                    Get.toNamed(AppRoutes.orderDelivered, arguments: {
+                      'id': order.id,
+                      'orderId': order.id,
+                      'orderUuid': order.uuid,
+                      'order': order,
+                    });
+                  },
+                  backgroundColor: AppColors.primary,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: OutlinedButton(
+                    onPressed: controller.onReorder,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.primary, width: 1.5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Reorder',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppDimensions.gapXl),
+              ] else if (order.isActive) ...[
+                const SizedBox(height: AppDimensions.gapXl),
+                AppButton(
+                  label: 'Track Order',
+                  onTap: () {
+                    AppUtils.haptic();
+                    Get.toNamed(AppRoutes.orderTracking, arguments: {
+                      'id': order.id,
+                      'orderId': order.id,
+                      'orderUuid': order.uuid ?? order.targetId,
+                      'order': order,
+                    });
+                  },
+                ),
+                const SizedBox(height: AppDimensions.gapXl),
+              ],
             ],
           ),
         );
@@ -104,6 +169,15 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
   Widget _buildCancellationBanner(OrderModel order) {
     final reasonText = order.effectiveCancellationReason;
     final isFailed = order.status == 'failed' || order.status == 'payment_failed';
+    final byText = order.cancelledBy != null && order.cancelledBy!.trim().isNotEmpty
+        ? (order.cancelledBy!.toLowerCase() == 'customer' || order.cancelledBy!.toLowerCase() == 'user'
+            ? 'Cancelled by you'
+            : (order.cancelledBy!.toLowerCase() == 'restaurant' || order.cancelledBy!.toLowerCase() == 'vendor'
+                ? 'Cancelled by restaurant'
+                : (order.cancelledBy!.toLowerCase() == 'driver' || order.cancelledBy!.toLowerCase() == 'rider'
+                    ? 'Cancelled by delivery partner'
+                    : 'Cancelled by ${order.cancelledBy}')))
+        : (isFailed ? 'Order Failed' : 'Order Cancelled');
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -125,7 +199,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isFailed ? 'Order Failed' : 'Order Cancelled',
+                  byText,
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -149,6 +223,13 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
   }
 
   Widget _buildOrderIdCard(OrderModel order) {
+    final dateLabel = order.isCancelled
+        ? 'Cancelled On'
+        : (order.isDelivered ? 'Delivered On' : 'Placed On');
+    final dateValue = order.isCancelled
+        ? order.displayCancelledAt
+        : (order.isDelivered ? order.displayDeliveredAt : order.displayPlacedAt);
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
@@ -184,7 +265,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                order.isCancelled ? 'Cancelled On' : (order.isDelivered ? 'Delivered On' : 'Placed On'),
+                dateLabel,
                 style: GoogleFonts.inter(
                   fontSize: 12,
                   color: AppColors.navyMuted200,
@@ -192,7 +273,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
               ),
               const SizedBox(height: 4),
               Text(
-                order.displayPlacedAt,
+                dateValue,
                 style: const TextStyle(
                   fontFamily: 'Fonts/Paragraph',
                   fontSize: 14,
@@ -370,42 +451,64 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
             padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: order.items.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            separatorBuilder: (context, index) => const SizedBox(height: 14),
             itemBuilder: (context, index) {
               final item = order.items[index];
+              final itemImg = item.image ?? order.fullRestaurantImage;
               return Row(
                 children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      '${item.quantity}x',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: itemImg != null && itemImg.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: itemImg,
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                            errorWidget: (c, u, e) => Assets.images.restaurantImage.image(
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Assets.images.restaurantImage.image(
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      item.name,
-                      style: const TextStyle(
-                        fontFamily: 'Fonts/Paragraph',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.lightSurfaceDarkText,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name,
+                          style: const TextStyle(
+                            fontFamily: 'Fonts/Paragraph',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.lightSurfaceDarkText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.modifiers.isNotEmpty
+                              ? '${item.modifiers.join(', ')} x${item.quantity}'
+                              : 'Qty x${item.quantity}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.lightSurfaceSubtitle,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Text(
-                    '£${(item.subtotal > 0 ? item.subtotal : (item.price * item.quantity)).toStringAsFixed(2)}',
+                    AppUtils.formatCurrency(item.subtotal > 0 ? item.subtotal : (item.price * item.quantity)),
                     style: const TextStyle(
                       fontFamily: 'Fonts/Paragraph',
                       fontSize: 14,
@@ -416,6 +519,49 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 ],
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpecialInstructionsCard(String instructions) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      decoration: BoxDecoration(
+        color: AppColors.offWhite,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.note_alt_outlined, size: 20, color: AppColors.navyMuted200),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Special Instructions',
+                  style: TextStyle(
+                    fontFamily: 'Fonts/Paragraph',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.lightSurfaceDarkText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  instructions,
+                  style: const TextStyle(
+                    fontFamily: 'Fonts/Paragraph',
+                    fontSize: 13,
+                    fontStyle: FontStyle.italic,
+                    color: AppColors.navyMuted200,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -451,25 +597,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                   ),
                 ),
               ),
-              RatingStars(
-                value: 0,
-                onValueChanged: (v) {
-                  AppUtils.showSuccess('Rating recorded!');
-                },
-                starBuilder: (index, color) => (color == AppColors.warning
-                        ? Assets.images.filledStart
-                        : Assets.images.emptyStar)
-                    .image(
-                  width: 18,
-                  height: 18,
-                ),
-                starCount: 5,
-                starSize: 18,
-                valueLabelVisibility: false,
-                starSpacing: 2,
-                starOffColor: const Color(0xffe4e8ef),
-                starColor: AppColors.warning,
-              ),
+              const _StaticStars(rating: 0, size: 18),
             ],
           );
         },
@@ -477,7 +605,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
     );
   }
 
-  Widget _buildPartnerRatingCard() {
+  Widget _buildPartnerRatingCard(OrderModel order) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -489,26 +617,12 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionHeader('Rate Delivery Partner'),
-          const SizedBox(height: 8),
-          Obx(() => RatingStars(
-                value: controller.partnerRating.value,
-                onValueChanged: (v) {
-                  controller.partnerRating.value = v;
-                },
-                starBuilder: (index, color) => (color == AppColors.warning
-                        ? Assets.images.filledStart
-                        : Assets.images.emptyStar)
-                    .image(
-                  width: 28,
-                  height: 28,
-                ),
-                starCount: 5,
-                starSize: 28,
-                valueLabelVisibility: false,
-                starSpacing: 8,
-                starOffColor: const Color(0xffe4e8ef),
-                starColor: AppColors.warning,
-              )),
+          const SizedBox(height: 10),
+          _StaticStars(
+            rating: order.driverRating ?? 0.0,
+            size: 26,
+            spacing: 6,
+          ),
         ],
       ),
     );
@@ -527,16 +641,16 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
       ),
       child: Column(
         children: [
-          _buildPaymentRow('Item Total', '£${subtotal.toStringAsFixed(2)}'),
+          _buildPaymentRow('Item Total', AppUtils.formatCurrency(subtotal)),
           const SizedBox(height: 12),
-          _buildPaymentRow('Delivery Fee', '£${order.deliveryFee.toStringAsFixed(2)}'),
+          _buildPaymentRow('Delivery Fee', AppUtils.formatCurrency(order.deliveryFee)),
           if (order.vatAmount > 0) ...[
             const SizedBox(height: 12),
-            _buildPaymentRow('Taxes & Charges (VAT)', '£${order.vatAmount.toStringAsFixed(2)}'),
+            _buildPaymentRow('Taxes & Charges (VAT)', AppUtils.formatCurrency(order.vatAmount)),
           ],
           if (order.discountAmount > 0) ...[
             const SizedBox(height: 12),
-            _buildPaymentRow('Discount', '-£${order.discountAmount.toStringAsFixed(2)}'),
+            _buildPaymentRow('Discount', '-${AppUtils.formatCurrency(order.discountAmount)}'),
           ],
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -555,7 +669,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                 ),
               ),
               Text(
-                '£${order.totalAmount.toStringAsFixed(2)}',
+                AppUtils.formatCurrency(order.totalAmount),
                 style: const TextStyle(
                   fontFamily: 'Fonts/Paragraph',
                   fontSize: 16,
@@ -636,3 +750,34 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
     );
   }
 }
+
+class _StaticStars extends StatelessWidget {
+  final double rating;
+  final double size;
+  final double spacing;
+
+  const _StaticStars({
+    required this.rating,
+    this.size = 18,
+    this.spacing = 3,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        final isFilled = index < rating;
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+          child: Icon(
+            isFilled ? Icons.star_rounded : Icons.star_outline_rounded,
+            size: size,
+            color: isFilled ? const Color(0xFFFBBF24) : const Color(0xFFCBD5E1),
+          ),
+        );
+      }),
+    );
+  }
+}
+

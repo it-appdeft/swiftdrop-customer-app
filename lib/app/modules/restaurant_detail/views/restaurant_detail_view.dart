@@ -3,6 +3,7 @@ import 'package:swiftdrop_customer_app/export.dart';
 import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../controllers/restaurant_detail_controller.dart';
+import 'product_addons_sheet.dart';
 import 'product_detail_bottom_sheet.dart';
 import 'store_info_bottom_sheet.dart';
 import 'your_customizations_sheet.dart';
@@ -81,8 +82,12 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                                       showFavorite: true,
                                       onTap: () {
                                         final cart = Get.find<CartController>();
-                                        if (item.modifierGroups.isNotEmpty && (cart.quantities[item.id] ?? 0) > 0) {
-                                          showYourCustomizationsSheet(itemMap);
+                                        if (item.modifierGroups.isNotEmpty) {
+                                          if ((cart.quantities[item.id] ?? 0) > 0) {
+                                            showYourCustomizationsSheet(itemMap);
+                                          } else {
+                                            showProductAddonsSheet(itemMap);
+                                          }
                                         } else {
                                           showProductDetailBottomSheet(itemMap);
                                         }
@@ -781,8 +786,12 @@ class RestaurantDetailView extends GetView<RestaurantDetailController> {
                                 showFavorite: true,
                                 onTap: () {
                                   final cart = Get.find<CartController>();
-                                  if (item.modifierGroups.isNotEmpty && (cart.quantities[item.id] ?? 0) > 0) {
-                                    showYourCustomizationsSheet(itemMap);
+                                  if (item.modifierGroups.isNotEmpty) {
+                                    if ((cart.quantities[item.id] ?? 0) > 0) {
+                                      showYourCustomizationsSheet(itemMap);
+                                    } else {
+                                      showProductAddonsSheet(itemMap);
+                                    }
                                   } else {
                                     showProductDetailBottomSheet(itemMap);
                                   }

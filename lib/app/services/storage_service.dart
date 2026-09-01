@@ -21,10 +21,15 @@ class StorageService extends GetxService {
 
   Future<void> clear() => _box.erase();
 
+  String? get authToken => read<String>(StorageKeys.authToken);
+  String? get refreshToken => read<String>(StorageKeys.refreshToken);
+
   bool get isLoggedIn {
-    final token = read<String>(StorageKeys.authToken);
+    final token = authToken;
     return token != null && token.isNotEmpty;
   }
+
+  String? get fcmToken => read<String>(StorageKeys.fcmToken);
 
   Future<void> clearAuth() async {
     await remove(StorageKeys.authToken);

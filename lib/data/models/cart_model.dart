@@ -15,13 +15,28 @@ class CartApiModifier {
     required this.priceDelta,
   });
 
-  factory CartApiModifier.fromJson(Map<String, dynamic> json) => CartApiModifier(
-        groupId: (json['group_id'] as num).toInt(),
-        groupName: json['group_name'] as String,
-        optionId: (json['option_id'] as num).toInt(),
-        optionName: json['option_name'] as String,
-        priceDelta: (json['price_delta'] as num?)?.toDouble() ?? 0.0,
-      );
+  factory CartApiModifier.fromJson(Map<String, dynamic> json) {
+    double delta = 0.0;
+    if (json.containsKey('price_delta') && json['price_delta'] != null) {
+      final raw = json['price_delta'];
+      if (raw is num) {
+        delta = raw.toDouble();
+      } else {
+        delta = double.tryParse(raw.toString()) ?? 0.0;
+      }
+    }
+    return CartApiModifier(
+      groupId: (json['group_id'] as num?)?.toInt() ??
+          int.tryParse(json['group_id']?.toString() ?? '0') ??
+          0,
+      groupName: json['group_name']?.toString() ?? '',
+      optionId: (json['option_id'] as num?)?.toInt() ??
+          int.tryParse(json['option_id']?.toString() ?? '0') ??
+          0,
+      optionName: json['option_name']?.toString() ?? '',
+      priceDelta: delta,
+    );
+  }
 }
 
 class CartApiItem {
@@ -32,6 +47,7 @@ class CartApiItem {
   final bool isVeg;
   final String? imageUrl;
   final double unitPrice;
+  final double basePrice;
   final int quantity;
   final double lineTotal;
   final List<CartApiModifier> modifiers;
@@ -45,6 +61,7 @@ class CartApiItem {
     required this.isVeg,
     this.imageUrl,
     required this.unitPrice,
+    required this.basePrice,
     required this.quantity,
     required this.lineTotal,
     required this.modifiers,
@@ -59,6 +76,9 @@ class CartApiItem {
         isVeg: json['is_veg'] as bool? ?? true,
         imageUrl: (json['image_url'] ?? json['image']) as String?,
         unitPrice: (json['unit_price'] as num?)?.toDouble() ?? 0.0,
+        basePrice: (json['base_price'] as num?)?.toDouble() ??
+            (json['unit_price'] as num?)?.toDouble() ??
+            0.0,
         quantity: (json['quantity'] as num?)?.toInt() ?? 0,
         lineTotal: (json['line_total'] as num?)?.toDouble() ?? 0.0,
         modifiers: (json['modifiers'] as List? ?? [])
@@ -75,6 +95,7 @@ class CartApiItem {
         'name': name,
         'description': description,
         'price': unitPrice.toStringAsFixed(2),
+        'base_price': basePrice.toStringAsFixed(2),
         'isVeg': isVeg,
         'image': imageUrl,
         'modifier_groups': modifierGroups,

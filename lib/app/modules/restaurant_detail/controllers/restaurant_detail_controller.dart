@@ -37,10 +37,21 @@ class RestaurantDetailController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments as Map<String, dynamic>?;
-    final id = _overrideId ?? (args?['id'] as num?)?.toInt() ?? 0;
+    final args = Get.arguments;
+    int id = _overrideId ?? 0;
+    String q = '';
+    if (id == 0 && args != null) {
+      if (args is Map) {
+        final rawId = args['id'];
+        id = (rawId as num?)?.toInt() ?? int.tryParse(rawId?.toString() ?? '0') ?? 0;
+        q = (args['q'] as String?) ?? '';
+      } else if (args is num) {
+        id = args.toInt();
+      } else if (args is String) {
+        id = int.tryParse(args) ?? 0;
+      }
+    }
     _restaurantId = id;
-    final q = _overrideId != null ? '' : (args?['q'] as String? ?? '');
     if (q.isNotEmpty) {
       searchQuery.value = q;
       searchController.text = q;

@@ -96,7 +96,27 @@ class CartRepository {
       final msg = response.data['message'] as String? ?? '';
       return ApiResponse(success: success, message: msg, data: success);
     } catch (e) {
-      return ApiResponse(success: false, message: e.toString(), data: false);
+      return ApiResponse(success: false, message: AppUtils.extractErrorMessage(e), data: false);
+    }
+  }
+
+  Future<ApiResponse<bool>> removeCoupon() async {
+    try {
+      final response = await _dio.delete(ApiEndpoints.customerApplyCoupon);
+      final success = response.data['success'] as bool? ?? false;
+      final msg = response.data['message'] as String? ?? '';
+      return ApiResponse(success: success, message: msg, data: success);
+    } catch (_) {
+      try {
+        final response = await _dio.post(ApiEndpoints.customerApplyCoupon, data: {
+          'coupon_id': null,
+        });
+        final success = response.data['success'] as bool? ?? false;
+        final msg = response.data['message'] as String? ?? '';
+        return ApiResponse(success: success, message: msg, data: success);
+      } catch (e) {
+        return ApiResponse(success: false, message: AppUtils.extractErrorMessage(e), data: false);
+      }
     }
   }
 
@@ -110,7 +130,7 @@ class CartRepository {
       final msg = response.data['message'] as String? ?? '';
       return ApiResponse(success: success, message: msg, data: success);
     } catch (e) {
-      return ApiResponse(success: false, message: e.toString(), data: false);
+      return ApiResponse(success: false, message: AppUtils.extractErrorMessage(e), data: false);
     }
   }
 
@@ -123,7 +143,7 @@ class CartRepository {
       final msg = response.data['message'] as String? ?? '';
       return ApiResponse(success: success, message: msg, data: success);
     } catch (e) {
-      return ApiResponse(success: false, message: e.toString(), data: false);
+      return ApiResponse(success: false, message: AppUtils.extractErrorMessage(e), data: false);
     }
   }
 }

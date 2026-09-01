@@ -109,9 +109,73 @@ class GoogleDirectionsRouteProvider implements RouteProvider {
   }
 }
 
+class OsrmRouteProvider implements RouteProvider {
+  static const String _endpoint =
+      'https://router.project-osrm.org/route/v1/driving';
+
+  final Dio _dio = Dio(BaseOptions(
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  ));
+
+  @override
+  Future<List<LatLng>> fetchRoute(List<LatLng> waypoints) async {
+    if (waypoints.length < 2) return const [];
+    try {
+      final coords =
+          waypoints.map((p) => '${p.longitude},${p.latitude}').join(';');
+      final url = '$_endpoint/$coords';
+      final response = await _dio.get(url, queryParameters: {
+        'overview': 'full',
+        'geometries': 'polyline',
+        'steps': 'false',
+      });
+      final data = response.data;
+      if (data is Map && data['code'] == 'Ok') {
+        final routes = data['routes'] as List?;
+        if (routes != null && routes.isNotEmpty) {
+          final geom = routes.first['geometry'];
+          if (geom is String && geom.isNotEmpty) {
+            final points = PolylineCodec.decode(geom);
+            if (points.length >= 2) {
+              AppLogger.i('[ROUTE] OSRM route fetched with ${points.length} road coordinates');
+              return points;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      AppLogger.w('[ROUTE] OSRM route request failed | $e');
+    }
+    return const [];
+  }
+}
+
+class CompositeRouteProvider implements RouteProvider {
+  final GoogleDirectionsRouteProvider _google = GoogleDirectionsRouteProvider();
+  final OsrmRouteProvider _osrm = OsrmRouteProvider();
+
+  @override
+  Future<List<LatLng>> fetchRoute(List<LatLng> waypoints) async {
+    // 1. Try Google Directions
+    try {
+      final googleRoute = await _google.fetchRoute(waypoints);
+      if (googleRoute.length >= 2) return googleRoute;
+    } catch (_) {}
+
+    // 2. Try OSRM (real road routing fallback)
+    try {
+      final osrmRoute = await _osrm.fetchRoute(waypoints);
+      if (osrmRoute.length >= 2) return osrmRoute;
+    } catch (_) {}
+
+    return const [];
+  }
+}
+
 class MapRouteService {
   MapRouteService({RouteProvider? provider})
-      : _provider = provider ?? GoogleDirectionsRouteProvider();
+      : _provider = provider ?? CompositeRouteProvider();
 
   final RouteProvider _provider;
   static final Map<String, List<LatLng>> _cache = {};

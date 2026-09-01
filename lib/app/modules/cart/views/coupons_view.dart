@@ -297,17 +297,24 @@ class _CouponsViewState extends State<CouponsView> {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: (coupon.eligible && !isApplied)
+                  onPressed: isApplied
                       ? () {
                           AppUtils.haptic();
-                          controller.applyCouponApi(coupon.id);
+                          controller.removeCouponApi();
                         }
-                      : null,
+                      : (coupon.eligible
+                          ? () {
+                              AppUtils.haptic();
+                              controller.applyCouponApi(coupon.id);
+                            }
+                          : null),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isApplied
-                        ? Colors.white.withValues(alpha: 0.8)
+                        ? Colors.white.withValues(alpha: 0.9)
                         : Colors.white,
-                    foregroundColor: const Color(0xFFE53915),
+                    foregroundColor: isApplied
+                        ? const Color(0xFFE53915)
+                        : const Color(0xFFE53915),
                     elevation: 0,
                     minimumSize: const Size(100, 38),
                     shape: RoundedRectangleBorder(
@@ -316,7 +323,7 @@ class _CouponsViewState extends State<CouponsView> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                   ),
                   child: Text(
-                    isApplied ? 'Applied' : AppStrings.applyNow,
+                    isApplied ? 'Remove' : AppStrings.applyNow,
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -427,20 +434,24 @@ class _CouponsViewState extends State<CouponsView> {
                         ),
                       )
                     : const SizedBox.shrink(),
-              ),
-              ElevatedButton(
-                onPressed: (coupon.eligible && !isApplied)
+              ),              ElevatedButton(
+                onPressed: isApplied
                     ? () {
                         AppUtils.haptic();
-                        controller.applyCouponApi(coupon.id);
+                        controller.removeCouponApi();
                       }
-                    : null,
+                    : (coupon.eligible
+                        ? () {
+                            AppUtils.haptic();
+                            controller.applyCouponApi(coupon.id);
+                          }
+                        : null),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isApplied
-                      ? const Color(0xFFE8F9F1)
+                      ? const Color(0xFFFDE8E8)
                       : (coupon.eligible ? AppColors.primary : AppColors.greyButton),
                   foregroundColor: isApplied
-                      ? AppColors.primary
+                      ? AppColors.error
                       : (coupon.eligible ? AppColors.white : AppColors.lightSurfaceSubtitle),
                   elevation: 0,
                   minimumSize: const Size(84, 36),
@@ -450,7 +461,7 @@ class _CouponsViewState extends State<CouponsView> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                 ),
                 child: Text(
-                  isApplied ? 'Applied' : 'Apply',
+                  isApplied ? 'Remove' : 'Apply',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

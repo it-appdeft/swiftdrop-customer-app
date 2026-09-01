@@ -1,10 +1,9 @@
 import '../../../../export.dart';
-import '../../../../data/models/order_model.dart';
-import '../../../../data/repositories/order_repository.dart';
+import '../../cart/controllers/cart_controller.dart';
 
 class OrderDetailsController extends GetxController {
   final order = Rxn<OrderModel>();
-  final isLoading = false.obs;
+  final isLoading = true.obs;
   final errorMessage = ''.obs;
   final partnerRating = 0.0.obs;
   final _repo = OrderRepository();
@@ -12,20 +11,32 @@ class OrderDetailsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    String? targetId;
     if (Get.arguments is OrderModel) {
-      order.value = Get.arguments as OrderModel;
-      if (order.value != null && order.value!.id.isNotEmpty) {
-        fetchOrderDetail(order.value!.id);
-      }
+      final passedOrder = Get.arguments as OrderModel;
+      targetId = (passedOrder.id.isNotEmpty && int.tryParse(passedOrder.id) != null)
+          ? passedOrder.id
+          : (passedOrder.uuid ?? passedOrder.targetId);
     } else if (Get.arguments is Map) {
       final map = Get.arguments as Map;
-      if (map['order'] is OrderModel) {
-        order.value = map['order'] as OrderModel;
-      }
-      final id = map['orderId'] ?? map['id'] ?? order.value?.id;
+      final id = map['id'] ??
+          map['orderId'] ??
+          map['orderUuid'] ??
+          map['uuid'] ??
+          (map['order'] is OrderModel ? (map['order'] as OrderModel).targetId : null);
       if (id != null && id.toString().isNotEmpty) {
-        fetchOrderDetail(id.toString());
+        targetId = id.toString();
       }
+    } else if (Get.parameters.containsKey('id')) {
+      targetId = Get.parameters['id'];
+    }
+
+    isLoading.value = true;
+    if (targetId != null && targetId.isNotEmpty) {
+      fetchOrderDetail(targetId);
+    } else {
+      isLoading.value = false;
+      errorMessage.value = 'Order details not found';
     }
   }
 
@@ -36,17 +47,26 @@ class OrderDetailsController extends GetxController {
       final res = await _repo.getOrderDetail(orderId);
       if (res.success && res.data != null) {
         order.value = res.data!;
-      } else if (res.message.isNotEmpty) {
-        errorMessage.value = res.message;
+      } else {
+        errorMessage.value = res.message.isNotEmpty ? res.message : 'Failed to load order details';
       }
     } catch (e) {
       AppLogger.w('[ORDER_DETAILS] fetchOrderDetail error: $e');
+      errorMessage.value = 'Failed to load order details';
     } finally {
       isLoading.value = false;
     }
   }
 
   void onReorder() {
-    AppUtils.showSuccess('Reordering order #${order.value?.orderNumber ?? ""}...');
+    AppUtils.haptic();
+    final o = order.value;
+    if (o == null) return;
+    if (Get.isRegistered<CartController>()) {
+      Get.find<CartController>().reorderFromOrder(o);
+    } else {
+      final cart = Get.put(CartController());
+      cart.reorderFromOrder(o);
+    }
   }
 }

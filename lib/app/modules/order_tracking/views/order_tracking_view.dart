@@ -23,13 +23,11 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Obx(() {
-        if (controller.isLoading.value) return const OrderTrackingShimmer();
-        if (controller.hasError.value) {
+        if (controller.isLoading.value && controller.order.value == null) return const OrderTrackingShimmer();
+        if (controller.hasError.value && controller.order.value == null) {
           return ErrorStateWidget(
             message: controller.errorMessage.value,
-            onRetry: () => controller.loadOrder(
-              Get.parameters['orderId'] ?? Get.arguments?['orderId'] ?? '',
-            ),
+            onRetry: () => controller.loadOrder(controller.orderId),
           );
         }
 
@@ -39,24 +37,19 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
         final restaurantName = order.displayRestaurantName;
         final restaurantAddress = order.restaurantAddressLine;
 
-        // Extract 4-digit delivery pin from order number or delivery_code
-        final cleanNumber = order.orderNumber.replaceAll(RegExp(r'\D'), '');
-        final deliveryCode = cleanNumber.length >= 4
-            ? cleanNumber.substring(cleanNumber.length - 4)
-            : (order.orderNumber.length >= 4
-                ? order.orderNumber.substring(order.orderNumber.length - 4)
-                : '');
+        // Extract delivery code strictly from order.deliveryCode (do NOT show if null or empty)
+        final rawCode = order.deliveryCode?.trim();
+        final deliveryCode = (rawCode != null && rawCode.isNotEmpty && rawCode.toLowerCase() != 'null')
+            ? rawCode
+            : null;
 
-        final status = order.status.toString().toLowerCase();
-        final isAwaitingConfirmation = status == 'placed' || status == 'pending';
-        final isOrderPlaced = status == 'accepted' || status == 'confirmed';
-        final isPreparing = status == 'preparing';
-        final isOutForDelivery = status == 'picked_up' || status == 'out_for_delivery' || status == 'on_the_way';
-        final isDriverReached = status == 'driver_reached' || status == 'arrived';
+        final isAwaitingConfirmation = order.isPending && order.isDriverUnassigned;
+        final isOutForDelivery = order.isOutForDelivery || order.isDriverOnTheWay;
+        final isDriverReached = order.isDriverReachedCustomer;
 
-        // Visibility rules based on UI flow
-        final showDeliveryCode = deliveryCode.isNotEmpty && (isPreparing || isOutForDelivery || isDriverReached);
-        final showDeliveryPartner = isPreparing || isOutForDelivery || isDriverReached;
+        // Delivery code is ONLY shown if backend provided a non-null delivery code
+        final showDeliveryCode = deliveryCode != null && deliveryCode.isNotEmpty;
+        final showDeliveryPartner = order.isDriverAssigned || order.isDriverReachedRestaurant || isOutForDelivery || isDriverReached;
 
         return NestedScrollView(
           physics: const BouncingScrollPhysics(),
@@ -75,8 +68,11 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      if (showDeliveryCode) ...[
-                        _DeliveryCodeSection(code: deliveryCode),
+                      if (showDeliveryCode && deliveryCode != null) ...[
+                        _DeliveryCodeSection(
+                          code: deliveryCode,
+                          isHighlighted: isDriverReached,
+                        ),
                         const SizedBox(height: 16),
                       ],
                       if (showDeliveryPartner) ...[
@@ -90,6 +86,12 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                         restaurantAddress: restaurantAddress,
                         orderNumber: order.orderNumber,
                         items: order.items,
+                        specialInstructions: order.specialInstructions,
+                        subtotal: order.subtotalAmount,
+                        deliveryFee: order.deliveryFee,
+                        vatAmount: order.vatAmount,
+                        discountAmount: order.discountAmount,
+                        totalAmount: order.totalAmount,
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -106,9 +108,10 @@ class OrderTrackingView extends GetView<OrderTrackingController> {
                             child: _SummaryCard(
                               label: 'Payment',
                               value: order.paymentMethod?.trim().isNotEmpty == true
-                                  ? order.paymentMethod!
-                                  : 'Online',
-                              icon: Icons.credit_card,
+                                  ? (order.paymentMethod!.toLowerCase().contains('card')
+                                      ? 'Card Payment'
+                                      : order.paymentMethod!)
+                                  : (order.isPending ? 'Pending' : 'Paid'),
                               isPayment: true,
                             ),
                           ),
@@ -141,58 +144,70 @@ class _SliverTrackingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String statusTitle = 'Awaiting Confirmation';
-    String statusSubtitle = '';
-    double progress = 0.15;
+    String statusTitle = 'Order Placed';
+    String statusSubtitle = 'Waiting for restaurant confirmation';
+    double progress = 0.20;
 
-    switch (order.status.toString().toLowerCase()) {
-      case 'placed':
-      case 'pending':
-        statusTitle = 'Awaiting Confirmation';
-        statusSubtitle = '';
-        progress = 0.15;
-        break;
-      case 'accepted':
-      case 'confirmed':
-        statusTitle = 'Order Placed';
-        statusSubtitle = 'Food preparation will begin shorty';
-        progress = 0.35;
-        break;
-      case 'preparing':
-        statusTitle = 'Preparing Your Order';
-        statusSubtitle = 'Arriving in ${order.estimatedTime} mins';
-        progress = 0.60;
-        break;
-      case 'picked_up':
-      case 'out_for_delivery':
-      case 'on_the_way':
-        statusTitle = 'Out For Delivery';
-        statusSubtitle = 'Arriving in ${order.estimatedTime} mins';
-        progress = 0.80;
-        break;
-      case 'driver_reached':
-      case 'arrived':
-        statusTitle = 'Driver Reached Your Location';
-        statusSubtitle = 'Please share the delivery code';
-        progress = 0.95;
-        break;
-      case 'delivered':
-        statusTitle = 'Order Delivered';
-        statusSubtitle = 'Enjoy your meal!';
-        progress = 1.0;
-        break;
-      case 'cancelled':
-        statusTitle = 'Order Cancelled';
-        statusSubtitle = order.effectiveCancellationReason.isNotEmpty
-            ? order.effectiveCancellationReason
-            : 'Your request has been processed';
-        progress = 1.0;
-        break;
-      default:
-        statusTitle = 'Awaiting Confirmation';
-        statusSubtitle = '';
-        progress = 0.15;
-        break;
+    final String ordStatus = (order is OrderModel)
+        ? order.effectiveOrderStatus.toLowerCase()
+        : (order?.status ?? '').toString().toLowerCase();
+
+    final String delStatus = (order is OrderModel)
+        ? order.effectiveDeliveryStatus.toLowerCase()
+        : '';
+
+    final bool isCancelled = (order is OrderModel)
+        ? order.isCancelled
+        : (ordStatus == 'cancelled' || ordStatus == 'canceled' || ordStatus == 'rejected' || ordStatus == 'failed');
+
+    final bool isDelivered = (order is OrderModel)
+        ? order.isDelivered
+        : (ordStatus == 'delivered' || ordStatus == 'completed' || delStatus == 'delivered');
+
+    if (isCancelled) {
+      statusTitle = 'Order Cancelled';
+      statusSubtitle = (order is OrderModel && order.effectiveCancellationReason.isNotEmpty)
+          ? order.effectiveCancellationReason
+          : 'Your request has been processed';
+      progress = 1.0;
+    } else if (isDelivered) {
+      statusTitle = 'Order Delivered';
+      statusSubtitle = 'Enjoy your meal!';
+      progress = 1.0;
+    } else if (delStatus == 'reached_customer' || delStatus == 'driver_reached' || delStatus == 'arrived' || delStatus == 'driver_arrived') {
+      statusTitle = 'Driver Reached Your Location';
+      statusSubtitle = 'Please share the delivery code with driver';
+      progress = 0.95;
+    } else if (delStatus == 'on_the_way' || delStatus == 'picked_up' || delStatus == 'in_transit' || ordStatus == 'out_for_delivery' || ordStatus == 'out_of_delivery') {
+      statusTitle = 'Out For Delivery';
+      final est = (order is OrderModel && order.etaMinutes != null && order.etaMinutes! > 0)
+          ? order.etaMinutes!
+          : ((order is OrderModel && order.estimatedTime > 0) ? order.estimatedTime : 15);
+      statusSubtitle = 'Arriving in $est mins';
+      progress = 0.85;
+    } else if (delStatus == 'reached_restaurant' || delStatus == 'arrived_at_restaurant' || delStatus == 'at_restaurant' || delStatus == 'reached_resturant') {
+      statusTitle = 'Driver at Restaurant';
+      statusSubtitle = 'Picking up your order';
+      progress = 0.75;
+    } else if (ordStatus == 'ready' || ordStatus == 'ready_for_pickup' || ordStatus == 'ready_to_pickup' || ordStatus == 'food_ready') {
+      statusTitle = 'Order Ready';
+      statusSubtitle = 'Waiting for delivery partner to pickup';
+      progress = 0.70;
+    } else if (ordStatus == 'preparing' || ordStatus == 'kitchen' || ordStatus == 'in_kitchen' || ordStatus == 'in_progress' || ordStatus == 'food_preparing') {
+      statusTitle = 'Preparing Your Order';
+      final est = (order is OrderModel && order.etaMinutes != null && order.etaMinutes! > 0)
+          ? order.etaMinutes!
+          : ((order is OrderModel && order.estimatedTime > 0) ? order.estimatedTime : 19);
+      statusSubtitle = 'Arriving in $est mins';
+      progress = 0.55;
+    } else if (ordStatus == 'accepted' || ordStatus == 'confirmed' || ordStatus == 'order_accepted') {
+      statusTitle = 'Order Accepted';
+      statusSubtitle = 'Food preparation will begin shortly';
+      progress = 0.35;
+    } else {
+      statusTitle = 'Order Placed';
+      statusSubtitle = 'Food preparation will begin shortly';
+      progress = 0.20;
     }
 
     final topPadding = MediaQuery.of(context).padding.top;
@@ -204,37 +219,44 @@ class _SliverTrackingHeader extends StatelessWidget {
       pinned: true,
       floating: true,
       snap: true,
-      elevation: 2,
+      elevation: 0,
       backgroundColor: AppColors.primary,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
         onPressed: () {
           AppUtils.haptic();
           Get.back();
         },
       ),
       title: Text(
-        restaurantName,
+        restaurantName.isNotEmpty ? restaurantName : 'The Marble Grill',
         style: GoogleFonts.inter(
           color: Colors.white,
-          fontSize: 18,
+          fontSize: 17,
           fontWeight: FontWeight.w600,
         ),
       ),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Assets.images.reloadButton.image(width: 28, height: 28),
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.refresh, color: Colors.white, size: 18),
+          ),
           onPressed: () {
             AppUtils.haptic();
             Get.find<OrderTrackingController>().refreshTracking();
           },
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 8),
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Padding(
-          padding: EdgeInsets.fromLTRB(16, topPadding + 52, 16, 16),
+          padding: EdgeInsets.fromLTRB(16, topPadding + 50, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.end,
@@ -252,7 +274,7 @@ class _SliverTrackingHeader extends StatelessWidget {
                 Text(
                   statusSubtitle,
                   style: GoogleFonts.inter(
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withOpacity(0.9),
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
@@ -262,17 +284,17 @@ class _SliverTrackingHeader extends StatelessWidget {
               Stack(
                 children: [
                   Container(
-                    height: 6,
+                    height: 5,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.3),
+                      color: Colors.white.withOpacity(0.28),
                       borderRadius: BorderRadius.circular(3),
                     ),
                   ),
                   FractionallySizedBox(
                     widthFactor: progress,
                     child: Container(
-                      height: 6,
+                      height: 5,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(3),
@@ -430,44 +452,83 @@ class _MapUnavailable extends StatelessWidget {
 
 class _DeliveryCodeSection extends StatelessWidget {
   final String code;
+  final bool isHighlighted;
 
-  const _DeliveryCodeSection({required this.code});
+  const _DeliveryCodeSection({required this.code, this.isHighlighted = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.offWhite,
+        color: isHighlighted ? AppColors.success.withValues(alpha: 0.1) : AppColors.offWhite,
         borderRadius: BorderRadius.circular(12),
+        border: isHighlighted ? Border.all(color: AppColors.success, width: 1.2) : null,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            'Delivery Code',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: const Color(0xFF0B243A),
+          Expanded(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isHighlighted) ...[
+                  const Icon(Icons.pin_outlined, size: 18, color: AppColors.success),
+                  const SizedBox(width: 6),
+                ],
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Delivery Code',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isHighlighted ? AppColors.success : const Color(0xFF0B243A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (isHighlighted)
+                        Text(
+                          'Share with delivery partner',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.success,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+          const SizedBox(width: 8),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: code.split('').map((digit) {
               return Container(
-                margin: const EdgeInsets.only(left: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                margin: const EdgeInsets.only(left: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: const Color(0xFFE1E2E3)),
+                  border: Border.all(
+                    color: isHighlighted ? AppColors.success : const Color(0xFFE1E2E3),
+                  ),
                 ),
                 child: Text(
                   digit,
                   style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF868AA5),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isHighlighted ? AppColors.success : const Color(0xFF0B243A),
                   ),
                 ),
               );
@@ -488,6 +549,17 @@ class _DeliveryPartnerSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final partnerName = order.driverName?.trim() ?? '';
     final isAssigning = partnerName.isEmpty;
+
+    String statusText = 'Assigned';
+    if (order.isDriverReachedCustomer) {
+      statusText = 'Reached your location';
+    } else if (order.isDriverOnTheWay) {
+      statusText = 'On the way to your location';
+    } else if (order.isDriverReachedRestaurant) {
+      statusText = 'At restaurant picking up';
+    } else if (order.isDriverAssigned) {
+      statusText = 'Heading to restaurant';
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -543,11 +615,13 @@ class _DeliveryPartnerSection extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '230 Order delivered',
+                        statusText,
                         style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: const Color(0xFF868AA5),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: order.isDriverReachedCustomer
+                              ? AppColors.success
+                              : const Color(0xFF868AA5),
                         ),
                       ),
                     ],
@@ -634,12 +708,24 @@ class _OrderDetailsCard extends StatelessWidget {
   final String restaurantAddress;
   final String orderNumber;
   final List<dynamic> items;
+  final String? specialInstructions;
+  final double subtotal;
+  final double deliveryFee;
+  final double vatAmount;
+  final double discountAmount;
+  final double totalAmount;
 
   const _OrderDetailsCard({
     required this.restaurantName,
     required this.restaurantAddress,
     required this.orderNumber,
     required this.items,
+    this.specialInstructions,
+    this.subtotal = 0.0,
+    this.deliveryFee = 0.0,
+    this.vatAmount = 0.0,
+    this.discountAmount = 0.0,
+    this.totalAmount = 0.0,
   });
 
   @override
@@ -670,14 +756,15 @@ class _OrderDetailsCard extends StatelessWidget {
                         color: const Color(0xFF0B243A),
                       ),
                     ),
-                    Text(
-                      restaurantAddress,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: const Color(0xFF868AA5),
-                        fontWeight: FontWeight.w400,
+                    if (restaurantAddress.isNotEmpty)
+                      Text(
+                        restaurantAddress,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: const Color(0xFF868AA5),
+                          fontWeight: FontWeight.w400,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -713,9 +800,12 @@ class _OrderDetailsCard extends StatelessWidget {
             final index = entry.key;
             final item = entry.value;
             final isLast = index == items.length - 1;
+            final hasModifiers = item is OrderItem && item.modifiers.isNotEmpty;
+
             return Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 20),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     width: 24,
@@ -737,20 +827,36 @@ class _OrderDetailsCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      item.name,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: const Color(0xFF868AA5),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.name,
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF0B243A),
+                          ),
+                        ),
+                        if (hasModifiers) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            item.modifiers.join(', '),
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF868AA5),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   Text(
-                    AppUtils.formatCurrency(item.price),
+                    AppUtils.formatCurrency(item is OrderItem && item.subtotal > 0 ? item.subtotal : (item.price * item.quantity)),
                     style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: const Color(0xFF0B243A),
                     ),
                   ),
@@ -758,8 +864,113 @@ class _OrderDetailsCard extends StatelessWidget {
               ),
             );
           }),
+          if (specialInstructions != null && specialInstructions!.trim().isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Divider(height: 1, color: Color(0xFFE1E2E3)),
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.note_alt_outlined, size: 18, color: Color(0xFF868AA5)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Special Instructions',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF0B243A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        specialInstructions!.trim(),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: const Color(0xFF868AA5),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (subtotal > 0 || vatAmount > 0 || deliveryFee > 0 || discountAmount > 0) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Divider(height: 1, color: Color(0xFFE1E2E3)),
+            ),
+            _buildBillRow('Item Subtotal', subtotal > 0 ? subtotal : (totalAmount - vatAmount - deliveryFee)),
+            if (deliveryFee > 0) ...[
+              const SizedBox(height: 8),
+              _buildBillRow('Delivery Fee', deliveryFee),
+            ],
+            if (vatAmount > 0) ...[
+              const SizedBox(height: 8),
+              _buildBillRow('Taxes & Charges (VAT)', vatAmount),
+            ],
+            if (discountAmount > 0) ...[
+              const SizedBox(height: 8),
+              _buildBillRow('Discount', -discountAmount, isDiscount: true),
+            ],
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Divider(height: 1, color: Color(0xFFE1E2E3)),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0B243A),
+                  ),
+                ),
+                Text(
+                  AppUtils.formatCurrency(totalAmount),
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildBillRow(String label, double amount, {bool isDiscount = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+            color: const Color(0xFF868AA5),
+          ),
+        ),
+        Text(
+          isDiscount ? '-${AppUtils.formatCurrency(amount.abs())}' : AppUtils.formatCurrency(amount),
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isDiscount ? const Color(0xFF00B36F) : const Color(0xFF0B243A),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -868,15 +1079,24 @@ class _CancelButton extends GetView<OrderTrackingController> {
 
   @override
   Widget build(BuildContext context) {
+    if (order is OrderModel && order.cancellable == false) {
+      return const SizedBox.shrink();
+    }
     final st = order.status.toString().toLowerCase();
     if (st != 'pending' && st != 'placed') {
       return const SizedBox.shrink();
     }
 
+    final cancelTargetId = (order is OrderModel && order.id.isNotEmpty)
+        ? order.id
+        : ((order is OrderModel && order.uuid != null && order.uuid!.isNotEmpty)
+            ? order.uuid!
+            : order.id.toString());
+
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => _showCancellationDialog(context, order.id),
+        onPressed: () => _showCancellationDialog(context, cancelTargetId),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFDC3545),
           foregroundColor: Colors.white,

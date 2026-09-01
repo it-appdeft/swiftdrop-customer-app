@@ -9,7 +9,36 @@ import '../models/order_model.dart';
 class OrderRepository {
   final Dio _dio = DioClient.instance;
 
-  static void invalidateCache() {}
+  static final Map<String, OrderModel> _orderCache = {};
+
+  static void invalidateCache() {
+    _orderCache.clear();
+  }
+
+  void _cacheOrder(OrderModel order) {
+    if (order.id.isNotEmpty) _orderCache[order.id] = order;
+    if (order.uuid != null && order.uuid!.isNotEmpty) _orderCache[order.uuid!] = order;
+    if (order.orderNumber.isNotEmpty) _orderCache[order.orderNumber] = order;
+  }
+
+  String _resolveNumericId(String idOrUuid) {
+    final trimmed = idOrUuid.trim();
+    if (int.tryParse(trimmed) != null) return trimmed;
+    final cached = _orderCache[trimmed];
+    if (cached != null && cached.id.isNotEmpty && int.tryParse(cached.id) != null) {
+      return cached.id;
+    }
+    return trimmed;
+  }
+
+  String _resolveTrackingUuid(String idOrUuid) {
+    final trimmed = idOrUuid.trim();
+    final cached = _orderCache[trimmed];
+    if (cached?.uuid != null && cached!.uuid!.isNotEmpty) {
+      return cached.uuid!;
+    }
+    return trimmed;
+  }
 
   List<OrderModel> _parseOrders(dynamic responseData) {
     dynamic listData;
@@ -27,10 +56,14 @@ class OrderRepository {
     }
 
     if (listData is List) {
-      return listData
+      final parsed = listData
           .whereType<Map<String, dynamic>>()
           .map((e) => OrderModel.fromJson(e))
           .toList();
+      for (final order in parsed) {
+        _cacheOrder(order);
+      }
+      return parsed;
     }
     return [];
   }
@@ -85,27 +118,59 @@ class OrderRepository {
   }
 
   Future<ApiResponse<OrderModel>> getOrderDetail(String orderId) async {
+    final numericId = _resolveNumericId(orderId);
+
+    // 1. Try /customer/profile/order/{numericId} if numericId is a number
+    if (int.tryParse(numericId) != null) {
+      try {
+        final response = await _dio.get(ApiEndpoints.customerProfileOrderDetail(numericId));
+        final dJson = response.data;
+        if (dJson is Map<String, dynamic>) {
+          final parsedOrder = OrderModel.fromJson(dJson);
+          _cacheOrder(parsedOrder);
+          AppLogger.i('[ORDERS] getOrderDetail SUCCESS | numericId: $numericId (requested: $orderId)');
+          return ApiResponse<OrderModel>(
+            success: dJson['success'] as bool? ?? true,
+            message: dJson['message'] as String? ?? 'Order detail retrieved.',
+            data: parsedOrder,
+          );
+        }
+      } catch (e) {
+        AppLogger.w('[ORDERS] getOrderDetail numericId failed: $numericId | $e');
+      }
+    }
+
+    // 2. Fallback to /customer/orders/{numericId}/status
     try {
-      final response = await _dio.get(ApiEndpoints.customerProfileOrderDetail(orderId));
-      final dJson = response.data;
-      if (dJson is Map<String, dynamic>) {
-        final parsedOrder = OrderModel.fromJson(dJson);
-        AppLogger.i('[ORDERS] getOrderDetail SUCCESS | orderId: $orderId');
+      final response = await _dio.get(ApiEndpoints.orderTracking(numericId));
+      final raw = response.data;
+      if (raw is Map<String, dynamic>) {
+        final parsedOrder = OrderModel.fromJson(raw);
+        _cacheOrder(parsedOrder);
+        AppLogger.i('[ORDERS] getOrderDetail from tracking status SUCCESS | id: $numericId');
         return ApiResponse<OrderModel>(
-          success: dJson['success'] as bool? ?? true,
-          message: dJson['message'] as String? ?? 'Order detail retrieved.',
+          success: raw['success'] as bool? ?? true,
+          message: raw['message'] as String? ?? 'Order detail retrieved.',
           data: parsedOrder,
         );
       }
     } catch (e) {
-      AppLogger.w('[ORDERS] getOrderDetail API error, attempting cached fallback | $e');
+      AppLogger.w('[ORDERS] getOrderDetail tracking status fallback failed | $e');
     }
 
+    // 3. In-memory cache fallback
     try {
+      if (_orderCache.containsKey(orderId)) {
+        return ApiResponse<OrderModel>(success: true, message: '', data: _orderCache[orderId]!);
+      }
+      if (_orderCache.containsKey(numericId)) {
+        return ApiResponse<OrderModel>(success: true, message: '', data: _orderCache[numericId]!);
+      }
+
       final activeRes = await getActiveOrders();
       if (activeRes.success && activeRes.data != null) {
         for (final o in activeRes.data!) {
-          if (o.id == orderId || o.orderNumber == orderId) {
+          if (o.id == orderId || o.uuid == orderId || o.id == numericId || o.orderNumber == orderId) {
             return ApiResponse<OrderModel>(success: true, message: '', data: o);
           }
         }
@@ -114,43 +179,30 @@ class OrderRepository {
       final historyRes = await getOrderHistory();
       if (historyRes.success && historyRes.data != null) {
         for (final o in historyRes.data!) {
-          if (o.id == orderId || o.orderNumber == orderId) {
+          if (o.id == orderId || o.uuid == orderId || o.id == numericId || o.orderNumber == orderId) {
             return ApiResponse<OrderModel>(success: true, message: '', data: o);
           }
         }
       }
+    } catch (_) {}
 
-      final fallback = AppData.activeOrders.firstWhere(
-        (o) => o.id == orderId,
-        orElse: () => AppData.orderHistory.firstWhere(
-          (o) => o.id == orderId,
-          orElse: () => AppData.activeOrders.first,
-        ),
-      );
-      return ApiResponse<OrderModel>(success: true, message: '', data: fallback);
-    } catch (e) {
-      AppLogger.w('[ORDERS] getOrderDetail fallback to local | $e');
-      final fallback = AppData.activeOrders.firstWhere(
-        (o) => o.id == orderId,
-        orElse: () => AppData.orderHistory.firstWhere(
-          (o) => o.id == orderId,
-          orElse: () => AppData.activeOrders.first,
-        ),
-      );
-      return ApiResponse<OrderModel>(success: true, message: '', data: fallback);
-    }
+    return const ApiResponse<OrderModel>(
+      success: false,
+      message: 'Failed to retrieve order detail',
+    );
   }
 
   /// Live-tracking payload: restaurant/delivery coordinates, driver position
-  /// and (optionally) a precomputed route polyline. Falls back to the order
-  /// detail payload while the dedicated endpoint is not deployed.
+  /// and (optionally) a precomputed route polyline.
   Future<ApiResponse<OrderModel>> getOrderTracking(String orderId) async {
+    final numericId = _resolveNumericId(orderId);
     try {
-      final response = await _dio.get(ApiEndpoints.orderTracking(orderId));
+      final response = await _dio.get(ApiEndpoints.orderTracking(numericId));
       final raw = response.data;
       if (raw is Map<String, dynamic>) {
         final parsedOrder = OrderModel.fromJson(raw);
-        AppLogger.i('[ORDERS] getOrderTracking SUCCESS | orderId: $orderId');
+        _cacheOrder(parsedOrder);
+        AppLogger.i('[ORDERS] getOrderTracking SUCCESS | id: $numericId (requested: $orderId)');
         return ApiResponse<OrderModel>(
           success: raw['success'] as bool? ?? true,
           message: raw['message'] as String? ?? '',
@@ -158,36 +210,29 @@ class OrderRepository {
         );
       }
     } catch (e) {
-      AppLogger.i('[ORDERS] tracking endpoint fallback | $e');
+      AppLogger.w('[ORDERS] getOrderTracking endpoint fallback | $e');
     }
     return getOrderDetail(orderId);
   }
 
-  Future<ApiResponse<bool>> cancelOrder(String orderId, {String? reason}) async {
+  Future<ApiResponse<bool>> cancelOrder(String orderIdOrUuid, {String? reason}) async {
     try {
+      final targetId = _resolveNumericId(orderIdOrUuid);
+
       final params = <String, dynamic>{};
       if (reason != null && reason.trim().isNotEmpty) {
         params['reason'] = reason.trim();
       }
 
-      Response response;
-      try {
-        response = await _dio.post(
-          ApiEndpoints.customerCancelOrder(orderId),
-          queryParameters: params.isNotEmpty ? params : null,
-          data: params.isNotEmpty ? params : null,
-        );
-      } catch (e) {
-        response = await _dio.post(
-          '${ApiEndpoints.customerProfileOrders}/$orderId/cancel',
-          queryParameters: params.isNotEmpty ? params : null,
-          data: params.isNotEmpty ? params : null,
-        );
-      }
+      final response = await _dio.post(
+        ApiEndpoints.customerCancelOrder(targetId),
+        queryParameters: params.isNotEmpty ? params : null,
+        data: params.isNotEmpty ? params : null,
+      );
 
       final success = (response.data as Map?)?['success'] as bool? ?? true;
       final msg = (response.data as Map?)?['message'] as String? ?? 'Order cancelled.';
-      AppLogger.i('[ORDERS] cancelOrder SUCCESS | orderId: $orderId, reason: $reason');
+      AppLogger.i('[ORDERS] cancelOrder SUCCESS | targetId: $targetId, reason: $reason');
       return ApiResponse<bool>(success: success, message: msg, data: success);
     } catch (e) {
       AppLogger.w('[ORDERS] cancelOrder error | $e');

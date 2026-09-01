@@ -4,11 +4,22 @@ import 'package:swiftdrop_customer_app/export.dart';
 class LocationService extends GetxService {
   static LocationService get to => Get.find();
 
+  // ==========================================
+  // TEMPORARY STATIC LOCATION FOR TESTING
+  // TODO: Uncomment original code when done testing
+  // ==========================================
+  static const double testLat = 30.7046486;
+  static const double testLng = 76.7178726;
+
   Position? _gpsPosition;
 
-  // Session-only — never persisted across app restarts
-  double? _sessionLat;
-  double? _sessionLng;
+  // --- TESTING STATIC COORDINATES ---
+  double? _sessionLat = testLat;
+  double? _sessionLng = testLng;
+
+  // --- ORIGINAL (UNCOMMENT FOR PRODUCTION) ---
+  // double? _sessionLat;
+  // double? _sessionLng;
 
   // Display label for the location bar — updated by reverse geocode
   final RxString displayAddress = 'Select Location'.obs;
@@ -16,41 +27,61 @@ class LocationService extends GetxService {
   // Changes ONLY when lat/lng coordinates change.
   // HomeController watches this to trigger reloads, NOT displayAddress,
   // so reverse-geocode label updates don't cause unnecessary dashboard reloads.
-  final RxString locationKey = ''.obs;
+  final RxString locationKey = '$testLat,$testLng'.obs;
+  // final RxString locationKey = ''.obs; // ORIGINAL
 
-  bool get hasLocation => _sessionLat != null && _sessionLng != null;
-  double? get lat => _sessionLat;
-  double? get lng => _sessionLng;
+  bool get hasLocation => true;
+  // bool get hasLocation => _sessionLat != null && _sessionLng != null; // ORIGINAL
+  double? get lat => _sessionLat ?? testLat;
+  // double? get lat => _sessionLat; // ORIGINAL
+  double? get lng => _sessionLng ?? testLng;
+  // double? get lng => _sessionLng; // ORIGINAL
 
   /// Called once per session from HomeController._initFlow.
   /// Always fetches fresh GPS — never restores from storage.
   Future<bool> initLocation() async {
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission != LocationPermission.whileInUse &&
-        permission != LocationPermission.always) {
-      return false;
-    }
+    // --- ORIGINAL GPS PERMISSION CHECK (UNCOMMENT FOR PRODUCTION) ---
+    // LocationPermission permission = await Geolocator.checkPermission();
+    // if (permission == LocationPermission.denied) {
+    //   permission = await Geolocator.requestPermission();
+    // }
+    // if (permission != LocationPermission.whileInUse &&
+    //     permission != LocationPermission.always) {
+    //   return false;
+    // }
+    // return _fetchGps();
+
     return _fetchGps();
   }
 
   Future<bool> _fetchGps() async {
     try {
-      _gpsPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      _sessionLat = _gpsPosition!.latitude;
-      _sessionLng = _gpsPosition!.longitude;
-      locationKey.value = '${_gpsPosition!.latitude},${_gpsPosition!.longitude}';
-      displayAddress.value = 'Current Location';
-      // Background reverse geocode — doesn't block dashboard load
-      _reverseGeocode(_gpsPosition!.latitude, _gpsPosition!.longitude);
+      // --- TESTING STATIC COORDINATES ---
+      _sessionLat = testLat;
+      _sessionLng = testLng;
+      locationKey.value = '$testLat,$testLng';
+      displayAddress.value = 'Sahibzada Ajit Singh Nagar';
+      // Background reverse geocode
+      _reverseGeocode(testLat, testLng);
       return true;
+
+      // --- ORIGINAL GPS FETCH (UNCOMMENT FOR PRODUCTION) ---
+      // _gpsPosition = await Geolocator.getCurrentPosition(
+      //   desiredAccuracy: LocationAccuracy.high,
+      // );
+      // _sessionLat = _gpsPosition!.latitude;
+      // _sessionLng = _gpsPosition!.longitude;
+      // locationKey.value = '${_gpsPosition!.latitude},${_gpsPosition!.longitude}';
+      // displayAddress.value = 'Current Location';
+      // _reverseGeocode(_gpsPosition!.latitude, _gpsPosition!.longitude);
+      // return true;
     } catch (e) {
-      AppLogger.e('[Location] GPS fetch failed', e);
-      return false;
+      _sessionLat = testLat;
+      _sessionLng = testLng;
+      locationKey.value = '$testLat,$testLng';
+      return true;
+      // AppLogger.e('[Location] GPS fetch failed', e);
+      // return false;
     }
   }
 

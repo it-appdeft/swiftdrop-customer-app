@@ -3,6 +3,7 @@ import 'package:swiftdrop_customer_app/generated/assets.dart';
 import '../../cart/controllers/cart_controller.dart';
 import '../controllers/restaurant_detail_controller.dart';
 import 'product_addons_sheet.dart';
+import 'your_customizations_sheet.dart';
 
 void showProductDetailBottomSheet(Map item) {
   Get.bottomSheet(
@@ -82,8 +83,8 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
             onTap: () {
               AppUtils.haptic();
               if (_hasModifiers) {
-                final mods = _cart?.getModifiersForItem(_itemId);
-                showProductAddonsSheet(widget.item, existingModifiers: mods);
+                Get.back();
+                showYourCustomizationsSheet(widget.item);
               } else {
                 _cart?.incrementCartItem(_itemId);
               }
@@ -152,7 +153,12 @@ class _ProductDetailContentState extends State<ProductDetailContent> {
             return;
           }
           if (_hasModifiers) {
-            showProductAddonsSheet(widget.item);
+            Get.back();
+            if ((_cart?.quantities[_itemId] ?? 0) > 0) {
+              showYourCustomizationsSheet(widget.item);
+            } else {
+              showProductAddonsSheet(widget.item);
+            }
           } else {
             try {
               int? rId = widget.item['restaurant_id'] as int?;

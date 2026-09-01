@@ -75,7 +75,14 @@ class RepeatLastContent extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () {
                       Get.back();
-                      showProductAddonsSheet(item);
+                      final cart = Get.find<CartController>();
+                      final cartItemId = int.tryParse(item['cart_item_id']?.toString() ?? '0') ?? 0;
+                      final itemId = (item['id'] as int?) ??
+                          (int.tryParse(item['id']?.toString() ?? '0') ?? 0);
+                      final mods = cartItemId > 0
+                          ? cart.getModifiersForCartItem(cartItemId)
+                          : cart.getModifiersForItem(itemId);
+                      showProductAddonsSheet(item, existingModifiers: mods);
                     },
                     style: OutlinedButton.styleFrom(
                       backgroundColor: const Color(0xFF8B94A3),

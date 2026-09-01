@@ -642,3 +642,272 @@ class OrderTrackingShimmer extends StatelessWidget {
   }
 }
 
+class OrderDetailsShimmer extends StatelessWidget {
+  const OrderDetailsShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(AppDimensions.paddingMd),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Order ID & Status Card Shimmer
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.offWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.lightSurfaceBorder),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppShimmer.text(width: 120, height: 16),
+                    const SizedBox(height: 6),
+                    AppShimmer.text(width: 160, height: 12),
+                  ],
+                ),
+                AppShimmer.rect(width: 80, height: 26, radius: 12),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppDimensions.gapMd),
+
+          // Address Card Shimmer
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.offWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.lightSurfaceBorder),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppShimmer.circle(size: 36),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppShimmer.text(width: 130, height: 14),
+                          const SizedBox(height: 6),
+                          AppShimmer.text(width: double.infinity, height: 12),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: AppColors.lightSurfaceBorder),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppShimmer.circle(size: 36),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          AppShimmer.text(width: 130, height: 14),
+                          const SizedBox(height: 6),
+                          AppShimmer.text(width: double.infinity, height: 12),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppDimensions.gapLg),
+
+          // Order Items Section Header
+          AppShimmer.text(width: 100, height: 16),
+          const SizedBox(height: AppDimensions.gapMd),
+
+          // Order Items Card Shimmer
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.offWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.lightSurfaceBorder),
+            ),
+            child: Column(
+              children: List.generate(2, (index) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: index == 1 ? 0 : 14),
+                  child: Row(
+                    children: [
+                      AppShimmer.rect(width: 44, height: 44, radius: 8),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppShimmer.text(width: 140, height: 14),
+                            const SizedBox(height: 6),
+                            AppShimmer.text(width: 80, height: 12),
+                          ],
+                        ),
+                      ),
+                      AppShimmer.text(width: 50, height: 14),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.gapLg),
+
+          // Payment Details Header
+          AppShimmer.text(width: 130, height: 16),
+          const SizedBox(height: AppDimensions.gapMd),
+
+          // Payment Details Card Shimmer
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.offWhite,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.lightSurfaceBorder),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppShimmer.text(width: 70, height: 13),
+                    AppShimmer.text(width: 45, height: 13),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppShimmer.text(width: 90, height: 13),
+                    AppShimmer.text(width: 40, height: 13),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppShimmer.text(width: 60, height: 13),
+                    AppShimmer.text(width: 40, height: 13),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: AppColors.lightSurfaceBorder),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    AppShimmer.text(width: 80, height: 16),
+                    AppShimmer.text(width: 60, height: 16),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppDimensions.gapXl),
+
+          // Button Shimmer
+          AppShimmer.rect(width: double.infinity, height: 52, radius: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class OrderHistoryCardShimmer extends StatelessWidget {
+  const OrderHistoryCardShimmer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF0F0F5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Restaurant Header Row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AppShimmer.rect(width: 48, height: 48, radius: 8),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    AppShimmer.text(width: 140, height: 16),
+                    const SizedBox(height: 6),
+                    AppShimmer.text(width: 180, height: 12),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AppShimmer.rect(width: 70, height: 20, radius: 10),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFF0F0F5)),
+          const SizedBox(height: 12),
+          // Items Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              AppShimmer.text(width: 160, height: 14),
+              AppShimmer.text(width: 50, height: 14),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Date & Time
+          AppShimmer.text(width: 130, height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class OrderHistoryShimmer extends StatelessWidget {
+  final int itemCount;
+  const OrderHistoryShimmer({super.key, this.itemCount = 4});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: itemCount,
+      itemBuilder: (_, __) => const OrderHistoryCardShimmer(),
+    );
+  }
+}
+
+
+

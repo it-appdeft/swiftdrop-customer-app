@@ -36,6 +36,7 @@ export 'app/services/location_service.dart';
 export 'app/services/map_route_service.dart';
 export 'app/services/notification_service.dart';
 export 'app/services/storage_service.dart';
+export 'app/services/realtime_service.dart';
 
 export 'app/bindings/initial_binding.dart';
 
@@ -81,6 +82,7 @@ export 'data/models/deletion_reason.dart';
 export 'data/models/notification_model.dart';
 export 'data/models/order_model.dart';
 export 'data/models/transaction_model.dart';
+export 'data/models/realtime_event.dart';
 export 'data/models/user_model.dart';
 
 export 'data/local/app_data.dart';

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "178530814915",
+    "project_id": "swiftdrop-customerapp",
+    "storage_bucket": "swiftdrop-customerapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:178530814915:android:e468c3dda543efe290cb76",
+        "android_client_info": {
+          "package_name": "com.example.swiftdrop_customer_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjsUtprxpENCGgkh4CO5md8RbFwLzxQHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

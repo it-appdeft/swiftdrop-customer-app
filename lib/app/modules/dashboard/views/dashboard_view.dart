@@ -40,46 +40,53 @@ class DashboardView extends GetView<DashboardController> {
     // gapSm (top pad) + bottomNavHeight + navBottomPad = full widget height
     final navTotalHeight = AppDimensions.gapSm + AppDimensions.bottomNavHeight + navBottomPad;
 
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: AppColors.darkBackground,
-      body: Stack(
-        children: [
-          Obx(() => IndexedStack(
-                index: controller.currentIndex.value,
-                children: _pages,
-              )),
-          
-          // Order floating bar (lower priority or stacked below cart if both exist?)
-          // Usually Active Order is more critical.
-          Obx(() {
-            final hasCart = cartController.cartItemCount.value > 0;
-            final hasActiveOrders = controller.activeOrders.isNotEmpty;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        controller.handleBackPress();
+      },
+      child: Scaffold(
+        extendBody: true,
+        backgroundColor: AppColors.darkBackground,
+        body: Stack(
+          children: [
+            Obx(() => IndexedStack(
+                  index: controller.currentIndex.value,
+                  children: _pages,
+                )),
             
-            if (!hasCart && !hasActiveOrders) return const SizedBox.shrink();
+            // Order floating bar (lower priority or stacked below cart if both exist?)
+            // Usually Active Order is more critical.
+            Obx(() {
+              final hasCart = cartController.cartItemCount.value > 0;
+              final hasActiveOrders = controller.activeOrders.isNotEmpty;
+              
+              if (!hasCart && !hasActiveOrders) return const SizedBox.shrink();
 
-            return Positioned(
-              left: 0,
-              right: 0,
-              bottom: navTotalHeight - 4,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (hasActiveOrders) ...[
-                    const ActiveOrdersFloatingBar(),
-                    if (hasCart) const SizedBox(height: 12),
+              return Positioned(
+                left: 0,
+                right: 0,
+                bottom: navTotalHeight - 4,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasActiveOrders) ...[
+                      const ActiveOrdersFloatingBar(),
+                      if (hasCart) const SizedBox(height: 12),
+                    ],
+                    if (hasCart) const CartFloatingBar(addSafeArea: false),
                   ],
-                  if (hasCart) const CartFloatingBar(addSafeArea: false),
-                ],
-              ),
-            );
-          }),
-        ],
+                ),
+              );
+            }),
+          ],
+        ),
+        bottomNavigationBar: Obx(() => _BottomNav(
+              currentIndex: controller.currentIndex.value,
+              onTap: controller.changePage,
+            )),
       ),
-      bottomNavigationBar: Obx(() => _BottomNav(
-            currentIndex: controller.currentIndex.value,
-            onTap: controller.changePage,
-          )),
     );
   }
 }

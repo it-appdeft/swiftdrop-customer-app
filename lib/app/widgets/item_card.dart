@@ -213,7 +213,8 @@ class _ItemCardState extends State<ItemCard> {
             if (cart != null && (cart.quantities[_itemId] ?? 0) > 0) {
               showYourCustomizationsSheet(widget.item);
             } else {
-              showProductDetailBottomSheet(widget.item);
+              final mods = cart?.getModifiersForItem(_itemId);
+              showProductAddonsSheet(widget.item, existingModifiers: mods);
             }
           } else {
             final cart = _cart;
@@ -233,7 +234,11 @@ class _ItemCardState extends State<ItemCard> {
                 }
               });
             } else {
-              showProductDetailBottomSheet(widget.item);
+              if (_hasModifiers) {
+                showProductAddonsSheet(widget.item);
+              } else {
+                showProductDetailBottomSheet(widget.item);
+              }
             }
           }
         },

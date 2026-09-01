@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'firebase_options.dart';
 import 'export.dart';
 
 Future<void> main() async {
@@ -8,8 +9,13 @@ Future<void> main() async {
   await dotenv.load(fileName: '.env');
   await GetStorage.init();
   try {
-    await Firebase.initializeApp();
-  } catch (_) {}
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    AppLogger.i('Firebase initialized successfully with DefaultFirebaseOptions');
+  } catch (e) {
+    AppLogger.e('Firebase initialization error: $e');
+  }
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,

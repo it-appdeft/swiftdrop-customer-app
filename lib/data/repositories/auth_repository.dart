@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:swiftdrop_customer_app/app/utils/app_utils.dart';
 import '../../app/config/app_config.dart';
 import '../../app/network/api_endpoints.dart';
 import '../../app/network/dio_client.dart';
@@ -43,10 +44,10 @@ class AuthRepository {
       }
       final msg = _extractMessage(e);
       if (msg != null) return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
-      AppLogger.w('[AUTH] sendOtp — no real API, falling back to local');
+      AppLogger.w('[AUTH] sendOtp â€” no real API, falling back to local');
       return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
     } catch (e) {
-      AppLogger.w('[AUTH] sendOtp — unexpected error, falling back to local | $e');
+      AppLogger.w('[AUTH] sendOtp â€” unexpected error, falling back to local | $e');
       return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
     }
   }
@@ -93,14 +94,14 @@ class AuthRepository {
       if (msg != null) {
         return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
       }
-      AppLogger.w('[AUTH] verifyOtp — no real API, falling back to local');
+      AppLogger.w('[AUTH] verifyOtp â€” no real API, falling back to local');
       return ApiResponse<Map<String, dynamic>>(
         success: true,
         message: '',
         data: {'token': AppConfig.accessTokenKey, 'user': AppData.user.toJson()},
       );
     } catch (e) {
-      AppLogger.w('[AUTH] verifyOtp — unexpected error, falling back to local | $e');
+      AppLogger.w('[AUTH] verifyOtp â€” unexpected error, falling back to local | $e');
       return ApiResponse<Map<String, dynamic>>(
         success: true,
         message: '',
@@ -146,11 +147,29 @@ class AuthRepository {
       if (msg != null) {
         return ApiResponse<Map<String, dynamic>>(success: false, message: msg);
       }
-      AppLogger.w('[AUTH] register — no real API, falling back to local');
+      AppLogger.w('[AUTH] register â€” no real API, falling back to local');
       return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
     } catch (e) {
-      AppLogger.w('[AUTH] register — unexpected error, falling back to local | $e');
+      AppLogger.w('[AUTH] register â€” unexpected error, falling back to local | $e');
       return const ApiResponse<Map<String, dynamic>>(success: true, message: '', data: null);
+    }
+  }
+
+  Future<ApiResponse<void>> updateFcmToken(String fcmToken) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.updateFcmToken,
+        data: FormData.fromMap({'fcm_token': fcmToken}),
+        options: Options(contentType: 'multipart/form-data'),
+      );
+      final json = response.data as Map<String, dynamic>;
+      final success = json['success'] as bool? ?? true;
+      return ApiResponse<void>(
+        success: success,
+        message: json['message'] as String? ?? 'FCM token updated successfully.',
+      );
+    } catch (e) {
+      return ApiResponse<void>(success: false, message: AppUtils.extractErrorMessage(e));
     }
   }
 
@@ -163,7 +182,7 @@ class AuthRepository {
       AppLogger.e('[AUTH] logout FAILED | status: ${e.response?.statusCode} | body: ${e.response?.data}');
       return const ApiResponse<bool>(success: true, message: '', data: true);
     } catch (e) {
-      AppLogger.w('[AUTH] logout — unexpected error | $e');
+      AppLogger.w('[AUTH] logout â€” unexpected error | $e');
       return const ApiResponse<bool>(success: true, message: '', data: true);
     }
   }

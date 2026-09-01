@@ -4,15 +4,7 @@ class AddressRepository {
   final _dio = DioClient.instance;
 
   ApiResponse<void> _apiError(dynamic e) {
-    if (e is DioException && e.response != null) {
-      final body = e.response!.data;
-      String message = 'Something went wrong';
-      if (body is Map) {
-        message = body['message'] as String? ?? message;
-      }
-      return ApiResponse(success: false, message: message, data: null);
-    }
-    return const ApiResponse(success: false, message: 'Network error. Please try again.', data: null);
+    return ApiResponse(success: false, message: AppUtils.extractErrorMessage(e), data: null);
   }
 
   Future<ApiResponse<Map<String, dynamic>>> getAddresses({int page = 1}) async {
@@ -47,6 +39,10 @@ class AddressRepository {
     String? deliveryInstructions,
   }) async {
     try {
+      // --- TESTING STATIC COORDINATES ---
+      const double testLat = 30.7046486;
+      const double testLng = 76.7178726;
+
       final response = await _dio.post(
         ApiEndpoints.customerAddresses,
         data: {
@@ -58,8 +54,8 @@ class AddressRepository {
           'city': city.trim().isNotEmpty ? city.trim() : 'City',
           'county': county.trim().isNotEmpty ? county.trim() : 'County',
           'postcode': postcode,
-          'lat': lat,
-          'lng': lng,
+          'lat': testLat, // ORIGINAL: 'lat': lat,
+          'lng': testLng, // ORIGINAL: 'lng': lng,
           if (deliveryInstructions != null && deliveryInstructions.isNotEmpty)
             'delivery_instructions': deliveryInstructions,
         },
@@ -88,6 +84,10 @@ class AddressRepository {
     String? deliveryInstructions,
   }) async {
     try {
+      // --- TESTING STATIC COORDINATES ---
+      const double testLat = 30.7046486;
+      const double testLng = 76.7178726;
+
       final response = await _dio.post(
         ApiEndpoints.customerAddressUpdate(id),
         data: {
@@ -100,8 +100,8 @@ class AddressRepository {
           'city': city.trim().isNotEmpty ? city.trim() : 'City',
           'county': county.trim().isNotEmpty ? county.trim() : 'County',
           'postcode': postcode,
-          'lat': lat,
-          'lng': lng,
+          'lat': testLat, // ORIGINAL: 'lat': lat,
+          'lng': testLng, // ORIGINAL: 'lng': lng,
           if (deliveryInstructions != null && deliveryInstructions.isNotEmpty)
             'delivery_instructions': deliveryInstructions,
         },

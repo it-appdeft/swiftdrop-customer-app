@@ -22,18 +22,18 @@ class DeliveredOrderBody extends StatelessWidget {
     return SingleChildScrollView(
       child: Column(
         children: [
-          _DeliveredHeader(context: context),
+          _DeliveredHeader(controller: controller),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 _DeliveredAtCard(order: order),
                 const SizedBox(height: 16),
-                _RateRestaurantCard(order: order),
+                _RateRestaurantCard(order: order, controller: controller),
                 const SizedBox(height: 16),
-                _RateFoodCard(order: order),
+                _RateFoodCard(order: order, controller: controller),
                 const SizedBox(height: 16),
-                const _RateDeliveryCard(),
+                _RateDeliveryCard(order: order, controller: controller),
                 const SizedBox(height: 20),
                 const _GoToSupportCard(),
                 const SizedBox(height: 24),
@@ -43,7 +43,7 @@ class DeliveredOrderBody extends StatelessWidget {
                   backgroundColor: AppColors.primary,
                 ),
                 const SizedBox(height: 12),
-                _BackToHomeButton(onPressed: controller.backToHome),
+                _BackToHomeButton(onPressed: controller.handleBack),
                 const SizedBox(height: 42),
               ],
             ),
@@ -57,8 +57,8 @@ class DeliveredOrderBody extends StatelessWidget {
 // ─── SUB-COMPONENTS ──────────────────────────────────────────────────────────
 
 class _DeliveredHeader extends StatelessWidget {
-  final BuildContext context;
-  const _DeliveredHeader({required this.context});
+  final OrderDeliveredController controller;
+  const _DeliveredHeader({required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,7 @@ class _DeliveredHeader extends StatelessWidget {
                   color: Colors.white,
                   size: 20,
                 ),
-                onPressed: () => Get.back(),
+                onPressed: controller.handleBack,
               ),
             ),
           ),
@@ -184,7 +184,8 @@ class _DeliveredAtCard extends StatelessWidget {
 
 class _RateRestaurantCard extends StatelessWidget {
   final OrderModel? order;
-  const _RateRestaurantCard({required this.order});
+  final OrderDeliveredController controller;
+  const _RateRestaurantCard({required this.order, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -271,7 +272,11 @@ class _RateRestaurantCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const _StarRating(size: 18),
+              Obx(() => _StarRating(
+                    rating: controller.restaurantRating.value,
+                    onRatingChanged: (v) => controller.restaurantRating.value = v,
+                    size: 20,
+                  )),
             ],
           ),
         ],
@@ -282,7 +287,8 @@ class _RateRestaurantCard extends StatelessWidget {
 
 class _RateFoodCard extends StatelessWidget {
   final OrderModel? order;
-  const _RateFoodCard({required this.order});
+  final OrderDeliveredController controller;
+  const _RateFoodCard({required this.order, required this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -316,14 +322,19 @@ class _RateFoodCard extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           ...items.asMap().entries.map((entry) {
+            final idx = entry.key;
             final item = entry.value;
-            final isLast = entry.key == items.length - 1;
+            final isLast = idx == items.length - 1;
             return Padding(
               padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
               child: _RateFoodItemRow(
                 name: item.name,
-                subtitle: 'Qty: x${item.quantity}',
+                subtitle: item.modifiers.isNotEmpty
+                    ? '${item.modifiers.join(', ')}  x${item.quantity}'
+                    : 'Qty: x${item.quantity}',
                 image: order?.fullRestaurantImage,
+                rating: controller.foodRatings[idx] ?? 4.0,
+                onRatingChanged: (v) => controller.foodRatings[idx] = v,
               ),
             );
           }),
@@ -337,11 +348,15 @@ class _RateFoodItemRow extends StatelessWidget {
   final String name;
   final String subtitle;
   final String? image;
+  final double rating;
+  final ValueChanged<double> onRatingChanged;
 
   const _RateFoodItemRow({
     required this.name,
     required this.subtitle,
     this.image,
+    required this.rating,
+    required this.onRatingChanged,
   });
 
   @override
@@ -395,17 +410,25 @@ class _RateFoodItemRow extends StatelessWidget {
             ],
           ),
         ),
-        const _StarRating(size: 18),
+        _StarRating(
+          rating: rating,
+          onRatingChanged: onRatingChanged,
+          size: 18,
+        ),
       ],
     );
   }
 }
 
 class _RateDeliveryCard extends StatelessWidget {
-  const _RateDeliveryCard();
+  final OrderModel? order;
+  final OrderDeliveredController controller;
+  const _RateDeliveryCard({required this.order, required this.controller});
 
   @override
   Widget build(BuildContext context) {
+    final driverPhoto = order?.driverImage;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -414,7 +437,7 @@ class _RateDeliveryCard extends StatelessWidget {
         border: Border.all(color: AppColors.cardBorder),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -434,14 +457,34 @@ class _RateDeliveryCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              const CircleAvatar(
-                radius: 22,
-                backgroundImage: NetworkImage(
-                  'https://i.pravatar.cc/150?u=james',
-                ),
+              ClipOval(
+                child: driverPhoto != null && driverPhoto.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: AppImage.buildUrl(driverPhoto),
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        errorWidget: (c, u, e) => Assets.images.deliveryPartner.image(
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Assets.images.deliveryPartner.image(
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                      ),
               ),
               const SizedBox(width: 14),
-              const Expanded(child: _StarRating(size: 26, spacing: 6)),
+              Expanded(
+                child: Obx(() => _StarRating(
+                      rating: controller.driverRating.value,
+                      onRatingChanged: (v) => controller.driverRating.value = v,
+                      size: 26,
+                      spacing: 6,
+                    )),
+              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -454,6 +497,7 @@ class _RateDeliveryCard extends StatelessWidget {
               border: Border.all(color: AppColors.lightSurfaceBorder),
             ),
             child: TextField(
+              controller: controller.driverFeedbackController,
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppColors.lightSurfaceDarkText,
@@ -558,34 +602,41 @@ class _BackToHomeButton extends StatelessWidget {
   }
 }
 
-class _StarRating extends StatefulWidget {
+class _StarRating extends StatelessWidget {
+  final double rating;
+  final ValueChanged<double> onRatingChanged;
   final double size;
   final double spacing;
-  const _StarRating({required this.size, this.spacing = 2});
 
-  @override
-  State<_StarRating> createState() => _StarRatingState();
-}
-
-class _StarRatingState extends State<_StarRating> {
-  double _rating = 4.0;
+  const _StarRating({
+    required this.rating,
+    required this.onRatingChanged,
+    required this.size,
+    this.spacing = 3,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return RatingStars(
-      value: _rating,
-      onValueChanged: (v) => setState(() => _rating = v),
-      starBuilder: (index, color) =>
-          (color == AppColors.warning
-                  ? Assets.images.filledStart
-                  : Assets.images.emptyStar)
-              .image(width: widget.size, height: widget.size),
-      starCount: 5,
-      starSize: widget.size,
-      valueLabelVisibility: false,
-      starSpacing: widget.spacing,
-      starOffColor: AppColors.lightSurfaceBorder,
-      starColor: AppColors.warning,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        final isFilled = index < rating;
+        return GestureDetector(
+          onTap: () {
+            AppUtils.haptic();
+            onRatingChanged(index + 1.0);
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+            child: Icon(
+              isFilled ? Icons.star_rounded : Icons.star_outline_rounded,
+              size: size,
+              color: isFilled ? const Color(0xFFFBBF24) : const Color(0xFFCBD5E1),
+            ),
+          ),
+        );
+      }),
     );
   }
 }
